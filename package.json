@@ -2,10 +2,11 @@
   "name": "study-app",
   "private": true,
   "type": "module",
-  "workspaces": ["shared", "server", "web"],
+  "workspaces": ["shared", "server", "web", "e2e"],
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p shared && tsc --noEmit -p server && tsc --noEmit -p web"
+    "typecheck": "tsc --noEmit -p shared && tsc --noEmit -p server && tsc --noEmit -p web",
+    "e2e": "npm run build -w web && playwright test -c e2e"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

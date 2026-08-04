@@ -2,3 +2,5 @@ node_modules/
 data/
 dist/
 *.zip
+test-results/
+playwright-report/
