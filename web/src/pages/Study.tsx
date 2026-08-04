@@ -36,7 +36,10 @@ export default function Study() {
         <label><input type="radio" checked={mode === "due"} onChange={() => setMode("due")} /> Due today</label>{" "}
         <label><input type="radio" checked={mode === "free"} onChange={() => setMode("free")} /> Free study</label>
         {mode === "free" && (
-          <select defaultValue="" onChange={(e) => { setQueue(null); getFreeStudy(e.target.value).then(setQueue); }}>
+          <select defaultValue="" onChange={(e) => {
+            setQueue(null); setRevealed(false); setReviewed(0);
+            getFreeStudy(e.target.value).then(setQueue);
+          }}>
             <option value="" disabled>pick a package…</option>
             {packages.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
