@@ -3,6 +3,7 @@ import type { Db } from "./db.js";
 import { packageRoutes } from "./routes/packages.js";
 import { lessonRoutes } from "./routes/lessons.js";
 import { attemptRoutes } from "./routes/attempts.js";
+import { reviewRoutes } from "./routes/review.js";
 
 export type AppEnv = { Variables: { db: Db } };
 
@@ -19,5 +20,6 @@ export function createApp(db: Db): Hono<AppEnv> {
   app.route("/api/packages", packageRoutes());
   app.route("/api/lessons", lessonRoutes());
   app.route("/api/attempts", attemptRoutes());
+  app.route("/api/review", reviewRoutes());
   return app;
 }
