@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 
 const importGood = () =>
-  app.request("/api/packages/import", { method: "POST", body: makeZip(GOOD_FILES) });
+  app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(GOOD_FILES)) });
 
 describe("package routes", () => {
   it("imports and lists", async () => {
