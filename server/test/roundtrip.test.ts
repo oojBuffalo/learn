@@ -8,11 +8,27 @@ import { exportPackage } from "../src/exporter.js";
 import { readPackageZip } from "../src/zip.js";
 import { GOOD_FILES, makeZip } from "./helpers.js";
 
+// Local extension of GOOD_FILES (not a mutation — other suites assert against GOOD_FILES
+// as-is) that adds a quiz and a game so the round-trip proves quizzes/games survive too.
+// mc1 is multiple-choice: quizzable, and compatible with the "timed-round" game template.
+// card1 is a flashcard — not quizzable/gameable, so it's deliberately not referenced here.
+const FILES = {
+  ...GOOD_FILES,
+  "quizzes.json": JSON.stringify([{ id: "quiz1", title: "Quiz 1", items: ["mc1"] }]),
+  "games.json": JSON.stringify([
+    { id: "game1", template: "timed-round", title: "Game 1", source: { itemIds: ["mc1"] } },
+  ]),
+};
+
 describe("export round-trip", () => {
   it("import → export → parse yields identical content", () => {
     const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
-    const original = readPackageZip(makeZip(GOOD_FILES)).pkg!;
-    importPackage(db, makeZip(GOOD_FILES));
+    const original = readPackageZip(makeZip(FILES)).pkg!;
+    // Guard against the round-trip going vacuous: if these fixtures ever lose their
+    // quiz/game content, the toEqual checks below would trivially pass on [] === [].
+    expect(original.quizzes.length).toBeGreaterThan(0);
+    expect(original.games.length).toBeGreaterThan(0);
+    importPackage(db, makeZip(FILES));
 
     const out = exportPackage(db, "demo")!;
     const reread = readPackageZip(out);
