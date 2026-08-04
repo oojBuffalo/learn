@@ -35,9 +35,9 @@ export default function Lesson() {
       <h1>{data.lesson.title}</h1>
       {segments.map((seg, i) =>
         seg.kind === "md" ? (
-          <Markdown key={i} packageId={packageId}>{seg.md}</Markdown>
+          <Markdown key={"md-" + i} packageId={packageId}>{seg.md}</Markdown>
         ) : data.items[seg.id] ? (
-          <ActivityView key={i} packageId={packageId} item={data.items[seg.id]!} />
+          <ActivityView key={seg.id} packageId={packageId} item={data.items[seg.id]!} />
         ) : null,
       )}
       {extra.length > 0 && <h2>Practice</h2>}
