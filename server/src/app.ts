@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import type { Db } from "./db.js";
 import { packageRoutes } from "./routes/packages.js";
+import { lessonRoutes } from "./routes/lessons.js";
+import { attemptRoutes } from "./routes/attempts.js";
 
 export type AppEnv = { Variables: { db: Db } };
 
@@ -15,5 +17,7 @@ export function createApp(db: Db): Hono<AppEnv> {
   );
   app.notFound((c) => c.json({ error: { code: "not_found", message: "no such route or resource" } }, 404));
   app.route("/api/packages", packageRoutes());
+  app.route("/api/lessons", lessonRoutes());
+  app.route("/api/attempts", attemptRoutes());
   return app;
 }
