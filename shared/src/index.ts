@@ -5,3 +5,13 @@ export type {
   Item, ItemType, McItem, MsItem, FillBlankItem, ShortAnswerItem,
   OrderingItem, MatchingItem, FlashcardItem,
 } from "./items.js";
+export {
+  manifestSchema,
+  lessonFrontmatterSchema,
+  quizSchema,
+  gameSchema,
+  KNOWN_FORMAT_VERSIONS,
+} from "./packageSchema.js";
+export type { Manifest, LessonFrontmatter, Quiz, Game } from "./packageSchema.js";
+export { splitLessonBody, activityIdsInBody } from "./lessonBody.js";
+export type { BodySegment } from "./lessonBody.js";
