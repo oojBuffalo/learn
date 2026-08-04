@@ -16,6 +16,7 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
   return (
     <div className="card">
       <Markdown packageId={packageId}>{item.prompt}</Markdown>
+      <Media packageId={packageId} media={item.media} />
       <AnswerForm item={item} disabled={!!result} onSubmit={submit} />
       {item.hints && hintsShown < item.hints.length && !result && (
         <p><button onClick={() => setHintsShown(hintsShown + 1)}>Hint</button></p>
@@ -42,10 +43,25 @@ function FlashcardReveal({ item, packageId }: { item: Extract<Item, { type: "fla
   return (
     <div className="card">
       <Markdown packageId={packageId}>{item.front}</Markdown>
+      <Media packageId={packageId} media={item.media} />
       {shown
         ? <Markdown packageId={packageId}>{item.back}</Markdown>
         : <button onClick={() => setShown(true)}>Reveal</button>}
     </div>
+  );
+}
+
+function Media({ packageId, media }: { packageId: string; media?: { src: string; alt?: string }[] }) {
+  if (!media?.length) return null;
+  return (
+    <>
+      {media.map((m) => {
+        const url = `/api/packages/${packageId}/${m.src}`;
+        return /\.mp3$/i.test(m.src)
+          ? <audio key={m.src} controls src={url} />
+          : <img key={m.src} src={url} alt={m.alt ?? ""} style={{ maxWidth: "100%" }} />;
+      })}
+    </>
   );
 }
 
