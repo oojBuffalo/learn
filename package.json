@@ -1,0 +1,15 @@
+{
+  "name": "study-app",
+  "private": true,
+  "type": "module",
+  "workspaces": ["shared", "server", "web"],
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p shared && tsc --noEmit -p server && tsc --noEmit -p web"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0",
+    "@types/node": "^20.14.0"
+  }
+}
