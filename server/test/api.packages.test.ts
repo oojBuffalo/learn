@@ -49,6 +49,8 @@ describe("package routes", () => {
     const res = await app.request("/api/packages/demo/assets/assets/dot.png");
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
+    expect(res.headers.get("content-security-policy")).toBe("sandbox");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
   });
 
   it("deletes content but keeps user state", async () => {

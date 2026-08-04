@@ -70,6 +70,8 @@ export function packageRoutes() {
     const ext = assetPath.split(".").pop() ?? "";
     return c.body(row.data.buffer.slice(row.data.byteOffset, row.data.byteOffset + row.data.byteLength) as ArrayBuffer, 200, {
       "Content-Type": MIME[ext] ?? "application/octet-stream",
+      "Content-Security-Policy": "sandbox",
+      "X-Content-Type-Options": "nosniff",
     });
   });
 
