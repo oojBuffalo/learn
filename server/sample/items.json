@@ -1,0 +1,56 @@
+[
+  {
+    "id": "mc-forgetting",
+    "type": "multiple-choice",
+    "prompt": "When is the most efficient moment to review a fact?",
+    "options": [
+      { "id": "a", "text": "Immediately after learning it", "feedback": "Too soon — the memory is still fresh, so the review adds little." },
+      { "id": "b", "text": "Just before you would forget it", "correct": true },
+      { "id": "c", "text": "After you have fully forgotten it", "feedback": "Now it's relearning, which costs more time." }
+    ],
+    "explanation": "Reviewing near the edge of forgetting gives the biggest boost per minute spent.",
+    "tags": ["memory"]
+  },
+  {
+    "id": "fb-intervals",
+    "type": "fill-blank",
+    "prompt": "Fill in the grading rule.",
+    "template": "Rating a card {{1}} brings it back in the same session; rating it Good pushes it {{2}} out each time.",
+    "blanks": [
+      { "slot": 1, "accept": ["Again", "again"] },
+      { "slot": 2, "accept": ["further", "farther", "longer"] }
+    ]
+  },
+  {
+    "id": "sa-recall",
+    "type": "short-answer",
+    "prompt": "One word: pulling an answer from memory instead of rereading it is called active ____.",
+    "accept": ["recall", "retrieval"],
+    "hints": ["It starts with r.", "Active ___ — the name of this lesson."]
+  },
+  {
+    "id": "ord-study-loop",
+    "type": "ordering",
+    "prompt": "Order the study loop.",
+    "steps": [
+      { "id": "s1", "text": "Read a small chunk" },
+      { "id": "s2", "text": "Close the source" },
+      { "id": "s3", "text": "Recall it from memory" },
+      { "id": "s4", "text": "Check and correct" }
+    ]
+  },
+  { "id": "card-spacing", "type": "flashcard", "front": "Spacing effect", "back": "Reviews spread over time beat the same time spent cramming.", "reverse": true },
+  { "id": "card-recall", "type": "flashcard", "front": "Active recall", "back": "Strengthening memory by retrieving it, not rereading it." },
+  { "id": "card-curve", "type": "flashcard", "front": "Forgetting curve", "back": "Memory decays fast at first, slower after each successful review.", "examples": ["Ebbinghaus, 1885"] },
+  {
+    "id": "match-terms",
+    "type": "matching",
+    "prompt": "Match each technique to its description.",
+    "pairs": [
+      { "left": "Spaced repetition", "right": "Grow the gap between reviews" },
+      { "left": "Active recall", "right": "Test yourself before checking" },
+      { "left": "Interleaving", "right": "Mix topics within one session" }
+    ],
+    "tags": ["memory"]
+  }
+]

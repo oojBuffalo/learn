@@ -1,0 +1,12 @@
+{
+  "formatVersion": "1.0.0",
+  "id": "learning-how-to-learn",
+  "title": "Learning How to Learn",
+  "version": "1.0.0",
+  "description": "A starter package about the study techniques this app is built on.",
+  "tags": ["meta", "sample"],
+  "objectives": [
+    "Explain why spaced repetition beats cramming",
+    "Use active recall instead of rereading"
+  ]
+}
