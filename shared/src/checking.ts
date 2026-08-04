@@ -84,7 +84,13 @@ export function checkAnswer(item: Item, answer: Answer): CheckResult {
     case "matching": {
       const a = answer as Extract<Answer, { type: "matching" }>;
       const want = new Map(item.pairs.map((p) => [p.left, p.right]));
-      const right = a.pairs.filter((p) => want.get(p.left) === p.right).length;
+      const seenLeft = new Set<string>();
+      const deduped = a.pairs.filter((p) => {
+        if (seenLeft.has(p.left)) return false;
+        seenLeft.add(p.left);
+        return true;
+      });
+      const right = deduped.filter((p) => want.get(p.left) === p.right).length;
       const score = right / item.pairs.length;
       return { correct: score === 1, score, expected: item.pairs };
     }

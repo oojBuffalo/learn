@@ -80,6 +80,19 @@ describe("checkAnswer", () => {
     expect(r).toMatchObject({ correct: false, score: 0.5 });
   });
 
+  it("matching: duplicate submitted pairs are deduped, not double-counted", () => {
+    const mt: Item = {
+      id: "x2", type: "matching", prompt: "?",
+      pairs: [{ left: "a", right: "1" }, { left: "b", right: "2" }],
+    };
+    const dup = checkAnswer(mt, {
+      type: "matching",
+      pairs: [{ left: "a", right: "1" }, { left: "a", right: "1" }, { left: "a", right: "1" }],
+    });
+    expect(dup).toMatchObject({ correct: false, score: 0.5 });
+    expect(dup.score).toBeLessThanOrEqual(1);
+  });
+
   it("throws on flashcards and on type mismatch", () => {
     const card: Item = { id: "c", type: "flashcard", front: "f", back: "b" };
     expect(() => checkAnswer(card, { type: "short-answer", text: "b" })).toThrow(/flashcard/i);
