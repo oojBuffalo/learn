@@ -5,35 +5,42 @@ import type { AppEnv } from "../app.js";
 import type { Db } from "../db.js";
 
 interface CardRow { packageId: string; itemId: string; direction: "front" | "back";
-  front: string; back: string; examples?: string[]; isNew: boolean; dueAt: string | null }
+  front: string; back: string; examples?: string[]; isNew: boolean; dueAt: string | null;
+  /** Scheduler state, so the player can show what each grade would do. */
+  state: CardState | null }
 
 function allCards(db: Db, packageId?: string): CardRow[] {
   const rows = db
     .prepare(
-      `SELECT i.package_id, i.id, i.data, s.due_at, s.item_id AS has_state, s.direction AS state_dir
+      `SELECT i.package_id, i.id, i.data, s.due_at, s.item_id AS has_state, s.direction AS state_dir,
+              s.interval_days, s.ease, s.reps, s.lapses
        FROM items i
        LEFT JOIN card_state s ON s.package_id = i.package_id AND s.item_id = i.id
        WHERE i.type = 'flashcard' ${packageId ? "AND i.package_id = ?" : ""}`,
     )
     .all(...(packageId ? [packageId] : [])) as any[];
   // one row per (item, state) join — regroup per item, then expand directions
-  const byItem = new Map<string, { pkg: string; item: FlashcardItem; states: Map<string, string> }>();
+  const byItem = new Map<string, { pkg: string; item: FlashcardItem; states: Map<string, CardState> }>();
   for (const r of rows) {
     const key = `${r.package_id}/${r.id}`;
     const entry = byItem.get(key) ?? { pkg: r.package_id, item: JSON.parse(r.data), states: new Map() };
-    if (r.has_state) entry.states.set(r.state_dir, r.due_at);
+    if (r.has_state) {
+      entry.states.set(r.state_dir, {
+        intervalDays: r.interval_days, ease: r.ease, reps: r.reps, lapses: r.lapses, dueAt: r.due_at,
+      });
+    }
     byItem.set(key, entry);
   }
   const cards: CardRow[] = [];
   for (const { pkg, item, states } of byItem.values()) {
     const dirs: ("front" | "back")[] = item.reverse ? ["front", "back"] : ["front"];
     for (const direction of dirs) {
-      const dueAt = states.get(direction) ?? null;
+      const state = states.get(direction) ?? null;
       cards.push({
         packageId: pkg, itemId: item.id, direction,
         front: direction === "front" ? item.front : item.back,
         back: direction === "front" ? item.back : item.front,
-        examples: item.examples, isNew: dueAt === null, dueAt,
+        examples: item.examples, isNew: state === null, dueAt: state?.dueAt ?? null, state,
       });
     }
   }

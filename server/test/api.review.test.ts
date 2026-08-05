@@ -51,6 +51,19 @@ describe("review", () => {
     expect(db.prepare("SELECT COUNT(*) n FROM card_state").get()).toMatchObject({ n: 0 });
   });
 
+  it("cards carry scheduler state so the player can preview each grade", async () => {
+    const fresh = await (await app.request("/api/review/due")).json();
+    expect(fresh.cards.every((c: any) => c.state === null)).toBe(true);
+
+    await grade("front", "good");
+
+    const all = await (await app.request("/api/review/free-study?packageId=demo")).json();
+    const front = all.cards.find((c: any) => c.direction === "front");
+    expect(front.isNew).toBe(false);
+    expect(front.state).toMatchObject({ intervalDays: 1, reps: 1, lapses: 0, ease: 2.5 });
+    expect(all.cards.find((c: any) => c.direction === "back").state).toBeNull();
+  });
+
   it("validates rating and item", async () => {
     expect((await grade("front", "meh")).status).toBe(400);
     const res = await app.request("/api/review/grade", {

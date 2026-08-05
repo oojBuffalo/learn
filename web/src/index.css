@@ -1,11 +1,5 @@
-:root { font-family: system-ui, sans-serif; line-height: 1.6; color-scheme: light dark; }
-body { margin: 0; }
-nav { display: flex; gap: 1rem; padding: 0.75rem 1.5rem; border-bottom: 1px solid #8884; }
-nav a { text-decoration: none; font-weight: 600; }
-main { max-width: 46rem; margin: 0 auto; padding: 1.5rem; }
-button { cursor: pointer; padding: 0.4rem 0.9rem; border-radius: 6px; border: 1px solid #8886; }
-button.primary { background: #4667d6; color: white; border-color: transparent; }
-.card { border: 1px solid #8884; border-radius: 10px; padding: 1rem 1.25rem; margin: 1rem 0; }
-.correct { color: #1a7f37; } .incorrect { color: #cf222e; }
-.error-list { color: #cf222e; font-size: 0.9rem; }
-img { max-width: 100%; }
+@import "./styles/fonts.css";
+@import "./styles/tokens.css";
+@import "./styles/base.css";
+@import "./styles/layout.css";
+@import "./styles/components.css";

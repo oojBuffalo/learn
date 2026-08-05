@@ -47,6 +47,13 @@ if (isMain) {
   seedSampleIfEmpty(db);
   const app = createApp(db);
   app.use("/*", serveStatic({ root: "../web/dist" })); // after /api routes; harmless if dist absent
+  // Client routes (/study, /lesson/…) must survive a reload: hand them the SPA shell.
+  const indexHtml = join(HERE, "..", "..", "web", "dist", "index.html");
+  app.get("*", (c) =>
+    c.req.path.startsWith("/api/") || !existsSync(indexHtml)
+      ? c.notFound()
+      : c.html(readFileSync(indexHtml, "utf8")),
+  );
   serve({ fetch: app.fetch, port: 4321 }, () =>
     console.log("study app on http://localhost:4321"),
   );

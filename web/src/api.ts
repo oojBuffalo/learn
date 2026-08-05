@@ -1,4 +1,4 @@
-import type { Answer, CheckResult, Item, PackageError, Rating } from "@study/shared";
+import type { Answer, CardState, CheckResult, Item, PackageError, Rating } from "@study/shared";
 
 export interface LessonSummary { id: string; title: string; summary?: string; status: string }
 export interface PackageSummary {
@@ -13,6 +13,8 @@ export interface LessonPayload {
 export interface Card {
   packageId: string; itemId: string; direction: "front" | "back";
   front: string; back: string; examples?: string[]; isNew: boolean;
+  /** Scheduler state, or null for a card never reviewed in this direction. */
+  state: CardState | null;
 }
 
 export class ApiError extends Error {
@@ -49,4 +51,4 @@ export const getDueCards = () => req<{ cards: Card[] }>("/api/review/due").then(
 export const getFreeStudy = (packageId: string) =>
   req<{ cards: Card[] }>(`/api/review/free-study?packageId=${encodeURIComponent(packageId)}`).then((r) => r.cards);
 export const gradeCard = (packageId: string, itemId: string, direction: string, rating: Rating) =>
-  req<unknown>("/api/review/grade", json({ packageId, itemId, direction, rating })).then(() => undefined);
+  req<{ state: CardState }>("/api/review/grade", json({ packageId, itemId, direction, rating }));
