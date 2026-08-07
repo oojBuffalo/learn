@@ -1,5 +1,8 @@
 # Study App — Stage 1 (Foundation) Implementation Plan
 
+**Status:** Completed 2026-08-06. The checkboxes record the completed execution;
+the source tree and README supersede illustrative snippets in this plan.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A working local study app: portable package format (Zod-validated zip of Markdown + JSON), import/export, library, lesson player with inline exercises, and spaced-repetition flashcards with a due queue and free study.
@@ -71,7 +74,7 @@ Boundaries: `shared` exports pure functions/types only (no I/O). `server` is the
 **Interfaces:**
 - Produces: workspace layout; `npm test` runs Vitest across workspaces; `@study/shared` importable as TS source (its `main` points at `src/index.ts` — no build step anywhere).
 
-- [ ] **Step 1: Write root config + shared workspace with a failing smoke test**
+- [x] **Step 1: Write root config + shared workspace with a failing smoke test**
 
 `package.json` (root):
 ```json
@@ -149,12 +152,12 @@ describe("workspace", () => {
 });
 ```
 
-- [ ] **Step 2: Install and run the test**
+- [x] **Step 2: Install and run the test**
 
 Run: `npm install && npm test`
 Expected: 1 test PASSES (this task's "failing state" is the empty repo itself — the test proves toolchain + TS-source imports work).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A
@@ -171,7 +174,7 @@ git commit -m "chore: scaffold npm-workspaces TypeScript monorepo with vitest"
 **Interfaces:**
 - Produces: `idSchema` (Zod string); `itemSchema` (Zod discriminated union on `type`); TS types `Item`, `ItemType`, and per-type `McItem`, `MsItem`, `FillBlankItem`, `ShortAnswerItem`, `OrderingItem`, `MatchingItem`, `FlashcardItem`. Later tasks call `itemSchema.parse(json)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `shared/test/items.test.ts`:
 ```ts
@@ -248,12 +251,12 @@ describe("itemSchema", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- shared/test/items.test.ts`
 Expected: FAIL — `itemSchema` is not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `shared/src/ids.ts`:
 ```ts
@@ -423,12 +426,12 @@ export type {
 } from "./items.js";
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- shared/test/items.test.ts`
 Expected: all 7 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add shared
@@ -445,7 +448,7 @@ git commit -m "feat: item schemas — 7 activity types with per-type invariants"
 **Interfaces:**
 - Produces: `manifestSchema`, `lessonFrontmatterSchema`, `quizSchema`, `gameSchema` (+ inferred types `Manifest`, `LessonFrontmatter`, `Quiz`, `Game`); `splitLessonBody(body: string): BodySegment[]` where `BodySegment = { kind: "md"; md: string } | { kind: "activity"; id: string }`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `shared/test/packageSchema.test.ts`:
 ```ts
@@ -535,12 +538,12 @@ describe("splitLessonBody", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- shared/test/packageSchema.test.ts shared/test/lessonBody.test.ts`
 Expected: FAIL — exports missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `shared/src/packageSchema.ts`:
 ```ts
@@ -675,12 +678,12 @@ export { splitLessonBody, activityIdsInBody } from "./lessonBody.js";
 export type { BodySegment } from "./lessonBody.js";
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- shared/test/packageSchema.test.ts shared/test/lessonBody.test.ts`
 Expected: all PASS. Note on the split test: a directive line consumes its own line; the surrounding `\n` handling in the expected segments is exact — match it.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add shared
@@ -708,7 +711,7 @@ git commit -m "feat: manifest/lesson/quiz/game schemas and lesson-body splitter"
   ```
   Task 8 (importer) calls `validatePackage` after Zod-parsing each file; Task 9 (exporter) builds a `LoadedPackage`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `shared/test/validatePackage.test.ts`:
 ```ts
@@ -782,12 +785,12 @@ describe("validatePackage", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- shared/test/validatePackage.test.ts`
 Expected: FAIL — `validatePackage` not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `shared/src/validatePackage.ts`:
 ```ts
@@ -897,12 +900,12 @@ export { validatePackage } from "./validatePackage.js";
 export type { LoadedPackage, LoadedLesson, PackageError } from "./validatePackage.js";
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- shared/test/validatePackage.test.ts`
 Expected: all 4 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add shared
@@ -933,7 +936,7 @@ git commit -m "feat: package referential-integrity validation"
   ```
   Task 12's `POST /api/attempts` calls `checkAnswer`; `expected` is what the UI reveals after answering.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `shared/test/checking.test.ts`:
 ```ts
@@ -1027,12 +1030,12 @@ describe("checkAnswer", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- shared/test/checking.test.ts`
 Expected: FAIL — exports missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `shared/src/checking.ts`:
 ```ts
@@ -1136,12 +1139,12 @@ export { checkAnswer, fold } from "./checking.js";
 export type { Answer, CheckResult } from "./checking.js";
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- shared/test/checking.test.ts`
 Expected: all 8 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add shared
@@ -1171,7 +1174,7 @@ git commit -m "feat: server-authoritative answer checking for all item types"
   - `dueAt = now + intervalDays*86400s` (for `again`: `now`).
   Task 13's grade endpoint persists this state verbatim.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `shared/test/scheduler.test.ts`:
 ```ts
@@ -1212,12 +1215,12 @@ describe("schedule", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- shared/test/scheduler.test.ts`
 Expected: FAIL — `schedule` not exported.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `shared/src/scheduler.ts`:
 ```ts
@@ -1271,12 +1274,12 @@ export { schedule } from "./scheduler.js";
 export type { Rating, CardState } from "./scheduler.js";
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- shared/test/scheduler.test.ts`
 Expected: all 5 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add shared
@@ -1292,7 +1295,7 @@ git commit -m "feat: SM-2-style spaced repetition scheduler"
 **Interfaces:**
 - Produces: `openDb(dataDir?: string): Database` (better-sqlite3 instance; `":memory:"`-style temp DBs for tests via explicit dir). Applies `schema.sql` idempotently, enables WAL + foreign keys. All later server tasks receive this `Database`.
 
-- [ ] **Step 1: Create the server workspace**
+- [x] **Step 1: Create the server workspace**
 
 `server/package.json`:
 ```json
@@ -1319,7 +1322,7 @@ git commit -m "feat: SM-2-style spaced repetition scheduler"
 { "extends": "../tsconfig.base.json", "include": ["src", "test"] }
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 `server/test/db.test.ts`:
 ```ts
@@ -1348,12 +1351,12 @@ describe("openDb", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm install && npm test -- server/test/db.test.ts`
 Expected: FAIL — `db.ts` missing.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 `server/src/schema.sql`:
 ```sql
@@ -1457,12 +1460,12 @@ export function openDb(dataDir = process.env.STUDY_DATA_DIR ?? "data"): Db {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- server/test/db.test.ts`
 Expected: PASS. (If better-sqlite3 needs a native rebuild: `npm rebuild better-sqlite3`.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add server package-lock.json
@@ -1487,7 +1490,7 @@ git commit -m "feat: sqlite layer — schema, WAL, idempotent migration"
   ```
   Import replaces all content rows for the package id in ONE transaction; user-state tables untouched.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `server/test/helpers.ts` (shared by all server test files — helpers must NOT live inside a `*.test.ts` file, or importing them would re-register that file's tests in every importer):
 ```ts
@@ -1576,12 +1579,12 @@ describe("importPackage", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- server/test/importer.test.ts`
 Expected: FAIL — modules missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server/src/zip.ts`:
 ```ts
@@ -1723,12 +1726,12 @@ export function insertPackage(db: Db, pkg: LoadedPackage): void {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- server/test/importer.test.ts`
 Expected: all 4 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server
@@ -1745,7 +1748,7 @@ git commit -m "feat: zip parsing and all-or-nothing package import"
 - Consumes: `buildPackageZip`, `readPackageZip` (Task 8); DB rows (Task 7).
 - Produces: `exportPackage(db: Db, packageId: string): Buffer | null` (null = unknown id). Round-trip guarantee (spec §2.7): `readPackageZip(exportPackage(db, id))` yields a `LoadedPackage` deep-equal to the imported one (semantic equality — manifest, lessons frontmatter+body, items, quizzes, games, asset bytes; YAML/JSON byte formatting may differ).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `server/test/roundtrip.test.ts`:
 ```ts
@@ -1785,12 +1788,12 @@ describe("export round-trip", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npm test -- server/test/roundtrip.test.ts`
 Expected: FAIL — `exporter.ts` missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server/src/exporter.ts`:
 ```ts
@@ -1824,12 +1827,12 @@ export function exportPackage(db: Db, packageId: string): Buffer | null {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npm test -- server/test/roundtrip.test.ts`
 Expected: both PASS. If frontmatter ordering from `matter.stringify` breaks equality, the fix belongs in the test's normalization only if values (not meaning) differ — key order in YAML does not affect the parsed object, so `toEqual` already ignores it.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server
@@ -1852,7 +1855,7 @@ git commit -m "feat: package export with lossless content round-trip"
   - `GET /api/packages/:id/assets/*` → asset bytes with mime by extension (png/jpg/jpeg/gif/svg/webp/mp3), `404` if missing
   - Error shape everywhere: `{ error: { code, message, details? } }`; unknown routes → 404 same shape.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `server/test/api.packages.test.ts`:
 ```ts
@@ -1921,12 +1924,12 @@ describe("package routes", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- server/test/api.packages.test.ts`
 Expected: FAIL — modules missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server/src/app.ts`:
 ```ts
@@ -2032,12 +2035,12 @@ export function packageRoutes() {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- server/test/api.packages.test.ts`
 Expected: all 5 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server
@@ -2059,7 +2062,7 @@ git commit -m "feat: package API — list, import, export, delete, assets"
   - `POST /api/attempts` body `{ packageId, itemId, answer: Answer }` → `200 CheckResult`, logs an `attempts` row (`kind='exercise'`). `404` unknown item; `422` flashcard or type-mismatch (`code: "not_checkable"`).
   Task 15/16 (web) consume exactly these shapes.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `server/test/api.lessons.test.ts`:
 ```ts
@@ -2129,12 +2132,12 @@ describe("attempts", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- server/test/api.lessons.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server/src/routes/lessons.ts`:
 ```ts
@@ -2228,12 +2231,12 @@ app.route("/api/lessons", lessonRoutes());
 app.route("/api/attempts", attemptRoutes());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- server/test/api.lessons.test.ts`
 Expected: all 5 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server
@@ -2255,7 +2258,7 @@ git commit -m "feat: lesson, progress, and exercise-attempt API"
   - `GET /api/review/free-study?packageId=<id>` → same card shape, ALL of that package's flashcard directions, no schedule reads or writes.
   Task 17 (Study page) consumes these.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `server/test/api.review.test.ts`:
 ```ts
@@ -2324,12 +2327,12 @@ describe("review", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npm test -- server/test/api.review.test.ts`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `server/src/routes/review.ts`:
 ```ts
@@ -2437,12 +2440,12 @@ import { reviewRoutes } from "./routes/review.js";
 app.route("/api/review", reviewRoutes());
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npm test -- server/test/api.review.test.ts`
 Expected: all 5 PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add server
@@ -2460,7 +2463,7 @@ git commit -m "feat: review API — due queue, SM-2 grading, free study"
 - Consumes: `insertPackage`, `readPackageZip`/folder loading, `createApp`.
 - Produces: `seedSampleIfEmpty(db: Db): void` (loads `server/sample/` as a package when `packages` is empty); `server/src/index.ts` entrypoint (`npm start` → migrate, seed, serve API + `web/dist` static on `:4321`). The sample package doubles as living documentation of the format.
 
-- [ ] **Step 1: Write the sample package**
+- [x] **Step 1: Write the sample package**
 
 `server/sample/manifest.json`:
 ```json
@@ -2604,7 +2607,7 @@ strengthens it — that's why every lesson here quizzes you as you read.
 ]
 ```
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 `server/test/seed.test.ts`:
 ```ts
@@ -2627,12 +2630,12 @@ describe("seedSampleIfEmpty", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run: `npm test -- server/test/seed.test.ts`
 Expected: FAIL — `seedSampleIfEmpty` missing.
 
-- [ ] **Step 4: Implement entrypoint**
+- [x] **Step 4: Implement entrypoint**
 
 `server/src/index.ts`:
 ```ts
@@ -2691,17 +2694,17 @@ if (isMain) {
 }
 ```
 
-- [ ] **Step 5: Run test to verify it passes**
+- [x] **Step 5: Run test to verify it passes**
 
 Run: `npm test -- server/test/seed.test.ts`
 Expected: PASS. Also verify all server tests still pass: `npm test -- server`.
 
-- [ ] **Step 6: Manual smoke**
+- [x] **Step 6: Manual smoke**
 
 Run: `npm start -w server` then `curl -s localhost:4321/api/packages | head -c 400`
 Expected: JSON listing `learning-how-to-learn` with 2 lessons. Ctrl-C the server.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add server
@@ -2732,7 +2735,7 @@ git commit -m "feat: bundled sample package, first-run seed, server entrypoint"
   ```
   Routes registered in `App.tsx`: `/` (Library), `/lesson/:packageId/:lessonId`, `/study`.
 
-- [ ] **Step 1: Scaffold the web workspace**
+- [x] **Step 1: Scaffold the web workspace**
 
 `web/package.json`:
 ```json
@@ -2854,7 +2857,7 @@ export default function App() {
 
 (Create `web/src/pages/Lesson.tsx` and `web/src/pages/Study.tsx` as placeholders that render `<p>Coming in Task 16/17</p>` so the app compiles; Tasks 16–17 replace them.)
 
-- [ ] **Step 2: Implement the API client**
+- [x] **Step 2: Implement the API client**
 
 `web/src/api.ts`:
 ```ts
@@ -2912,7 +2915,7 @@ export const gradeCard = (packageId: string, itemId: string, direction: string, 
   req<unknown>("/api/review/grade", json({ packageId, itemId, direction, rating })).then(() => undefined);
 ```
 
-- [ ] **Step 3: Implement the Library page**
+- [x] **Step 3: Implement the Library page**
 
 `web/src/pages/Library.tsx`:
 ```tsx
@@ -2979,12 +2982,12 @@ export default function Library() {
 }
 ```
 
-- [ ] **Step 4: Verify by running**
+- [x] **Step 4: Verify by running**
 
 Run: `npm install`, then in one terminal `npm start -w server`, in another `npm run dev -w web`. Open `http://localhost:5173`.
 Expected: sample package listed with 2 lessons; Export downloads a zip; importing that zip back succeeds (list unchanged); importing a text file renamed `.zip` shows a readable error list; Delete removes it (re-seed by restarting the server with an empty DB, or re-import the exported zip).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web package-lock.json
@@ -3003,7 +3006,7 @@ git commit -m "feat: web scaffold, typed API client, library page"
   - `<ActivityView packageId={id} item={item} />` — renders any `Item`; on submit calls `submitAnswer`, shows ✓/✗, score, per-option `feedback`, item `explanation`, and progressive hints; flashcards render as click-to-reveal (no grading — scheduling lives on the Study page).
   Task 16 embeds these; Task 17 reuses `Markdown`.
 
-- [ ] **Step 1: Implement Markdown**
+- [x] **Step 1: Implement Markdown**
 
 `web/src/components/Markdown.tsx`:
 ```tsx
@@ -3026,7 +3029,7 @@ export default function Markdown({ packageId, children }: { packageId: string; c
 
 > Note: the server's asset route is `/api/packages/:id/assets/*` where `*` is the full stored path (`assets/foo.png`), so the rewritten URL is `/api/packages/demo/assets/foo.png` → route strips and re-adds the `assets/` prefix (Task 10 handles both forms, and its test covers the server side).
 
-- [ ] **Step 2: Implement ActivityView**
+- [x] **Step 2: Implement ActivityView**
 
 `web/src/components/ActivityView.tsx`:
 ```tsx
@@ -3219,12 +3222,12 @@ function Matching({ item, disabled, onSubmit }: {
 
 > Implementation note: `shuffleOnce` is a plain function (deliberately no `use` prefix — it's called inside a `useState` initializer, which hook-lint would flag for a `use`-named function). `useShuffled` IS a hook and stays at component top level as written.
 
-- [ ] **Step 3: Verify compilation**
+- [x] **Step 3: Verify compilation**
 
 Run: `npm run typecheck && npm run build -w web`
 Expected: clean typecheck and build (components are exercised in the browser next task).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add web
@@ -3240,7 +3243,7 @@ git commit -m "feat: activity components for all exercise item types"
 - Consumes: `getLesson`, `setProgress` (Task 14); `splitLessonBody` (shared); `Markdown`, `ActivityView` (Task 15).
 - Produces: the `/lesson/:packageId/:lessonId` route — renders body segments in order (md → `Markdown`, activity → `ActivityView`), then frontmatter `activities` not already embedded, then a "Mark lesson complete" button. Marks `in-progress` on first load when status is `not-started`.
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 `web/src/pages/Lesson.tsx`:
 ```tsx
@@ -3301,12 +3304,12 @@ export default function Lesson() {
 }
 ```
 
-- [ ] **Step 2: Verify by running**
+- [x] **Step 2: Verify by running**
 
 With `npm start -w server` + `npm run dev -w web` running, open the sample package's *Spaced Repetition* lesson.
 Expected: prose renders with the multiple-choice embedded mid-lesson at the exact directive point; answering wrong shows the option's feedback + explanation + expected answer; *Active Recall* lesson shows `sa-recall` under "Practice" (frontmatter-attached) and the ordering exercise inline with working ↑/↓; completing the lesson flips the Library status to "completed"; revisiting shows "in-progress" behavior correctly.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web
@@ -3322,7 +3325,7 @@ git commit -m "feat: lesson player with inline activities and progress"
 - Consumes: `getDueCards`, `getFreeStudy`, `gradeCard`, `listPackages` (Task 14); `Markdown` (Task 15).
 - Produces: the `/study` route. Due mode: fetch queue once, walk it card-by-card (front → Reveal → back + Again/Hard/Good/Easy); `again` re-appends the card locally to the end of the session queue; finished state shows "All caught up". Free-study mode: pick a package, same card walk but with Next instead of grades (never calls `gradeCard`).
 
-- [ ] **Step 1: Implement**
+- [x] **Step 1: Implement**
 
 `web/src/pages/Study.tsx`:
 ```tsx
@@ -3404,12 +3407,12 @@ export default function Study() {
 }
 ```
 
-- [ ] **Step 2: Verify by running**
+- [x] **Step 2: Verify by running**
 
 Open `/study` with the sample package freshly imported.
 Expected: 4 due cards (card-spacing front+back, card-recall front, card-curve front), "new card" badge on each; *Again* re-queues the card this session; *Good* advances; finishing shows the caught-up message with count; reloading shows an empty due queue (cards are now scheduled out); free study on the sample package walks all 4 directions with Next and leaves the due queue empty afterwards (no state written).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web
@@ -3426,7 +3429,7 @@ git commit -m "feat: study page — due queue with grading, free study"
 - Consumes: the whole app (`npm start -w server` serving built web).
 - Produces: one Playwright spec covering the spec's e2e path (§7): import → lesson + exercise → review. Runs against the production-style single server on `:4321` (no Vite dev server) with a temp `STUDY_DATA_DIR`.
 
-- [ ] **Step 1: Scaffold e2e**
+- [x] **Step 1: Scaffold e2e**
 
 `e2e/package.json`:
 ```json
@@ -3462,7 +3465,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Write the smoke test**
+- [x] **Step 2: Write the smoke test**
 
 `e2e/smoke.spec.ts`:
 ```ts
@@ -3503,12 +3506,12 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
 });
 ```
 
-- [ ] **Step 3: Run it**
+- [x] **Step 3: Run it**
 
 Run: `npm install && npx playwright install chromium && npm run e2e`
 Expected: 1 test PASSES. If the multiple-choice label locator is flaky due to option shuffling, target by option text as written (`getByLabel` matches the label text regardless of order).
 
-- [ ] **Step 4: Write README**
+- [x] **Step 4: Write README**
 
 `README.md`:
 ```markdown
@@ -3543,12 +3546,12 @@ example and `docs/superpowers/specs/2026-08-03-study-app-design.md` for the full
     npm run e2e     # Playwright smoke (builds web first)
 ```
 
-- [ ] **Step 5: Full verification sweep**
+- [x] **Step 5: Full verification sweep**
 
 Run: `npm run typecheck && npm test && npm run e2e`
 Expected: everything green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -3562,7 +3565,6 @@ git commit -m "feat: e2e smoke test and README"
 - Stage 1 delivers spec §8 stage 1 exactly: format, import/export, library, lesson player + exercises, flashcards + due queue + free study, sample package.
 - Deferred to Stage 2 (do NOT build now): quiz runner UI, game templates UI. Their *content* (quizzes.json/games.json) already imports, validates, and round-trips — that's Stage 1's job.
 - Deferred to Stage 3: notes, explain-back, home dashboard, orphaned-state purge action.
-
 
 
 

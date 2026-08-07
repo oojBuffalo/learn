@@ -36,6 +36,10 @@ const mcSchema = z
   .refine((v) => v.options.filter((o) => o.correct).length === 1, {
     message: "multiple-choice requires exactly one correct option",
     path: ["options"],
+  })
+  .refine((v) => new Set(v.options.map((option) => option.id)).size === v.options.length, {
+    message: "multiple-choice requires unique option ids",
+    path: ["options"],
   });
 
 const msSchema = z
@@ -49,6 +53,10 @@ const msSchema = z
   .strict()
   .refine((v) => v.options.some((o) => o.correct), {
     message: "multi-select requires at least one correct option",
+    path: ["options"],
+  })
+  .refine((v) => new Set(v.options.map((option) => option.id)).size === v.options.length, {
+    message: "multi-select requires unique option ids",
     path: ["options"],
   });
 
@@ -89,7 +97,21 @@ const shortAnswerSchema = z
     accept: z.array(z.string()).min(1),
     match: z.enum(["exact", "fold", "regex"]).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.match !== "regex") return;
+    value.accept.forEach((pattern, index) => {
+      try {
+        new RegExp(pattern);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["accept", index],
+          message: "must be a valid regular expression",
+        });
+      }
+    });
+  });
 
 const orderingSchema = z
   .object({
@@ -97,7 +119,11 @@ const orderingSchema = z
     type: z.literal("ordering"),
     steps: z.array(z.object({ id: idSchema, text: z.string() }).strict()).min(2),
   })
-  .strict();
+  .strict()
+  .refine((value) => new Set(value.steps.map((step) => step.id)).size === value.steps.length, {
+    message: "ordering requires unique step ids",
+    path: ["steps"],
+  });
 
 const matchingSchema = z
   .object({
@@ -106,7 +132,11 @@ const matchingSchema = z
     pairs: z.array(z.object({ left: z.string(), right: z.string() }).strict()).min(2),
     distractors: z.array(z.string()).optional(),
   })
-  .strict();
+  .strict()
+  .refine((value) => new Set(value.pairs.map((pair) => pair.left)).size === value.pairs.length, {
+    message: "matching requires unique left-hand values",
+    path: ["pairs"],
+  });
 
 const flashcardSchema = z
   .object({

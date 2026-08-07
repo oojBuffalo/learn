@@ -65,4 +65,19 @@ describe("validatePackage", () => {
     );
     expect(errs.map((e) => e.message).join()).toMatch(/no compatible items/i);
   });
+
+  it("flags ambiguous unit identities and lesson ordering", () => {
+    const errs = validatePackage(pkg({
+      manifest: {
+        formatVersion: "1.0.0", id: "p", title: "P", version: "1",
+        units: [
+          { id: "dup", title: "First", lessonIds: ["l1"] },
+          { id: "dup", title: "Second", lessonIds: ["l1"] },
+        ],
+      },
+    }));
+    const messages = errs.map((error) => error.message).join("\n");
+    expect(messages).toMatch(/duplicate unit id "dup"/i);
+    expect(messages).toMatch(/lesson "l1" appears in more than one unit position/i);
+  });
 });

@@ -10,14 +10,13 @@ export function loadPackageFromDb(db: Db, packageId: string): LoadedPackage | nu
     .all(packageId) as any[]).map((l) => ({
       file: l.file, order: l.ord, frontmatter: JSON.parse(l.frontmatter), body: l.body,
     }));
-  // ORDER BY rowid preserves original file order — round-trip equality depends on it
-  const items = (db.prepare("SELECT data FROM items WHERE package_id = ? ORDER BY rowid").all(packageId) as any[])
+  const items = (db.prepare("SELECT data FROM items WHERE package_id = ? ORDER BY ord").all(packageId) as any[])
     .map((r) => JSON.parse(r.data));
-  const quizzes = (db.prepare("SELECT data FROM quizzes WHERE package_id = ? ORDER BY rowid").all(packageId) as any[])
+  const quizzes = (db.prepare("SELECT data FROM quizzes WHERE package_id = ? ORDER BY ord").all(packageId) as any[])
     .map((r) => JSON.parse(r.data));
-  const games = (db.prepare("SELECT data FROM games WHERE package_id = ? ORDER BY rowid").all(packageId) as any[])
+  const games = (db.prepare("SELECT data FROM games WHERE package_id = ? ORDER BY ord").all(packageId) as any[])
     .map((r) => JSON.parse(r.data));
-  const assets = (db.prepare("SELECT path, data FROM assets WHERE package_id = ? ORDER BY rowid").all(packageId) as any[])
+  const assets = (db.prepare("SELECT path, data FROM assets WHERE package_id = ? ORDER BY ord").all(packageId) as any[])
     .map((r) => ({ path: r.path, data: new Uint8Array(r.data) }));
   return { manifest: JSON.parse(row.manifest), lessons, items, quizzes, games, assets };
 }

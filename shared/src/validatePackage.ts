@@ -60,13 +60,24 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
     }
   }
 
+  const unitIds = new Set<string>();
+  const unitLessonIds = new Set<string>();
   for (const u of pkg.manifest.units ?? []) {
+    if (unitIds.has(u.id)) err("manifest.json", `units.${u.id}`, `duplicate unit id "${u.id}"`);
+    unitIds.add(u.id);
     for (const id of u.lessonIds) {
+      if (unitLessonIds.has(id)) {
+        err("manifest.json", `units.${u.id}`, `lesson "${id}" appears in more than one unit position`);
+      }
+      unitLessonIds.add(id);
       if (!lessonIds.has(id)) err("manifest.json", `units.${u.id}`, `unit references missing lesson "${id}"`);
     }
   }
 
+  const quizIds = new Set<string>();
   for (const q of pkg.quizzes) {
+    if (quizIds.has(q.id)) err("quizzes.json", q.id, `duplicate quiz id "${q.id}"`);
+    quizIds.add(q.id);
     for (const id of q.items) {
       if (!itemIds.has(id)) err("quizzes.json", q.id, `quiz references missing item "${id}"`);
       else if (itemIds.get(id)!.type === "flashcard")
@@ -74,7 +85,10 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
     }
   }
 
+  const gameIds = new Set<string>();
   for (const g of pkg.games) {
+    if (gameIds.has(g.id)) err("games.json", g.id, `duplicate game id "${g.id}"`);
+    gameIds.add(g.id);
     const compat = GAME_COMPAT[g.template];
     const source =
       "itemIds" in g.source

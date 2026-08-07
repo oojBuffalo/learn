@@ -61,4 +61,77 @@ describe("attempts", () => {
     expect(res.status).toBe(422);
     expect((await res.json()).error.code).toBe("not_checkable");
   });
+
+  it("rejects an option id that does not belong to the item without logging it", async () => {
+    const res = await app.request("/api/attempts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        packageId: "demo",
+        itemId: "mc1",
+        answer: { type: "multiple-choice", optionId: "tampered" },
+      }),
+    });
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe("not_checkable");
+    expect(db.prepare("SELECT COUNT(*) n FROM attempts").get()).toMatchObject({ n: 0 });
+  });
+
+  it("rejects extra matching pairs without logging a forged correct attempt", async () => {
+    const item = {
+      id: "match1",
+      type: "matching",
+      prompt: "Match",
+      pairs: [{ left: "a", right: "1" }, { left: "b", right: "2" }],
+    };
+    db.prepare(
+      "INSERT INTO items (package_id, id, ord, type, data) VALUES ('demo', 'match1', 2, 'matching', ?)",
+    ).run(JSON.stringify(item));
+
+    const res = await app.request("/api/attempts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        packageId: "demo",
+        itemId: "match1",
+        answer: {
+          type: "matching",
+          pairs: [
+            { left: "a", right: "1" },
+            { left: "b", right: "2" },
+            { left: "tampered", right: "x" },
+          ],
+        },
+      }),
+    });
+
+    expect(res.status).toBe(422);
+    expect(db.prepare("SELECT COUNT(*) n FROM attempts").get()).toMatchObject({ n: 0 });
+  });
+
+  it("400s a malformed attempt request without touching SQLite", async () => {
+    const res = await app.request("/api/attempts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ packageId: "demo", itemId: "mc1" }),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.code).toBe("invalid_request");
+    expect(db.prepare("SELECT COUNT(*) n FROM attempts").get()).toMatchObject({ n: 0 });
+  });
+
+  it("400s unknown request fields and ids longer than the package format allows", async () => {
+    const request = (body: unknown) => app.request("/api/attempts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const answer = { type: "multiple-choice", optionId: "a" };
+
+    expect((await request({ packageId: "demo", itemId: "mc1", answer, typo: true })).status).toBe(400);
+    expect((await request({ packageId: "x".repeat(65), itemId: "mc1", answer })).status).toBe(400);
+    expect(db.prepare("SELECT COUNT(*) n FROM attempts").get()).toMatchObject({ n: 0 });
+  });
 });

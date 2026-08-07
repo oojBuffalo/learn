@@ -39,10 +39,15 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
   const lessonFiles = [...entries.keys()].filter((n) => /^lessons\/[^/]+\.md$/.test(n)).sort();
   if (lessonFiles.length === 0) errors.push({ file: "lessons/", path: "", message: "package has no lessons" });
   lessonFiles.forEach((file, order) => {
-    const { data, content } = matter(text(file)!);
-    const fm = lessonFrontmatterSchema.safeParse(data);
-    if (fm.success) lessons.push({ file, order, frontmatter: fm.data, body: content });
-    else errors.push(...zodErrors(file, fm.error));
+    try {
+      const { data, content } = matter(text(file)!);
+      const fm = lessonFrontmatterSchema.safeParse(data);
+      if (fm.success) lessons.push({ file, order, frontmatter: fm.data, body: content });
+      else errors.push(...zodErrors(file, fm.error));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message.split("\n")[0] : "unreadable frontmatter";
+      errors.push({ file, path: "frontmatter", message: `invalid YAML frontmatter: ${reason}` });
+    }
   });
 
   const parseJsonArray = <T>(file: string, schema: z.ZodType<T>): T[] => {
@@ -73,7 +78,19 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
     .filter(([n]) => n.startsWith("assets/"))
     .map(([path, e]) => ({ path, data: new Uint8Array(e.getData()) }));
 
-  if (!manifest || errors.length) return { pkg: null, errors };
+  if (!manifest) return { pkg: null, errors };
+  const unitLessonIds = manifest.units?.flatMap((unit) => unit.lessonIds) ?? [];
+  if (unitLessonIds.length > 0) {
+    const rank = new Map<string, number>();
+    unitLessonIds.forEach((id, index) => {
+      if (!rank.has(id)) rank.set(id, index);
+    });
+    lessons.sort((a, b) =>
+      (rank.get(a.frontmatter.id) ?? unitLessonIds.length + a.order) -
+      (rank.get(b.frontmatter.id) ?? unitLessonIds.length + b.order),
+    );
+    lessons.forEach((lesson, order) => { lesson.order = order; });
+  }
   const pkg: LoadedPackage = { manifest, lessons, items, quizzes, games, assets };
   errors.push(...validatePackage(pkg));
   return errors.length ? { pkg: null, errors } : { pkg, errors: [] };

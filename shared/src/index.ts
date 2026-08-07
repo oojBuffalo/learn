@@ -17,7 +17,7 @@ export { splitLessonBody, activityIdsInBody } from "./lessonBody.js";
 export type { BodySegment } from "./lessonBody.js";
 export { validatePackage } from "./validatePackage.js";
 export type { LoadedPackage, LoadedLesson, PackageError } from "./validatePackage.js";
-export { checkAnswer, fold } from "./checking.js";
+export { answerSchema, attemptRequestSchema, checkAnswer, fold } from "./checking.js";
 export type { Answer, CheckResult } from "./checking.js";
 export { schedule } from "./scheduler.js";
 export type { Rating, CardState } from "./scheduler.js";

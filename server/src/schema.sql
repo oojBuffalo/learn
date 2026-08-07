@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS lessons (
 CREATE TABLE IF NOT EXISTS items (
   package_id TEXT NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
   id TEXT NOT NULL,
+  ord INTEGER NOT NULL,
   type TEXT NOT NULL,
   data TEXT NOT NULL,               -- full Item JSON
   PRIMARY KEY (package_id, id)
@@ -22,18 +23,21 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE TABLE IF NOT EXISTS quizzes (
   package_id TEXT NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
   id TEXT NOT NULL,
+  ord INTEGER NOT NULL,
   data TEXT NOT NULL,
   PRIMARY KEY (package_id, id)
 );
 CREATE TABLE IF NOT EXISTS games (
   package_id TEXT NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
   id TEXT NOT NULL,
+  ord INTEGER NOT NULL,
   data TEXT NOT NULL,
   PRIMARY KEY (package_id, id)
 );
 CREATE TABLE IF NOT EXISTS assets (
   package_id TEXT NOT NULL REFERENCES packages(id) ON DELETE CASCADE,
   path TEXT NOT NULL,
+  ord INTEGER NOT NULL,
   data BLOB NOT NULL,
   PRIMARY KEY (package_id, path)
 );

@@ -3,6 +3,9 @@
 Local-first study platform: lessons with inline exercises, spaced-repetition
 flashcards, quizzes and games (Stage 2), all driven by a portable package format.
 
+Stage 1 (foundation) is complete. The next planned objective is Stage 2: the quiz
+runner and the three game-template players described in the design document.
+
 ## Run
 
     npm install
@@ -13,9 +16,17 @@ Dev mode: `npm start -w server` + `npm run dev -w web` (Vite on :5173, proxies /
 
 ## Data
 
-Everything lives in `data/study.db` (override dir: `STUDY_DATA_DIR`). Back up by
-copying the file. Deleting a package keeps your progress; re-importing a package
-updates content in place.
+Everything lives in `data/study.db` (override dir: `STUDY_DATA_DIR`). Because the
+database uses SQLite WAL mode, do not copy that file while the app is running.
+Create a consistent live backup instead:
+
+    npm run backup -w server -- ./backups/study.db
+
+Existing installs that created `server/data/study.db` are detected and continue to
+use that database until moved deliberately.
+
+Deleting a package keeps your progress; re-importing a package updates content
+in place.
 
 ## Packages
 

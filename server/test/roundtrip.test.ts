@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { openDb } from "../src/db.js";
 import { importPackage } from "../src/importer.js";
-import { exportPackage } from "../src/exporter.js";
+import { exportPackage, loadPackageFromDb } from "../src/exporter.js";
 import { readPackageZip } from "../src/zip.js";
 import { GOOD_FILES, makeZip } from "./helpers.js";
 
@@ -46,5 +46,18 @@ describe("export round-trip", () => {
   it("returns null for an unknown package", () => {
     const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
     expect(exportPackage(db, "nope")).toBeNull();
+  });
+
+  it("loads structured content by its persisted package order", () => {
+    const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+    importPackage(db, makeZip(FILES));
+
+    const reorder = db.transaction(() => {
+      db.prepare("UPDATE items SET ord = ord + 100 WHERE package_id = 'demo'").run();
+      db.prepare("UPDATE items SET ord = CASE id WHEN 'card1' THEN 0 ELSE 1 END WHERE package_id = 'demo'").run();
+    });
+    reorder();
+
+    expect(loadPackageFromDb(db, "demo")!.items.map((item) => item.id)).toEqual(["card1", "mc1"]);
   });
 });

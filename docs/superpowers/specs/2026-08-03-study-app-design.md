@@ -1,7 +1,7 @@
 # Study App — Design
 
 **Date:** 2026-08-03
-**Status:** Approved (pending final spec review)
+**Status:** Approved; Stage 1 implemented
 
 ## Overview
 
@@ -40,8 +40,10 @@ One TypeScript repo, three parts:
 - **`shared/`** — the package format's types and Zod validation schemas. Server and
   UI both import from here, so the format has exactly one definition.
 - **`server/`** — Node + Hono + better-sqlite3. Serves the JSON API and the built
-  frontend; one command starts everything on `localhost:4321`. All data lives in a
-  single SQLite file at `data/study.db` (WAL mode); backup = copy the file.
+  frontend; one command starts everything on the loopback-only address
+  `127.0.0.1:4321`. All data lives in a single SQLite file at `data/study.db` (WAL
+  mode); live backups use SQLite's backup operation (`npm run backup -w server --
+  <destination.db>`), while direct file copies require the app to be stopped.
 - **`web/`** — Vite + React single-page app.
 
 **Core rule: teaching content and personal state never mix.** Imported content goes in

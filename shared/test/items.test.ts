@@ -26,6 +26,17 @@ describe("itemSchema", () => {
     ).toThrow(/exactly one/i);
   });
 
+  it("rejects duplicate option ids", () => {
+    expect(() => itemSchema.parse({
+      ...base,
+      type: "multiple-choice",
+      options: [
+        { id: "dup", text: "Right", correct: true },
+        { id: "dup", text: "Wrong" },
+      ],
+    })).toThrow(/unique option ids/i);
+  });
+
   it("rejects multi-select with zero correct options", () => {
     expect(() =>
       itemSchema.parse({
@@ -34,6 +45,14 @@ describe("itemSchema", () => {
         options: [{ id: "a", text: "A" }, { id: "b", text: "B" }],
       }),
     ).toThrow(/at least one/i);
+    expect(() => itemSchema.parse({
+      ...base,
+      type: "multi-select",
+      options: [
+        { id: "dup", text: "A", correct: true },
+        { id: "dup", text: "B" },
+      ],
+    })).toThrow(/unique option ids/i);
   });
 
   it("rejects fill-blank whose blanks don't match {{n}} placeholders", () => {
@@ -67,5 +86,30 @@ describe("itemSchema", () => {
     expect(() =>
       itemSchema.parse({ id: "bad id!", type: "short-answer", prompt: "p", accept: ["x"] }),
     ).toThrow(/id/i);
+  });
+
+  it("rejects an invalid short-answer regular expression at import time", () => {
+    expect(() => itemSchema.parse({
+      ...base,
+      type: "short-answer",
+      match: "regex",
+      accept: ["[unterminated"],
+    })).toThrow(/regular expression/i);
+  });
+
+  it("rejects duplicate ordering step ids", () => {
+    expect(() => itemSchema.parse({
+      ...base,
+      type: "ordering",
+      steps: [{ id: "dup", text: "First" }, { id: "dup", text: "Second" }],
+    })).toThrow(/unique step ids/i);
+  });
+
+  it("rejects duplicate matching left-hand values", () => {
+    expect(() => itemSchema.parse({
+      ...base,
+      type: "matching",
+      pairs: [{ left: "dup", right: "First" }, { left: "dup", right: "Second" }],
+    })).toThrow(/unique left/i);
   });
 });

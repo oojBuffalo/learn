@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { checkAnswer } from "@study/shared";
+import { attemptRequestSchema, checkAnswer } from "@study/shared";
 import type { AppEnv } from "../app.js";
 
 export function attemptRoutes() {
@@ -7,7 +7,17 @@ export function attemptRoutes() {
 
   r.post("/", async (c) => {
     const db = c.get("db");
-    const { packageId, itemId, answer } = await c.req.json();
+    let payload: unknown;
+    try {
+      payload = await c.req.json();
+    } catch {
+      return c.json({ error: { code: "invalid_request", message: "request body must be valid JSON" } }, 400);
+    }
+    const request = attemptRequestSchema.safeParse(payload);
+    if (!request.success) {
+      return c.json({ error: { code: "invalid_request", message: "request body is not a valid attempt" } }, 400);
+    }
+    const { packageId, itemId, answer } = request.data;
     const row = db.prepare("SELECT data FROM items WHERE package_id = ? AND id = ?").get(packageId, itemId) as any;
     if (!row) return c.json({ error: { code: "not_found", message: "unknown item" } }, 404);
     const item = JSON.parse(row.data);

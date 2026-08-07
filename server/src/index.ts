@@ -15,6 +15,10 @@ import { insertPackage } from "./importer.js";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SAMPLE_DIR = join(HERE, "..", "sample");
 
+export function studyServerOptions(fetch: Parameters<typeof serve>[0]["fetch"]) {
+  return { fetch, hostname: "127.0.0.1", port: 4321 } as const;
+}
+
 export function loadSamplePackage(): LoadedPackage {
   const read = (p: string) => readFileSync(join(SAMPLE_DIR, p), "utf8");
   const maybeJson = <T>(p: string, parse: (v: unknown) => T): T[] =>
@@ -54,7 +58,7 @@ if (isMain) {
       ? c.notFound()
       : c.html(readFileSync(indexHtml, "utf8")),
   );
-  serve({ fetch: app.fetch, port: 4321 }, () =>
+  serve(studyServerOptions(app.fetch), () =>
     console.log("study app on http://localhost:4321"),
   );
 }

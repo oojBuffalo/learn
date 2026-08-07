@@ -24,14 +24,22 @@ export function insertPackage(db: Db, pkg: LoadedPackage): void {
     for (const l of pkg.lessons) {
       insLesson.run(pid, l.frontmatter.id, l.order, l.file, JSON.stringify(l.frontmatter), l.body);
     }
-    const insItem = db.prepare("INSERT INTO items (package_id, id, type, data) VALUES (?, ?, ?, ?)");
-    for (const i of pkg.items) insItem.run(pid, i.id, i.type, JSON.stringify(i));
-    const insQuiz = db.prepare("INSERT INTO quizzes (package_id, id, data) VALUES (?, ?, ?)");
-    for (const q of pkg.quizzes) insQuiz.run(pid, q.id, JSON.stringify(q));
-    const insGame = db.prepare("INSERT INTO games (package_id, id, data) VALUES (?, ?, ?)");
-    for (const g of pkg.games) insGame.run(pid, g.id, JSON.stringify(g));
-    const insAsset = db.prepare("INSERT INTO assets (package_id, path, data) VALUES (?, ?, ?)");
-    for (const a of pkg.assets) insAsset.run(pid, a.path, Buffer.from(a.data));
+    const insItem = db.prepare("INSERT INTO items (package_id, id, ord, type, data) VALUES (?, ?, ?, ?, ?)");
+    for (const [order, item] of pkg.items.entries()) {
+      insItem.run(pid, item.id, order, item.type, JSON.stringify(item));
+    }
+    const insQuiz = db.prepare("INSERT INTO quizzes (package_id, id, ord, data) VALUES (?, ?, ?, ?)");
+    for (const [order, quiz] of pkg.quizzes.entries()) {
+      insQuiz.run(pid, quiz.id, order, JSON.stringify(quiz));
+    }
+    const insGame = db.prepare("INSERT INTO games (package_id, id, ord, data) VALUES (?, ?, ?, ?)");
+    for (const [order, game] of pkg.games.entries()) {
+      insGame.run(pid, game.id, order, JSON.stringify(game));
+    }
+    const insAsset = db.prepare("INSERT INTO assets (package_id, path, ord, data) VALUES (?, ?, ?, ?)");
+    for (const [order, asset] of pkg.assets.entries()) {
+      insAsset.run(pid, asset.path, order, Buffer.from(asset.data));
+    }
   });
   tx();
 }

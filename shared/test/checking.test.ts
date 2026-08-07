@@ -38,6 +38,12 @@ describe("checkAnswer", () => {
     expect(partial.score).toBe(0); // (1 right - 1 wrong) / 2 correct → 0
     const noPartial: Item = { ...ms, partialCredit: false };
     expect(checkAnswer(noPartial, { type: "multi-select", optionIds: ["a"] }).score).toBe(0);
+    expect(() => checkAnswer(ms, {
+      type: "multi-select", optionIds: ["a", "tampered"],
+    })).toThrow(/unknown option/i);
+    expect(() => checkAnswer(ms, {
+      type: "multi-select", optionIds: ["a", "a", "b"],
+    })).toThrow(/duplicate option/i);
   });
 
   it("fill-blank: per-blank accept lists, case sensitivity respected", () => {
@@ -51,6 +57,9 @@ describe("checkAnswer", () => {
     expect(checkAnswer(fb, { type: "fill-blank", answers: { "1": "paris", "2": "Lyon" } }).correct).toBe(true);
     const half = checkAnswer(fb, { type: "fill-blank", answers: { "1": "Paris", "2": "lyon" } });
     expect(half).toMatchObject({ correct: false, score: 0.5 });
+    expect(() => checkAnswer(fb, {
+      type: "fill-blank", answers: { "1": "Paris", "2": "Lyon", "999": "tampered" },
+    })).toThrow(/unknown blank/i);
   });
 
   it("short-answer: fold (default), exact, regex", () => {
@@ -71,6 +80,30 @@ describe("checkAnswer", () => {
     expect(off).toMatchObject({ correct: false, score: 1 / 3 });
   });
 
+  it("ordering: rejects answers that are not an exact permutation of the steps", () => {
+    const ord: Item = {
+      id: "o2", type: "ordering", prompt: "?",
+      steps: [{ id: "s1", text: "1" }, { id: "s2", text: "2" }],
+    };
+
+    expect(() => checkAnswer(ord, {
+      type: "ordering",
+      orderedIds: ["s1", "s2", "tampered"],
+    })).toThrow(/exactly once/i);
+  });
+
+  it("rejects runtime answer values that only resemble the TypeScript shape", () => {
+    const ord: Item = {
+      id: "o3", type: "ordering", prompt: "?",
+      steps: [{ id: "a", text: "1" }, { id: "b", text: "2" }],
+    };
+
+    expect(() => checkAnswer(ord, {
+      type: "ordering",
+      orderedIds: "ab",
+    } as never)).toThrow(/invalid answer/i);
+  });
+
   it("matching: fraction of correct pairs", () => {
     const mt: Item = {
       id: "x1", type: "matching", prompt: "?",
@@ -80,17 +113,23 @@ describe("checkAnswer", () => {
     expect(r).toMatchObject({ correct: false, score: 0.5 });
   });
 
-  it("matching: duplicate submitted pairs are deduped, not double-counted", () => {
+  it("matching: rejects duplicate or unknown submitted pairs", () => {
     const mt: Item = {
       id: "x2", type: "matching", prompt: "?",
       pairs: [{ left: "a", right: "1" }, { left: "b", right: "2" }],
     };
-    const dup = checkAnswer(mt, {
+    expect(() => checkAnswer(mt, {
       type: "matching",
-      pairs: [{ left: "a", right: "1" }, { left: "a", right: "1" }, { left: "a", right: "1" }],
-    });
-    expect(dup).toMatchObject({ correct: false, score: 0.5 });
-    expect(dup.score).toBeLessThanOrEqual(1);
+      pairs: [{ left: "a", right: "1" }, { left: "a", right: "1" }],
+    })).toThrow(/every left-hand value exactly once/i);
+    expect(() => checkAnswer(mt, {
+      type: "matching",
+      pairs: [
+        { left: "a", right: "1" },
+        { left: "b", right: "2" },
+        { left: "tampered", right: "x" },
+      ],
+    })).toThrow(/every left-hand value exactly once/i);
   });
 
   it("throws on flashcards and on type mismatch", () => {
