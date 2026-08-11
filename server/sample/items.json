@@ -4,7 +4,7 @@
     "type": "multiple-choice",
     "prompt": "When is the most efficient moment to review a fact?",
     "options": [
-      { "id": "a", "text": "Immediately after learning it", "feedback": "Too soon — the memory is still fresh, so the review adds little." },
+      { "id": "a", "text": "Immediately after learning it, while $R \\approx 1$", "feedback": "Too soon — the memory is still fresh, so the review adds little." },
       { "id": "b", "text": "Just before you would forget it", "correct": true },
       { "id": "c", "text": "After you have fully forgotten it", "feedback": "Now it's relearning, which costs more time." }
     ],
@@ -41,7 +41,7 @@
   },
   { "id": "card-spacing", "type": "flashcard", "front": "Spacing effect", "back": "Reviews spread over time beat the same time spent cramming.", "reverse": true },
   { "id": "card-recall", "type": "flashcard", "front": "Active recall", "back": "Strengthening memory by retrieving it, not rereading it." },
-  { "id": "card-curve", "type": "flashcard", "front": "Forgetting curve", "back": "Memory decays fast at first, slower after each successful review.", "examples": ["Ebbinghaus, 1885"] },
+  { "id": "card-curve", "type": "flashcard", "front": "Forgetting curve", "back": "Retention falls as $R = e^{-t/S}$ — fast at first, slower once review has raised $S$.", "examples": ["Ebbinghaus, 1885"] },
   {
     "id": "match-terms",
     "type": "matching",

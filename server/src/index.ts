@@ -11,12 +11,16 @@ import matter from "gray-matter";
 import { createApp } from "./app.js";
 import { openDb, type Db } from "./db.js";
 import { insertPackage } from "./importer.js";
+import { validateMath } from "./mathCheck.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SAMPLE_DIR = join(HERE, "..", "sample");
 
+/** `PORT` lets a second checkout run alongside the default one. */
+export const STUDY_PORT = Number(process.env.PORT) || 4321;
+
 export function studyServerOptions(fetch: Parameters<typeof serve>[0]["fetch"]) {
-  return { fetch, hostname: "127.0.0.1", port: 4321 } as const;
+  return { fetch, hostname: "127.0.0.1", port: STUDY_PORT } as const;
 }
 
 export function loadSamplePackage(): LoadedPackage {
@@ -35,7 +39,7 @@ export function loadSamplePackage(): LoadedPackage {
     games: maybeJson("games.json", (v) => gameSchema.parse(v)),
     assets: [],
   };
-  const errs = validatePackage(pkg);
+  const errs = [...validatePackage(pkg), ...validateMath(pkg)];
   if (errs.length) throw new Error(`sample package invalid: ${JSON.stringify(errs)}`);
   return pkg;
 }

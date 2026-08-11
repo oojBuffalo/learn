@@ -9,8 +9,15 @@ tags: [memory]
 
 ## The forgetting curve
 
-Memories decay fast at first, then slower. Each successful recall **flattens the curve** —
-so the best moment to review is just before you'd forget.
+Memories decay fast at first, then slower. Ebbinghaus modelled the share $R$ you still
+retain after time $t$ as a decay against your memory's strength $S$:
+
+$$
+R = e^{-t/S}
+$$
+
+Each successful recall **flattens the curve** by raising $S$ — so the best moment to
+review is just before you'd forget.
 
 ::activity{id="mc-forgetting"}
 

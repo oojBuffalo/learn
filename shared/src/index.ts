@@ -17,6 +17,14 @@ export { splitLessonBody, activityIdsInBody } from "./lessonBody.js";
 export type { BodySegment } from "./lessonBody.js";
 export { validatePackage } from "./validatePackage.js";
 export type { LoadedPackage, LoadedLesson, PackageError } from "./validatePackage.js";
+export {
+  MATH_OPTIONS,
+  KATEX_OPTIONS,
+  prosePassages,
+  fillBlankSegments,
+  stripMath,
+} from "./mathSource.js";
+export type { ProseMode, Passage } from "./mathSource.js";
 export { answerSchema, attemptRequestSchema, checkAnswer, fold } from "./checking.js";
 export type { Answer, CheckResult } from "./checking.js";
 export { schedule } from "./scheduler.js";
