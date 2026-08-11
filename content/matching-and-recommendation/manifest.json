@@ -1,0 +1,18 @@
+{
+  "formatVersion": "1.0.0",
+  "id": "matching-and-recommendation",
+  "title": "Matching and Recommendation",
+  "version": "1.0.0",
+  "description": "How systems decide who gets connected to whom — stable matching and marketplace dispatch on one side, retrieval-and-ranking recommenders on the other. Half theory, half production practice.",
+  "language": "en",
+  "tags": [
+    "systems",
+    "recsys"
+  ],
+  "objectives": [
+    "Explain why scarcity, not algorithm choice, separates a matching problem from a recommendation problem",
+    "Describe deferred acceptance and say what makes a matching stable",
+    "Read a recommender as a funnel: retrieval, filtering, ranking, re-ranking",
+    "Name the production failure modes each kind of system is prone to"
+  ]
+}

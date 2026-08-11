@@ -1,0 +1,418 @@
+[
+  {
+    "id": "mc-scarcity",
+    "type": "multiple-choice",
+    "prompt": "What most sharply separates a matching problem from a recommendation problem?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Matching uses graph algorithms; recommendation uses machine learning",
+        "feedback": "Both use both. Dispatch systems run large models, and plenty of recommenders are graph walks."
+      },
+      {
+        "id": "b",
+        "text": "Choosing an option for one person takes it away from everyone else",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Recommendation needs far more training data",
+        "feedback": "Data volume varies by product, not by which of the two problems you are holding."
+      },
+      {
+        "id": "d",
+        "text": "Matching runs in batch; recommendation runs in real time",
+        "feedback": "Dispatch is famously real-time, and plenty of recommendations are precomputed overnight."
+      }
+    ],
+    "explanation": "Scarcity is the dividing line. A recommendation hands out a copy, so the same item can go to a million people at once. A match hands out the thing itself, and that is what forces the problem to be an allocation rather than a ranking.",
+    "difficulty": "beginner",
+    "tags": [
+      "matching",
+      "recsys"
+    ]
+  },
+  {
+    "id": "ord-deferred-acceptance",
+    "type": "ordering",
+    "prompt": "Put one round of deferred acceptance into order.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Every unmatched proposer proposes to its favourite remaining choice"
+      },
+      {
+        "id": "s2",
+        "text": "Each receiver identifies the best offer it can currently see"
+      },
+      {
+        "id": "s3",
+        "text": "It holds that one and rejects the rest, including any offer it was already holding"
+      },
+      {
+        "id": "s4",
+        "text": "Rejected proposers strike that receiver off their list"
+      },
+      {
+        "id": "s5",
+        "text": "Repeat until no proposer has anyone left to ask"
+      }
+    ],
+    "explanation": "Nothing is ever accepted permanently — that is the “deferred” part. Because a held offer can always be displaced by a better one, and because every rejection removes an edge for good, the loop is guaranteed to terminate.",
+    "difficulty": "intermediate",
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "sa-blocking-pair",
+    "type": "short-answer",
+    "prompt": "Two participants would each rather have the other than the partner they were assigned. What is that pair called?",
+    "accept": [
+      "blocking pair",
+      "a blocking pair",
+      "blocking-pair",
+      "blocking"
+    ],
+    "hints": [
+      "It is the thing a stable matching contains none of.",
+      "Two words. The first one starts with b."
+    ],
+    "explanation": "A blocking pair can walk away and pair up privately, which is exactly why a matching containing one is unstable: it will not survive contact with the people in it.",
+    "difficulty": "beginner",
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "ms-collaborative-filtering",
+    "type": "multi-select",
+    "prompt": "Which of these are true of collaborative filtering?",
+    "partialCredit": true,
+    "options": [
+      {
+        "id": "a",
+        "text": "It works without any description of what the items actually are",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "It has little to say about items and users it has seen no interactions for",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Left alone, it tends to amplify whatever is already popular",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "It requires every item to carry text or image features",
+        "feedback": "That describes content-based filtering. Collaborative filtering reads only the interaction pattern."
+      },
+      {
+        "id": "e",
+        "text": "It removes the need to measure ranking quality",
+        "feedback": "Nothing removes that. However items get scored, the user still reads a list from the top and stops."
+      }
+    ],
+    "explanation": "Reading only the pattern of who touched what is collaborative filtering’s strength and its weakness at once: no item metadata is needed, and there is nothing to say about an item nobody has touched yet. The two false options belong elsewhere — requiring text or image features describes content-based filtering, and no choice of method ever removes the need to measure ranking quality, because the user still reads a list from the top and stops.",
+    "difficulty": "intermediate",
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "ord-funnel",
+    "type": "ordering",
+    "prompt": "Order the stages of a production recommender, widest first.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Retrieval: pull about a thousand candidates out of the whole corpus"
+      },
+      {
+        "id": "s2",
+        "text": "Filtering: drop anything already seen, blocked, or against policy"
+      },
+      {
+        "id": "s3",
+        "text": "Ranking: score the survivors with the heavy multi-head model"
+      },
+      {
+        "id": "s4",
+        "text": "Re-ranking: enforce diversity, dedup, freshness and business rules"
+      }
+    ],
+    "explanation": "Each stage sees fewer items than the last and can therefore afford to be more expensive per item. The order is forced by cost: you cannot run the ranker over a billion items, and you cannot enforce list-level diversity before you have a list.",
+    "difficulty": "intermediate",
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "fb-retrieval",
+    "type": "fill-blank",
+    "prompt": "Fill in the two constraints that give the retrieval stage its shape.",
+    "template": "Retrieval has to search the entire corpus in roughly {{1}} milliseconds, which is only possible because item vectors are built offline and searched with an {{2}} index.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "10",
+          "ten",
+          "~10"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "ANN",
+          "approximate",
+          "nearest"
+        ]
+      }
+    ],
+    "explanation": "That latency budget is what dictates the two-tower shape. The item tower runs offline into an approximate nearest-neighbour index, so at request time you embed only the user and ask the index for the closest few hundred.",
+    "difficulty": "intermediate",
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "mc-offline-gap",
+    "type": "multiple-choice",
+    "prompt": "An offline replay says your new ranker is 4% better on NDCG. The A/B test comes back flat. What is the most likely explanation?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The logs contain only items the old system chose to show, in the positions it chose",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "NDCG is not a meaningful metric",
+        "feedback": "NDCG is a perfectly good list metric. The problem is the data it was computed over, not the formula."
+      },
+      {
+        "id": "c",
+        "text": "The experiment did not run long enough to reach significance",
+        "feedback": "Always worth checking, but this is the routine structural case rather than the exception — and a flat result is not the same as an underpowered one."
+      },
+      {
+        "id": "d",
+        "text": "The new model has overfit its training set",
+        "feedback": "Overfitting usually shows up as a weaker held-out score, not a strong one that fails to transfer."
+      }
+    ],
+    "explanation": "Logged data was generated by the policy you are trying to replace, so the replay grades your new ranker inside the old ranker’s world. Inverse-propensity weighting, interleaving and a standing exploration budget all exist to attack this.",
+    "difficulty": "advanced",
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "mc-dispatch",
+    "type": "multiple-choice",
+    "prompt": "Why do ride-hailing systems hold requests for a few seconds instead of sending each rider the nearest free driver straight away?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Solving the whole batch as one assignment can beat every greedy choice made in isolation",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "It gives the pricing system time to compute surge",
+        "feedback": "Pricing runs on its own path. The batching window exists to improve the pairing itself."
+      },
+      {
+        "id": "c",
+        "text": "Drivers need a few seconds to accept the trip",
+        "feedback": "Accept latency is real, but it is not the reason requests are pooled before the solve."
+      },
+      {
+        "id": "d",
+        "text": "It reduces load on the servers",
+        "feedback": "Batching increases the work per solve — you are now solving an assignment problem instead of doing a lookup."
+      }
+    ],
+    "explanation": "Greedy dispatch can hand the only nearby driver to whoever asked first and strand a rider whose next-best option is fifteen minutes out. A few seconds of waiting buys the global view that makes a better set of pairings possible.",
+    "difficulty": "intermediate",
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "match-cases",
+    "type": "matching",
+    "prompt": "Match each system to the idea it is the standard example of.",
+    "pairs": [
+      {
+        "left": "US medical residency match",
+        "right": "Deferred acceptance, run nationally"
+      },
+      {
+        "left": "Ride-hailing dispatch",
+        "right": "Batched min-cost assignment"
+      },
+      {
+        "left": "A video home feed",
+        "right": "Retrieval, then ranking, then re-ranking"
+      },
+      {
+        "left": "A dating app",
+        "right": "Reciprocal recommendation"
+      }
+    ],
+    "distractors": [
+      "Maximum-cardinality matching",
+      "Content-based filtering"
+    ],
+    "explanation": "The first two are allocations under scarcity and the third is a pure ranking problem. The fourth needs both at once, which is what makes two-sided marketplaces the hardest of the four.",
+    "difficulty": "intermediate",
+    "tags": [
+      "matching",
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-blocking-pair",
+    "type": "flashcard",
+    "front": "Blocking pair",
+    "back": "Two participants who each prefer the other to the partner they were assigned. A matching is stable exactly when no blocking pair exists.",
+    "reverse": true,
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "card-deferred-acceptance",
+    "type": "flashcard",
+    "front": "Deferred acceptance",
+    "back": "Gale and Shapley’s algorithm: proposers work down their preference lists while each receiver holds the best offer so far and rejects the rest, accepting nothing permanently until the proposals run out.",
+    "reverse": true,
+    "examples": [
+      "Gale and Shapley, 1962",
+      "Used by the NRMP residency match"
+    ],
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "card-assignment-problem",
+    "type": "flashcard",
+    "front": "The assignment problem",
+    "back": "Given a cost on every possible pair, find the pairing that uses each participant once and minimises the total cost — solved exactly by the Hungarian algorithm in cubic time, or posed as min-cost flow at scale.",
+    "reverse": true,
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "card-collaborative-filtering",
+    "type": "flashcard",
+    "front": "Collaborative filtering",
+    "back": "Recommending from the pattern of who interacted with what, using no description of the items themselves — which is also why it has nothing to say about an item nobody has touched yet.",
+    "reverse": true,
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-matrix-factorization",
+    "type": "flashcard",
+    "front": "Matrix factorization",
+    "back": "Learning a short vector for every user and every item so that their dot product predicts the missing cell. Nobody designs the dimensions; they fall out of the data.",
+    "reverse": true,
+    "examples": [
+      "The family the Netflix Prize settled on"
+    ],
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-ndcg",
+    "type": "flashcard",
+    "front": "NDCG",
+    "back": "A ranking metric that discounts each position logarithmically, so being right at rank 1 counts for far more than being right at rank 20. It is the list-shaped answer to RMSE.",
+    "reverse": true,
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-two-tower",
+    "type": "flashcard",
+    "front": "Two-tower retrieval",
+    "back": "A user tower and an item tower whose outputs meet only in a final dot product, so every item vector can be built offline and searched in an approximate nearest-neighbour index at request time.",
+    "reverse": true,
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-training-serving-skew",
+    "type": "flashcard",
+    "front": "Training–serving skew",
+    "back": "The same feature computed one way for training and another way at serving, quietly degrading the model. It is the most common serious defect in deployed ML and it never raises an error.",
+    "reverse": true,
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-reciprocal-recommendation",
+    "type": "flashcard",
+    "front": "Reciprocal recommendation",
+    "back": "Ranking where a suggestion only counts if both sides say yes, so the score combines both directions and exposure has to be capped — because the scarce good is attention.",
+    "reverse": true,
+    "examples": [
+      "Dating apps",
+      "Hiring marketplaces"
+    ],
+    "tags": [
+      "matching",
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-proposer-optimal",
+    "type": "flashcard",
+    "front": "In deferred acceptance, which side does better?",
+    "back": "The proposing side. Every proposer gets the best partner available to it in any stable matching and every receiver gets its worst, which makes “who proposes” a decision about whose interests the market serves.",
+    "tags": [
+      "matching"
+    ]
+  },
+  {
+    "id": "card-implicit-feedback",
+    "type": "flashcard",
+    "front": "Why isn’t an unclicked item a dislike?",
+    "back": "Because the user almost certainly never saw it. With implicit feedback an empty cell is absence of evidence rather than negative evidence, so systems weight observed interactions by confidence or learn order instead of values.",
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-cold-start",
+    "type": "flashcard",
+    "front": "What happens to a system that only ranks what it can score well?",
+    "back": "New items never get in, because they have no embedding, no co-visitation neighbours and no statistics — so the catalogue narrows over time to whatever was already popular.",
+    "tags": [
+      "recsys"
+    ]
+  },
+  {
+    "id": "card-fails-hard",
+    "type": "flashcard",
+    "front": "How do the two kinds of system fail differently?",
+    "back": "A recommender that degrades serves a boring page, while a matching system that degrades gives two people the same slot or nobody a driver. One fails soft, the other fails hard.",
+    "tags": [
+      "matching",
+      "recsys"
+    ]
+  }
+]
