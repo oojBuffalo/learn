@@ -19,7 +19,7 @@ week. Yesterday it answered with a redirect to object storage. This morning it
 streamed a document that had plainly been generated on the spot. Three different
 things from one URL — surely two of them are wrong.
 
-None of them is. The resource remains "the monthly report". Which representation
+None of them is. The resource remains “the monthly report”. Which representation
 it currently has, and how that representation reaches the client, are separate
 design decisions, and keeping them separate is most of what the arrangement is
 for. What the client team has discovered is not a defect. It is that they were
@@ -34,8 +34,8 @@ peer services — sometimes inside a single request.
 
 Role-based language keeps designs accurate because the interesting questions
 attach to roles rather than to hosts. Which side chose the format? Which side
-enforces the policy? "The backend" answers neither question. "The server in this
-exchange" answers both.
+enforces the policy? “The backend” answers neither question. “The server in this
+exchange” answers both.
 
 ::activity{id="clients-servers-and-resources-mc1"}
 
@@ -69,7 +69,7 @@ caching. The monthly report from the opening leaned on two of them — caching,
 then a redirect — and stayed one resource throughout.
 
 One complication follows. Intermediaries can act as a server on one connection
-and a client on another, so "the server" may in fact be a chain of proxies and
+and a client on another, so “the server” may in fact be a chain of proxies and
 services with different policy — and calling it one process hides precisely the
 hops where the policy differs.
 

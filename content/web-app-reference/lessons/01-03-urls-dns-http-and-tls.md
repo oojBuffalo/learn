@@ -81,8 +81,9 @@ connection is a pipe, not a session.
 ## Where the trust boundary actually sits
 
 TLS can terminate at an edge, which is convenient and moves the boundary. Past
-that point the internal hops still need an explicit trust model, because they
-are carrying traffic that arrived protected and no longer is.
+that point the internal hops still need an explicit trust model, because whether
+they are still protected is now somebody's decision rather than something TLS is
+doing for them.
 
 The same caution applies to what the certificate itself establishes. A valid
 certificate proves control of a name under the certificate system — not that the
@@ -93,18 +94,18 @@ which site it is serving.
 
 ::activity{id="urls-dns-http-and-tls-ms1"}
 
-## What each symptom implicates
+## Which of the four is at fault
 
 Read the common failures as narrowing devices rather than a list of things that
 break.
 
 A name that still resolves to the old address implicates DNS: nothing above it
-was ever exercised against the server you meant. A certificate the browser refuses implicates TLS and the
-names in the certificate, whatever the application is doing. Mixed HTTP and
-HTTPS content on one page implicates the scheme in URLs your own pages emit, not
-the server that serves them. Redirect loops, cache collisions and mishandled
-forwarded hosts all implicate HTTP itself — the fields and statuses of the
-exchange.
+was ever exercised against the server you meant. A certificate the browser
+refuses implicates TLS and the names in the certificate, whatever the
+application is doing. Mixed HTTP and HTTPS content on one page implicates the
+scheme in URLs your own pages emit, not the server that serves them. Redirect
+loops, cache collisions and mishandled forwarded hosts all implicate HTTP
+itself — the fields and statuses of the exchange.
 
 Which returns the migration to its proper size. Replacing a hostname changes the
 origin, and the origin is read by naming, by security, and by every policy

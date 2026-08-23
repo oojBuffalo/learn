@@ -392,7 +392,7 @@
     "id": "request-response-lifecycle-card3",
     "type": "flashcard",
     "front": "The streaming tradeoff",
-    "back": "Streaming reduces time to first content and complicates error replacement: once content has started arriving, an error can no longer take the place of the response.",
+    "back": "Streaming reduces time to first content and complicates error replacement: once content has started arriving, an error can no longer simply replace it.",
     "reverse": true,
     "tags": [
       "web-foundations"
@@ -480,7 +480,7 @@
     "options": [
       {
         "id": "a",
-        "text": "Resolution can follow caches and delegated name servers, so a change is never instantly global",
+        "text": "Resolution can follow caches and delegated name servers, so nothing guarantees a change is instantly global",
         "correct": true
       },
       {
@@ -499,7 +499,7 @@
         "feedback": "Short TTLs speed routing changes and increase lookup traffic — and still never guarantee instant global change."
       }
     ],
-    "explanation": "DNS resolution can follow caches and delegated name servers, so an answer describes what some resolver holds rather than what is authoritative right now. Short TTLs shift the tradeoff — faster routing changes, more lookup traffic — without ever making a change atomic.",
+    "explanation": "DNS resolution can follow caches and delegated name servers, so an answer describes what some resolver holds rather than what is authoritative right now. Short TTLs shift the tradeoff — faster routing changes, more lookup traffic — without ever guaranteeing instant global change.",
     "difficulty": "intermediate",
     "tags": [
       "web-foundations"
@@ -690,7 +690,7 @@
   {
     "id": "clients-servers-and-resources-sa1",
     "type": "short-answer",
-    "prompt": "Describing one process as \"the server\" can hide something. What?",
+    "prompt": "Describing one process as “the server” can hide something. What?",
     "accept": [
       "a chain of proxies and services",
       "a chain of proxies",
@@ -706,7 +706,7 @@
       "Something can be a server on one connection and a client on another.",
       "There may be more than one thing between the client and the code."
     ],
-    "explanation": "Intermediaries can act as a server on one connection and a client on another, so \"the server\" may be a chain of proxies and services with different policy. The single name hides exactly the hops where the policy differs.",
+    "explanation": "Intermediaries can act as a server on one connection and a client on another, so “the server” may be a chain of proxies and services with different policy. The single name hides exactly the hops where the policy differs.",
     "difficulty": "intermediate",
     "tags": [
       "web-foundations"
@@ -727,7 +727,7 @@
       },
       {
         "left": "Server authority",
-        "right": "Simpler invariants"
+        "right": "Simpler invariants, responsiveness forgone"
       },
       {
         "left": "Optimistic client state",
@@ -738,7 +738,7 @@
       "Stable nouns and generic HTTP behavior",
       "Commands expressed more directly"
     ],
-    "explanation": "Each choice buys something at a stated price, and none of them has a default answer. The two distractors are real benefits — of resource-oriented and action-oriented designs respectively — but they belong to the choice of style, not to any of the four tradeoffs listed here.",
+    "explanation": "Each choice buys something at a stated price, and none of them has a default answer. Server authority is the one whose price you have to read off its alternative: what it gives up is the responsiveness optimistic client state can buy. The two distractors are real benefits — of resource-oriented and action-oriented designs respectively — but they belong to the choice of style, not to any of the four tradeoffs listed here.",
     "difficulty": "intermediate",
     "tags": [
       "web-foundations"

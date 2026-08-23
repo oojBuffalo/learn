@@ -20,9 +20,7 @@ order go through?
 
 Nobody in the room can answer it. A timeout is not a refusal. It records that
 the client stopped waiting, and says nothing about what the server did with the
-work — which it may well have committed after the client walked away. Whether
-the question is answerable at all was decided long before this afternoon, by
-somebody choosing whether the operation would be queryable or idempotent.
+work — which it may well have committed after the client walked away.
 
 ## Failure accumulates along a path
 
@@ -31,12 +29,11 @@ client code, browser policy, naming, connections, intermediaries, server
 middleware, application logic and dependencies before a response travels back,
 and latency and failure accumulate across that entire path.
 
-So "the server is slow" is rarely a finding. It is a summary of a path, and the
-useful question is which segment of it spent the time. Making the lifecycle
-explicit is what turns vague debugging into boundary checks — and the same
-explicitness tells you where authentication, caching, validation, tracing and
-timeout budgets belong, because each of them has an owner somewhere along the
-path.
+So “the server is slow” is rarely a finding. It is a summary of a path, and the
+useful question is which segment spent the time. Making the lifecycle explicit
+turns vague debugging into boundary checks — and tells you where authentication,
+caching, validation, tracing and timeout budgets belong, because each has an
+owner somewhere along the path.
 
 HTTP itself is modest by comparison: a request carries a method and a target, a
 response carries a status and optional content. Everything above is arrangement
@@ -57,6 +54,7 @@ Backend
    |   query or transaction
    v
 Data store
+=== turn: the response retraces the same hops ===
    |   result
    v
 Backend
@@ -68,22 +66,21 @@ Edge
 Frontend
 ```
 
-Read down for the request and back up for the response: four participants, six
-messages, the same three hops travelled twice. Every one of the six is a place
-the exchange can stop, and the return half is no safer than the outward one.
+Read straight down. Three hops out to the data store, then the same three hops
+retraced in reverse — four participants, six messages, any of which can be
+where it stops.
 
 ::activity{id="request-response-lifecycle-ord1"}
 
 ## What each hop is allowed to do
 
 The client serializes input, attaches headers, and applies origin and credential
-rules. DNS and connection establishment may then be reused from caches or pools,
-so the earliest work in the path is often work that does not happen at all.
+rules. DNS and connection establishment can then be reused from caches or pools,
+so the earliest work in the path can be work that does not happen at all.
 
 An edge may terminate TLS, reject traffic, serve a cached representation, or
 forward the request. Two of those — rejecting and serving from cache — mean the
-backend never sees the message, which is worth knowing before you go hunting for
-it in application logs.
+backend never sees the message at all.
 
 The backend parses the message, establishes request context, authenticates,
 authorizes, validates, invokes application behaviour, and maps the result to a
@@ -96,44 +93,49 @@ response can be received and still never reach the screen.
 
 ::activity{id="request-response-lifecycle-mat1"}
 
-## Spending a two-second budget
-
-Give the checkout a two-second deadline. That budget is divided, not repeated: a
-portion for the connection, a portion for the edge, a portion for the
-application, a portion for the database, and a portion for transferring the
-response. Deadlines are chosen end to end, not independently at every hop:
-timeouts set per hop, each generous on its own terms, are how a path ends up
-with no budget at all.
-
-The rule that falls out is uncomfortably concrete. The application should not
-begin a five-second payment call after 1.8 seconds have already gone. There is
-nothing left to pay for it, and starting it anyway converts a slow request into
-the unknown outcome this lesson opened with.
-
-Retries deserve the same discipline. Decide in advance which operations are safe
-to retry and which require an idempotency key, because a retry storm is what
-many callers each behaving reasonably looks like from the far end.
-
-::activity{id="request-response-lifecycle-ms1"}
-
 ## What a status and a silence each rule out
 
 The value of a symptom is what it removes from the list.
 
-A `200` eliminates transport and routing trouble and remarkably little else: a
+A `200` establishes that the exchange completed and remarkably little else: a
 `200` response can still contain the wrong business result. A response that is
 slow while the application's own timing looks fast eliminates application logic
 and points before it, at queueing ahead of the code you instrumented. Lost trace
-context eliminates nothing at all, which is precisely the damage — it removes
+context eliminates nothing at all, which is precisely the damage: it removes
 your ability to attribute time to any segment.
 
-Then the silence. A timeout is an unknown outcome unless the operation is
-queryable or idempotent, so the customer's question is answerable only if
-somebody decided in advance that it should be. A retry carrying the same
-idempotency key is that decision made concrete: it lets the server return the
-original outcome rather than doing the work twice.
+A timeout is emptier still. It is an unknown outcome unless the operation is
+queryable or idempotent, which makes it less a finding than a question about
+what was decided earlier.
 
 ::activity{id="request-response-lifecycle-sa1"}
+
+## The decisions that make a timeout answerable
+
+Two of those decisions have to be taken before the request that needs them, and
+each has a price.
+
+The first is the budget. Give the checkout a two-second deadline and that budget
+is divided, not repeated: a portion for the connection, the edge, the
+application, the database, and transferring the response. Deadlines are chosen
+end to end, not independently at every hop, and the cost is that no hop may be
+generous on its own terms: per-hop timeouts, each reasonable alone, leave a path
+with no budget at all. What it buys is a concrete refusal: the application
+should not begin a five-second payment call after 1.8 seconds have gone.
+
+The second is retry policy. Decide in advance which operations are safe to retry
+and which require an idempotency key. That costs machinery on the server, and
+buys a retry that carries the same key and gets the original outcome back
+instead of doing the work twice. Skip the decision and the default is a blanket
+retry — which is how retry storms start: many callers each behaving reasonably,
+seen from the far end.
+
+Both are made long before anyone times out. Which is why the question support
+asked — did the order go through? — was settled before the checkout was
+submitted, by whoever chose whether that operation would be queryable or
+idempotent, or chose not to think about it.
+
+::activity{id="request-response-lifecycle-ms1"}
 
 ## Sources
 
