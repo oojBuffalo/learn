@@ -207,5 +207,627 @@
     "tags": [
       "web-foundations"
     ]
+  },
+  {
+    "id": "request-response-lifecycle-mc1",
+    "type": "multiple-choice",
+    "prompt": "A checkout times out after two seconds. What has that established about the order?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Nothing about the outcome — the server may commit the work after the client stops waiting",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "That no order was created, since the request failed",
+        "feedback": "A timeout is the client giving up, not the server refusing. One of the standard failure modes is exactly this: a client abandoning work that the server later commits."
+      },
+      {
+        "id": "c",
+        "text": "That the order was created and only the confirmation was lost",
+        "feedback": "Just as unsupported as assuming the opposite. Guessing in either direction is the mistake — the outcome is genuinely unknown."
+      },
+      {
+        "id": "d",
+        "text": "That the database was the segment that ran out of time",
+        "feedback": "The timeout says nothing about which segment of the path spent the time, let alone which one failed."
+      }
+    ],
+    "explanation": "A timeout is an unknown outcome unless the operation is queryable or idempotent. Latency and failure accumulate across the whole path, so a client's deadline expiring tells you the client stopped waiting and nothing about what the rest of the path did afterwards.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-ord1",
+    "type": "ordering",
+    "prompt": "Order the six messages of one request-response exchange.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Frontend to edge: request, credentials and trace context"
+      },
+      {
+        "id": "s2",
+        "text": "Edge to backend: routed request"
+      },
+      {
+        "id": "s3",
+        "text": "Backend to data store: query or transaction"
+      },
+      {
+        "id": "s4",
+        "text": "Data store to backend: result"
+      },
+      {
+        "id": "s5",
+        "text": "Backend to edge: status, headers and content"
+      },
+      {
+        "id": "s6",
+        "text": "Edge to frontend: response"
+      }
+    ],
+    "explanation": "The request travels down the participants and the response comes back up the same three hops. Every one of the six is a place the exchange can stop — the three on the way back no less than the three on the way out.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-mat1",
+    "type": "matching",
+    "prompt": "Match each responsibility to the participant that holds it.",
+    "pairs": [
+      {
+        "left": "Attach headers and apply credential rules",
+        "right": "Frontend"
+      },
+      {
+        "left": "Terminate TLS or serve a cached representation",
+        "right": "Edge"
+      },
+      {
+        "left": "Establish request context, then authorize",
+        "right": "Backend"
+      },
+      {
+        "left": "Answer a query or run a transaction",
+        "right": "Data store"
+      }
+    ],
+    "distractors": [
+      "DNS resolution",
+      "Connection pool"
+    ],
+    "explanation": "Naming the participant that owns a responsibility is what makes a boundary check possible: an edge that serves a cached representation means the backend never saw the message at all. DNS resolution and connection pooling are in the path too, but they are work that may not happen — reused from caches or pools — rather than participants that decide anything about the message.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-ms1",
+    "type": "multi-select",
+    "prompt": "A checkout has a two-second user deadline. Which of these follow from budgeting the path end to end rather than hop by hop?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Reserve a portion of the two seconds for connection, edge, application, database and response transfer",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Refuse to start a five-second payment call once 1.8 seconds have already gone",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Give every hop its own two-second timeout so no single hop is the bottleneck"
+      },
+      {
+        "id": "d",
+        "text": "Retry any request that overruns its portion, so the user still gets an answer"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Deadlines are chosen end to end, not independently at every hop. Per-hop timeouts that are each generous on their own terms are how a path ends up with no budget at all, which rules out the third option. The fourth ignores two constraints at once: a blanket retry is how retry storms start, and retrying an operation that is neither idempotent nor queryable can commit the work twice.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-sa1",
+    "type": "short-answer",
+    "prompt": "Requests are slow, but the application's own timing shows it handling them quickly. Which part of the path does that point at?",
+    "accept": [
+      "queueing",
+      "queuing",
+      "queueing before application code",
+      "queuing before application code",
+      "queueing before the application",
+      "queuing before the application",
+      "queueing ahead of the application",
+      "queuing ahead of the application",
+      "a queue",
+      "queue"
+    ],
+    "hints": [
+      "The application only starts its clock once it has the request.",
+      "The time went somewhere before the code you instrumented."
+    ],
+    "explanation": "Queueing before application code is a standard failure mode, and it hides from application timing by definition — the clock the application keeps starts after the wait is already over. The symptom eliminates application logic and points at whatever held the request before it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-card1",
+    "type": "flashcard",
+    "front": "Request and response, per HTTP",
+    "back": "A request carries a method and a target; a response carries a status and optional content. Credentials, trace context, caching and deadlines are arrangement built around those two messages rather than parts of them.",
+    "reverse": true,
+    "examples": [
+      "RFC 9110: HTTP message semantics"
+    ],
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-card2",
+    "type": "flashcard",
+    "front": "Idempotency key",
+    "back": "A retry that reuses the same idempotency key lets the server return the original outcome instead of doing the work a second time. It is what turns a timeout from an unknown outcome into a question you can ask again.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-card3",
+    "type": "flashcard",
+    "front": "The streaming tradeoff",
+    "back": "Streaming reduces time to first content and complicates error replacement: once content has started arriving, an error can no longer take the place of the response.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-card4",
+    "type": "flashcard",
+    "front": "What caching costs",
+    "back": "Caching saves work and adds invalidation and privacy rules. Both obligations arrive with the saving, not later.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "request-response-lifecycle-card5",
+    "type": "flashcard",
+    "front": "What a `200` does not promise",
+    "back": "A `200` response can still contain the wrong business result. The status describes the exchange, not the correctness of the outcome carried inside it.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-mc1",
+    "type": "multiple-choice",
+    "prompt": "An HTTP origin is distinguished by scheme, host and port. Which of these changes leaves the origin the same?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Changing the path from `/orders` to `/orders/open`",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Changing the scheme from `http` to `https`",
+        "feedback": "The scheme is part of the origin, so those are two different origins even though the host and the path never moved."
+      },
+      {
+        "id": "c",
+        "text": "Moving the app from `app.example.com` to `www.example.com`",
+        "feedback": "The host is part of the origin. This is the migration that touches DNS records, certificates, cookie scope and everything else defined on an origin."
+      },
+      {
+        "id": "d",
+        "text": "Serving the same host on a different port",
+        "feedback": "The port is part of the origin too. All three of scheme, host and port have to match."
+      }
+    ],
+    "explanation": "Scheme, host and port make an origin; the path and the query do not. That is why moving a resource within a host is cheap and moving it to another host is not.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-sa1",
+    "type": "short-answer",
+    "prompt": "Query parameters are appropriate for selecting a representation and unsafe for secrets. What property of URLs makes them unsafe?",
+    "accept": [
+      "they appear in logs and history",
+      "URLs appear in logs and history",
+      "logs and history",
+      "logs and browser history",
+      "they appear in logs",
+      "they end up in logs and history",
+      "they are logged",
+      "URLs are logged"
+    ],
+    "hints": [
+      "Think about where a URL is written down after the request is over.",
+      "Two places keep it: one on the server side, one in the browser."
+    ],
+    "explanation": "URLs appear in logs and history, so anything in the query outlives the request in places nobody audited. The path and query being addressed to the application does not make them private.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-mc2",
+    "type": "multiple-choice",
+    "prompt": "A DNS record was changed an hour ago, and some clients still reach the old address. What does that show?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Resolution can follow caches and delegated name servers, so a change is never instantly global",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The change was applied incorrectly, since DNS is authoritative",
+        "feedback": "An authoritative record is not the same thing as the answer a client currently holds. Caches and delegated name servers sit between the two."
+      },
+      {
+        "id": "c",
+        "text": "The old server is refusing to give up the name",
+        "feedback": "Servers do not hold names. What is holding the old answer is the resolution path, not the machine at the end of it."
+      },
+      {
+        "id": "d",
+        "text": "A shorter time-to-live would have made the change instant",
+        "feedback": "Short TTLs speed routing changes and increase lookup traffic — and still never guarantee instant global change."
+      }
+    ],
+    "explanation": "DNS resolution can follow caches and delegated name servers, so an answer describes what some resolver holds rather than what is authoritative right now. Short TTLs shift the tradeoff — faster routing changes, more lookup traffic — without ever making a change atomic.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-ms1",
+    "type": "multi-select",
+    "prompt": "A browser accepts the certificate presented for `www.example.com`. Which conclusions does that support?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Control of that name under the certificate system",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The host the client requested matched the certificate presented",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The application behind the name is benign"
+      },
+      {
+        "id": "d",
+        "text": "The host's DNS records point at the intended server"
+      },
+      {
+        "id": "e",
+        "text": "The hops between an edge and the application are themselves trusted"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "A valid certificate proves control of a name under the certificate system, and the client's check confirms the certificate is valid for the host it requested. It says nothing about the application's intent, nothing about whether naming sent you to the server you meant, and nothing past the point where TLS terminates — an edge that terminates TLS leaves the internal hops needing an explicit trust model of their own.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-mat1",
+    "type": "matching",
+    "prompt": "Match each symptom to the mechanism it implicates.",
+    "pairs": [
+      {
+        "left": "The name still resolves to the old address",
+        "right": "DNS"
+      },
+      {
+        "left": "The certificate is not valid for this host",
+        "right": "TLS"
+      },
+      {
+        "left": "A forwarded host field is trusted unchecked",
+        "right": "HTTP fields"
+      },
+      {
+        "left": "One page loads content over both schemes",
+        "right": "The URLs the page emits"
+      }
+    ],
+    "distractors": [
+      "Cookie scope",
+      "OAuth redirect URIs"
+    ],
+    "explanation": "Each symptom narrows to one of the four cooperating mechanisms rather than to all of them. Mixed HTTP and HTTPS content is the one people misfile: it implicates the scheme in the URLs a page emits, not the server that served the page. Cookie scope and OAuth redirect URIs are things an origin migration breaks, but no symptom listed here points at either.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-card1",
+    "type": "flashcard",
+    "front": "TLS 1.3",
+    "back": "Negotiates cryptographic parameters, and is designed to prevent eavesdropping, tampering and message forgery.",
+    "reverse": true,
+    "examples": [
+      "RFC 8446: TLS 1.3"
+    ],
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-card2",
+    "type": "flashcard",
+    "front": "Connection reuse",
+    "back": "Many requests may share one connection without sharing application meaning. A connection is a pipe, not a session.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-card3",
+    "type": "flashcard",
+    "front": "Stable resource identifiers",
+    "back": "They improve linking and caching, which is why a path worth publishing is a path worth keeping.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-card4",
+    "type": "flashcard",
+    "front": "An origin migration",
+    "back": "Moving a host touches DNS records, certificates, cookie scope, CORS policy, OAuth redirect URIs, canonical links, caches and monitoring — an origin migration, not a text replacement.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "urls-dns-http-and-tls-card5",
+    "type": "flashcard",
+    "front": "TLS terminating at an edge",
+    "back": "Convenient, and it moves the boundary: the internal hops past the edge still need an explicit trust model of their own.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-mc1",
+    "type": "multiple-choice",
+    "prompt": "While handling a browser request, your backend calls a payment provider. What roles is it holding?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Server to the browser and client to the payment provider, within the one request",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Server throughout, because it is the server process",
+        "feedback": "Server names a role in one interaction, not a kind of machine. The process that initiates the outbound request is a client for as long as that exchange lasts."
+      },
+      {
+        "id": "c",
+        "text": "Client throughout, because it initiated the outbound call",
+        "feedback": "It initiated one exchange and accepted another. Both roles are live at once, which is exactly why role-based language is worth the trouble."
+      },
+      {
+        "id": "d",
+        "text": "Server, with the payment call being a separate interaction that carries no role",
+        "feedback": "Every request has a client. Calling the payment provider is what makes your backend one."
+      }
+    ],
+    "explanation": "Client and server are roles in one interaction. The same backend process is a server to a browser, a client to a payment provider, and perhaps both to peer services — sometimes inside a single request.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-mc2",
+    "type": "multiple-choice",
+    "prompt": "`GET /reports/monthly` returned a cached PDF last week and a redirect to object storage today. What changed?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The representation and its delivery, while the resource stayed the same",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The resource, since a redirect is a different kind of thing from a document",
+        "feedback": "The resource is the conceptual target the URI identifies. It is still the monthly report — a redirect is one more way of delivering a representation of it."
+      },
+      {
+        "id": "c",
+        "text": "Nothing a client can observe, so the difference does not matter",
+        "feedback": "A client certainly observes it. The point is not that the change is invisible; it is that the change was the server's to make."
+      },
+      {
+        "id": "d",
+        "text": "The identifier's meaning, which now names object storage",
+        "feedback": "The URL still names the monthly report. Had it named the storage, this migration would have changed the identifier too — which is the failure the design exists to avoid."
+      }
+    ],
+    "explanation": "A resource is the conceptual target identified by a URI; a representation is transferable information about that resource. The current representation and its delivery mechanism are separate design decisions, so changing them is not changing the resource.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-sa1",
+    "type": "short-answer",
+    "prompt": "Describing one process as \"the server\" can hide something. What?",
+    "accept": [
+      "a chain of proxies and services",
+      "a chain of proxies",
+      "a chain of intermediaries",
+      "proxies and services",
+      "proxies",
+      "intermediaries",
+      "other services",
+      "a chain of proxies and services with different policy",
+      "intermediaries with different policy"
+    ],
+    "hints": [
+      "Something can be a server on one connection and a client on another.",
+      "There may be more than one thing between the client and the code."
+    ],
+    "explanation": "Intermediaries can act as a server on one connection and a client on another, so \"the server\" may be a chain of proxies and services with different policy. The single name hides exactly the hops where the policy differs.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-mat1",
+    "type": "matching",
+    "prompt": "Match each design choice to what it buys and what it costs.",
+    "pairs": [
+      {
+        "left": "Coarse representations",
+        "right": "Fewer round trips, unused data"
+      },
+      {
+        "left": "Fine-grained resources",
+        "right": "Better reuse, chattier clients"
+      },
+      {
+        "left": "Server authority",
+        "right": "Simpler invariants"
+      },
+      {
+        "left": "Optimistic client state",
+        "right": "Responsiveness, then reconciliation"
+      }
+    ],
+    "distractors": [
+      "Stable nouns and generic HTTP behavior",
+      "Commands expressed more directly"
+    ],
+    "explanation": "Each choice buys something at a stated price, and none of them has a default answer. The two distractors are real benefits — of resource-oriented and action-oriented designs respectively — but they belong to the choice of style, not to any of the four tradeoffs listed here.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-ms1",
+    "type": "multi-select",
+    "prompt": "Which of these break a client even though the server's own code is correct?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A URL that encoded an implementation detail which later changed",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A status code that does not match the outcome",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "A representation that silently omits information needed to interpret it",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "An account assembled from several stores rather than read from one row"
+      },
+      {
+        "id": "e",
+        "text": "A response format changing from HTML to JSON under content negotiation"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "The first three are failures of the boundary rather than of the logic behind it: the client was told something untrue, or told too little, or made to depend on a detail it should never have seen. The last two are the arrangement working — HTTP deliberately hides resource implementation, and negotiating a format is what content negotiation is for. A client that breaks on either had inferred undocumented behaviour.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-card1",
+    "type": "flashcard",
+    "front": "Method and target",
+    "back": "The method communicates the requested action; the target names what the action concerns.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-card2",
+    "type": "flashcard",
+    "front": "What each role chooses",
+    "back": "Clients select methods, targets, fields and acceptable formats. Servers interpret those semantics, enforce policy, and choose a status and a representation.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-card3",
+    "type": "flashcard",
+    "front": "One resource model, many clients",
+    "back": "Content negotiation, conditional requests, redirects and caching let a single resource model support different clients and efficient reuse.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-card4",
+    "type": "flashcard",
+    "front": "`/accounts/42` is not a row",
+    "back": "It can represent an account assembled from several stores, calculated at request time, and formatted as HTML or JSON, all without the identifier changing.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "clients-servers-and-resources-card5",
+    "type": "flashcard",
+    "front": "What HTTP deliberately hides",
+    "back": "Resource implementation, behind messages and representations — the uniform boundary that lets independently implemented components interoperate.",
+    "reverse": true,
+    "examples": [
+      "RFC 9110 §3: Terminology and Core Concepts"
+    ],
+    "tags": [
+      "web-foundations"
+    ]
   }
 ]

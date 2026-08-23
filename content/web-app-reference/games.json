@@ -1,0 +1,25 @@
+[
+  {
+    "id": "game-web-foundations-match",
+    "template": "matching",
+    "title": "Web foundations — match them up",
+    "source": {
+      "tags": [
+        "web-foundations"
+      ]
+    }
+  },
+  {
+    "id": "game-web-foundations-speed",
+    "template": "timed-round",
+    "title": "Web foundations — quick fire",
+    "source": {
+      "tags": [
+        "web-foundations"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  }
+]

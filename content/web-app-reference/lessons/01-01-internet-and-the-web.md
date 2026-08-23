@@ -8,6 +8,7 @@ objectives:
   - Use layer boundaries to narrow where a failure lives
 estimatedMinutes: 12
 difficulty: beginner
+prerequisites: [anatomy-of-a-web-app]
 tags: [web-foundations]
 ---
 
@@ -134,4 +135,4 @@ was failing.
 
 ## Sources
 
-- IETF, [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) (accessed 2026-07-18)
+- IETF, [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) (accessed 2026-07-18) — HTTP statelessness

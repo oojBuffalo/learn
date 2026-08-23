@@ -1,0 +1,29 @@
+[
+  {
+    "id": "quiz-web-foundations",
+    "title": "Web foundations check",
+    "items": [
+      "internet-and-the-web-mc1",
+      "internet-and-the-web-mc2",
+      "internet-and-the-web-ord1",
+      "internet-and-the-web-mat1",
+      "internet-and-the-web-sa1",
+      "request-response-lifecycle-mc1",
+      "request-response-lifecycle-ord1",
+      "request-response-lifecycle-mat1",
+      "request-response-lifecycle-ms1",
+      "request-response-lifecycle-sa1",
+      "urls-dns-http-and-tls-mc1",
+      "urls-dns-http-and-tls-sa1",
+      "urls-dns-http-and-tls-mc2",
+      "urls-dns-http-and-tls-ms1",
+      "urls-dns-http-and-tls-mat1",
+      "clients-servers-and-resources-mc1",
+      "clients-servers-and-resources-mc2",
+      "clients-servers-and-resources-sa1",
+      "clients-servers-and-resources-mat1",
+      "clients-servers-and-resources-ms1"
+    ],
+    "passThreshold": 0.75
+  }
+]
