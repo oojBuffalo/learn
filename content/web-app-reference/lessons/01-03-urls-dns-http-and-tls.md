@@ -21,22 +21,35 @@ afternoon.
 It is not. The change touches DNS records, certificates, cookie scope, CORS
 policy, OAuth redirect URIs, canonical links, caches and monitoring — eight
 places the ticket never mentioned. A hostname reaches that far because four
-different mechanisms all read it, and each reads it for a different purpose.
+mechanisms all read it, each for a different purpose.
 
 ## Four mechanisms, four different problems
 
 A URL identifies how to access a resource. DNS helps find an address for its
 host. TLS protects communication and authenticates the server endpoint. HTTP
 describes the request and the response. They cooperate on every page load while
-solving genuinely different problems, which is why a symptom usually implicates
-one of them rather than all four at once.
+solving different problems, which is why a symptom usually implicates one
+rather than all four.
 
-One boundary among them carries more weight than the rest, because so much
-policy is defined on it: an HTTP origin is distinguished by scheme, host and
+One boundary carries more weight than the rest, because so much policy is
+defined on it: an HTTP origin is distinguished by scheme, host and
 port. The path and the query are not part of it, so a change of path leaves the
 origin alone while a change of scheme does not.
 
 ::activity{id="urls-dns-http-and-tls-mc1"}
+
+## Which of the four is at fault
+
+Read the common failures as narrowing devices, not a list of things that break.
+
+A name that still resolves to the old address implicates DNS. A certificate the
+browser refuses implicates TLS and the names in it, whatever the application is
+doing. Mixed HTTP and HTTPS content implicates the scheme in URLs
+your own pages emit, not the server that serves them. Redirect loops, cache
+collisions and mishandled forwarded hosts all implicate HTTP itself — the fields
+and statuses of the exchange.
+
+::activity{id="urls-dns-http-and-tls-mat1"}
 
 ## Reading a URL part by part
 
@@ -50,31 +63,30 @@ For `https://api.example.com:443/orders?state=open`:
 | `/orders` | path in the namespace |
 | `state=open` | query read by the app |
 
-The first three parts constitute the origin. The last two are addressed to the
-application, and that difference sets what each may safely carry. Stable
-identifiers improve linking and caching, so a path worth publishing is a path
-worth keeping. Query parameters are appropriate for selecting a representation
-and unsafe for secrets, because URLs appear in logs and history long after the
-request is over.
+The first three parts constitute the origin; the last two are addressed to the
+application, which sets what each may safely carry. Stable identifiers improve
+linking and caching, so a path worth publishing is worth keeping. Query
+parameters suit representation selection and are unsafe for secrets, because
+URLs appear in logs and history long after the request is over.
 
 ::activity{id="urls-dns-http-and-tls-sa1"}
 
 ## What has to be true before a request means anything
 
 DNS resolution can follow caches and delegated name servers, so an answer is not
-a promise about what is authoritative right now. That is also the shape of the
-tradeoff behind time-to-live values: short ones speed routing changes and
-increase lookup traffic, and never guarantee instant global change.
+a promise about what is authoritative right now. Short time-to-live values speed
+routing changes and increase lookup traffic, and never guarantee instant global
+change.
 
 TLS 1.3 then negotiates cryptographic parameters and is designed to prevent
-eavesdropping, tampering and message forgery, and the client verifies that the
-certificate is valid for the requested host — the host taken from the URL. The
+eavesdropping, tampering and message forgery, and the client verifies the
+certificate is valid for the requested host — the host taken from the URL. A
 name in a URL is therefore a security input, not merely a routing one.
 
 Only then does HTTP carry a method, a target, fields and content, and bring a
 status back. One consequence catches people out: connection reuse means many
-requests may share a connection without sharing application meaning. A
-connection is a pipe, not a session.
+requests may share a connection without sharing application meaning — a pipe,
+not a session.
 
 ::activity{id="urls-dns-http-and-tls-mc2"}
 
@@ -85,34 +97,33 @@ that point the internal hops still need an explicit trust model, because whether
 they are still protected is now somebody's decision rather than something TLS is
 doing for them.
 
-The same caution applies to what the certificate itself establishes. A valid
-certificate proves control of a name under the certificate system — not that the
-application behind it is benign, and not that anything else about the deployment
-is correct. And on the receiving side, application code that trusts an
-unvalidated `Host` field has taken a client-supplied string as authority over
-which site it is serving.
+The same caution applies to the certificate itself. A valid certificate proves
+control of a name under the certificate system — not that the application behind
+it is benign, nor that anything else about the deployment is correct. And
+application code that trusts an unvalidated `Host` field has taken a
+client-supplied string as authority over which site it serves.
 
 ::activity{id="urls-dns-http-and-tls-ms1"}
 
-## Which of the four is at fault
+## Start with the origin
 
-Read the common failures as narrowing devices rather than a list of things that
-break.
+Four mechanisms and eight affected places is a lot of surface, and the order you
+work through it is not arbitrary: some checks rule out far more than others.
 
-A name that still resolves to the old address implicates DNS: nothing above it
-was ever exercised against the server you meant. A certificate the browser
-refuses implicates TLS and the names in the certificate, whatever the
-application is doing. Mixed HTTP and HTTPS content on one page implicates the
-scheme in URLs your own pages emit, not the server that serves them. Redirect
-loops, cache collisions and mishandled forwarded hosts all implicate HTTP
-itself — the fields and statuses of the exchange.
+The origin is one fact — scheme, host and port — and the fact cookie scope, CORS
+policy, OAuth redirect URIs and cache keys are all defined against. If it moved,
+the eight places are not eight problems but one problem and its consequences:
+the difference between a text replacement and a migration, established by one
+look at a URL.
 
-Which returns the migration to its proper size. Replacing a hostname changes the
-origin, and the origin is read by naming, by security, and by every policy
-defined on it. Treat it as an origin migration, not a text replacement, and the
-eight places stop being surprises.
+Ask what the name resolves to next, because resolution sits under everything
+else: while a client still holds the old address, everything you check above it
+is checked against the wrong server.
 
-::activity{id="urls-dns-http-and-tls-mat1"}
+Only then are the expensive questions worth asking: whether the certificate is
+valid for the host actually requested, whether a redirect chain terminates,
+whether a forwarded host is trusted unchecked — each costing more to settle and
+ruling out less.
 
 ## Sources
 
