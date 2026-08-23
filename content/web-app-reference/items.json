@@ -1,1 +1,204 @@
-[]
+[
+  {
+    "id": "internet-and-the-web-mc1",
+    "type": "multiple-choice",
+    "prompt": "A host answers packets and accepts a connection, but the page still will not load. What have those two checks established?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Nothing useful — neither check tells you anything",
+        "feedback": "They tell you a great deal, just not about the application. Packets arriving and a connection opening are real evidence about the layers underneath."
+      },
+      {
+        "id": "b",
+        "text": "Routing and basic reachability, but nothing about HTTP behaviour",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "That DNS is configured correctly, since the host responded",
+        "feedback": "You reached it by address, so name resolution was never exercised. DNS is still a suspect."
+      },
+      {
+        "id": "d",
+        "text": "That the application is up and the browser is at fault",
+        "feedback": "A web app can be unavailable even when its host is perfectly reachable. Nothing here has looked at the app yet."
+      }
+    ],
+    "explanation": "Each check proves a property of one layer and the layers below it. A network can deliver packets while an HTTP request fails, so reachability says nothing about whether HTTP behaviour is correct.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-mc2",
+    "type": "multiple-choice",
+    "prompt": "HTTP is defined as a stateless application-level request-response protocol. What does that make the login session your app keeps?",
+    "options": [
+      {
+        "id": "a",
+        "text": "An added mechanism, built on top of a protocol that carries nothing between requests",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A feature of HTTP that switches on once the user authenticates",
+        "feedback": "Statelessness is not a mode HTTP leaves. Whatever continuity your app has between requests, your app added it."
+      },
+      {
+        "id": "c",
+        "text": "A property of the transport connection underneath",
+        "feedback": "A transport connection associates endpoint addresses and ports. Application state is not its job, and connections may be short-lived by design."
+      },
+      {
+        "id": "d",
+        "text": "A sign that the app has been built incorrectly",
+        "feedback": "Sessions are normal and necessary. The point is only that they sit above HTTP rather than inside it."
+      }
+    ],
+    "explanation": "HTTP is explicitly stateless, so application sessions are something built on top of it. That is also why “how much application state is coupled to a particular process” is a live design decision rather than a settled one.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-ord1",
+    "type": "ordering",
+    "prompt": "Order what a browser may do when a developer opens `https://shop.example/orders`.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Obtain an address for shop.example through DNS"
+      },
+      {
+        "id": "s2",
+        "text": "Create a protected transport connection"
+      },
+      {
+        "id": "s3",
+        "text": "Send an HTTP request naming the authority and the path"
+      },
+      {
+        "id": "s4",
+        "text": "Receive HTML in the response"
+      },
+      {
+        "id": "s5",
+        "text": "Issue the further independent requests that HTML triggers"
+      }
+    ],
+    "explanation": "Each step depends on the one before it, which is why any of them can fail on its own terms while the rest look healthy. The last step is the one people forget: one page load is dozens of exchanges, each with its own caching and security rules.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-mat1",
+    "type": "matching",
+    "prompt": "Match each decision a developer makes to the layer of the stack it is made at.",
+    "pairs": [
+      {
+        "left": "Where to terminate TLS",
+        "right": "TLS protection"
+      },
+      {
+        "left": "Which intermediaries may cache content",
+        "right": "HTTP messages"
+      },
+      {
+        "left": "Long-lived or short-lived connections",
+        "right": "TCP or QUIC transport"
+      },
+      {
+        "left": "How much state is coupled to one process",
+        "right": "web app behavior"
+      }
+    ],
+    "distractors": [
+      "IP routing",
+      "physical and link networks"
+    ],
+    "explanation": "Naming the layer a decision belongs to is most of what the stack is for. None of these four decisions lands on routing or the physical network, which is why those two appear here only as distractors.",
+    "difficulty": "intermediate",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-sa1",
+    "type": "short-answer",
+    "prompt": "A site loads by IP address but not by name. Name the mechanism that resolves names to addresses — the first thing that symptom implicates.",
+    "accept": [
+      "DNS",
+      "the DNS",
+      "domain name system",
+      "the domain name system",
+      "name resolution",
+      "naming"
+    ],
+    "hints": [
+      "Three letters.",
+      "It resolves names through a distributed hierarchy."
+    ],
+    "explanation": "“It works by IP” narrows a problem toward naming or virtual-host configuration. Reaching the host by address exercised everything below, and left exactly those two untested.",
+    "difficulty": "beginner",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-card1",
+    "type": "flashcard",
+    "front": "Internet vs web",
+    "back": "The internet is a network of interconnected networks, moving packets between interfaces. The web is an application system built on that connectivity, using URLs to identify resources, HTTP to exchange representations, and browsers as general-purpose clients.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-card2",
+    "type": "flashcard",
+    "front": "HTTP statelessness",
+    "back": "HTTP is explicitly a stateless application-level request-response protocol, so nothing in it carries information from one request to the next. Application sessions are an added mechanism on top.",
+    "reverse": true,
+    "examples": [
+      "RFC 9110: HTTP Semantics"
+    ],
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-card3",
+    "type": "flashcard",
+    "front": "DNS",
+    "back": "The distributed hierarchy that resolves names to addresses. It is the step a request that works by IP but not by name never got to exercise.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-card4",
+    "type": "flashcard",
+    "front": "The layer stack, top to bottom",
+    "back": "Web app behavior, HTTP messages, TLS protection, TCP or QUIC transport, IP routing, physical and link networks — a reasoning stack rather than a claim that every implementation has identical layers, in which each layer relies on services below and exposes a narrower abstraction above.",
+    "tags": [
+      "web-foundations"
+    ]
+  },
+  {
+    "id": "internet-and-the-web-card5",
+    "type": "flashcard",
+    "front": "The intermediary tradeoff",
+    "back": "More intermediaries can improve reach, security and caching, and the same intermediaries complicate diagnosis and trust — proxy policy being one of the ways a request fails.",
+    "reverse": true,
+    "tags": [
+      "web-foundations"
+    ]
+  }
+]
