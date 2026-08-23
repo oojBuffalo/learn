@@ -30,19 +30,17 @@ between interfaces. The web is an application system built on that connectivity,
 using URLs to identify resources, HTTP to exchange representations of them, and
 browsers as general-purpose clients.
 
-Collapsing the two produces a category error you will meet in every outage.
-“The server is up” is a claim about connectivity. “The page works” is a claim
-about an application. The first never implies the second, and no amount of
-network evidence will settle a question the network was never asked.
+Collapsing the two produces a category error you will meet in every outage. “The
+server is up” is a claim about connectivity. “The page works” is a claim about
+an application. The first never implies the second, and no amount of network
+evidence will settle a question the network was never asked.
 
 ::activity{id="internet-and-the-web-mc1"}
 
 ## The stack is a reasoning tool
 
-Application code sits above link, internet and transport mechanisms. Routers
-forward IP packets between networks, transport protocols provide communication
-between endpoints, DNS maps names, TLS protects a connection, and HTTP gives
-messages their web semantics. Stacked, that reads:
+Application code sits above link, internet and transport mechanisms: routers
+forwarding packets at the bottom, HTTP semantics at the top. Stacked, that reads:
 
 ```text
 web app behavior
@@ -54,68 +52,79 @@ physical and link networks
 ```
 
 This is a reasoning stack, not a claim that every implementation has identical
-layers. What it buys you is a discipline: each layer relies on services below and
-exposes a narrower abstraction above. Evidence gathered at one layer licenses
-conclusions about that layer and the ones beneath it — and no others.
+layers. The discipline it buys: each layer relies on services below and exposes
+a narrower abstraction above. Evidence gathered at one layer licenses
+conclusions about that layer and the ones beneath it — rarely any above.
 
 ## What each layer promises
 
-Read from the bottom. IP addresses identify network interfaces so that packets
-can be routed, and autonomous networks exchange reachability information so that
-routing works between them at all. DNS resolves names through a distributed
-hierarchy. A transport connection associates the two endpoints’ addresses and
-ports. TLS protects that connection. Only then does HTTP get to say anything
-interesting: it expresses an operation on a resource.
+Read from the bottom. IP addresses identify network interfaces so packets can be
+routed, and autonomous networks exchange reachability information so routing
+works between them at all. DNS resolves names through a distributed hierarchy —
+and it is not one of the layers in the diagram: it is a lookup that happens
+before any connection exists, beside the stack rather than inside it. A
+transport connection then associates the two endpoints’ addresses and ports. TLS
+protects that connection. Only then does HTTP get to say anything interesting:
+it expresses an operation on a resource.
 
 One property of HTTP deserves singling out, because so much application design is
 a reaction to it. HTTP is explicitly a stateless application-level
-request-response protocol. Every session, cart and login you have ever built is
-an added mechanism, layered on top of a protocol that by itself carries nothing
-from one request to the next.
+request-response protocol. Every session, cart and login you have built is an
+added mechanism, layered on a protocol that by itself carries nothing from one
+request to the next.
 
 ::activity{id="internet-and-the-web-mc2"}
 
 ## One URL, all the way down
 
-Say a developer opens `https://shop.example/orders`. The browser may obtain an
-address for `shop.example` through DNS, create a protected transport connection,
-send an HTTP request naming that authority and the path, and receive HTML back.
+Say a developer opens `https://shop.example/orders`. Four things happen, each on
+a layer you have just read.
 
-That looks like a single action and is at least four, each able to fail on its
-own terms. Nor does it stop there: the HTML that comes back can trigger many more
+**Obtain an address for `shop.example` through DNS.** A name is not something
+packets can be routed to, so this lookup comes first. DNS misconfiguration stops
+the request here, before any connection exists.
+
+**Create a protected transport connection to that address.** IP routing carries
+the packets, the transport connection ties the two endpoints and their ports
+together, and TLS protects what travels over it. Unreachable routes, packet loss
+and connection exhaustion live in the first two; certificate errors in the third.
+
+**Send an HTTP request naming the authority and the path.** The authority is the
+`shop.example` part of the URL — which host the request is addressed to — and the
+path is `/orders`, the resource being asked for on it. This is the first step
+that says anything about an application, so the first that can meet proxy policy
+or an application-level timeout.
+
+**Receive HTML back — and then do it all again.** The HTML can trigger many more
 independent requests, each with its own caching and security rules. “The page
-loaded” is a statement about dozens of exchanges, not one.
+loaded” is a statement about many exchanges, not one.
 
 ::activity{id="internet-and-the-web-ord1"}
 
 ## Decisions, and the layer each one lives at
 
-Once the layers are visible, several familiar arguments turn out to be arguments
-about where in the stack something should happen. Developers choose where to
-terminate TLS, which intermediaries may cache content, whether traffic uses
-long-lived or short-lived connections, and how much application state is coupled
-to a particular process — a question you only have because HTTP itself keeps
-none.
+Once the layers are visible, familiar arguments turn out to be arguments about
+where in the stack something happens. Developers choose where to terminate TLS,
+which intermediaries may cache content, whether traffic uses long-lived or
+short-lived connections, and how much application state is coupled to a
+particular process — a question you only have because HTTP itself keeps none.
 
-Intermediaries are the sharpest of these tradeoffs. More of them can improve
-reach, security and caching. The same additions complicate diagnosis and trust:
-every hop is one more place a response can be served from or refused, and one
-more party whose behaviour you are relying on.
+Intermediaries are the sharpest of these tradeoffs. More can improve reach,
+security and caching. The same additions complicate diagnosis and trust: every
+hop is one more place a response can be served from or refused, and one more
+party you are relying on.
 
 ::activity{id="internet-and-the-web-mat1"}
 
 ## What each symptom rules out
 
-Failures are spread across the whole stack — DNS misconfiguration, unreachable
-routes, packet loss, connection exhaustion, certificate errors, proxy policy,
-application-level timeouts. What makes a symptom useful is less what it proves
-than what it eliminates.
+What makes a symptom useful is less what it proves than what it eliminates.
 
 “It works by IP” narrows a problem toward naming or virtual-host configuration:
 reaching the host by address exercised the layers below it and left those two
-untested. “The TCP connection opens” is weaker than it feels. It shows that
-two endpoints found each other; it does not prove that HTTP behaviour above them
-is correct.
+untested. “The TCP connection opens” is weaker than it feels. It shows that two
+endpoints found each other; it does not prove that HTTP behaviour above them is
+correct.
 
 That answers the puzzle this lesson opened with. Packets arriving and a
 connection being accepted were both true, and both silent about the layer that

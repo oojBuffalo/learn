@@ -6,8 +6,8 @@
     "options": [
       {
         "id": "a",
-        "text": "Nothing useful — neither check tells you anything",
-        "feedback": "They tell you a great deal, just not about the application. Packets arriving and a connection opening are real evidence about the layers underneath."
+        "text": "That the network path is clean end to end",
+        "feedback": "Two successful samples are not a clean path — packet loss and connection exhaustion are still on the list of things that go wrong. And even a flawless path would say nothing about HTTP."
       },
       {
         "id": "b",
@@ -89,7 +89,7 @@
         "text": "Issue the further independent requests that HTML triggers"
       }
     ],
-    "explanation": "Each step depends on the one before it, which is why any of them can fail on its own terms while the rest look healthy. The last step is the one people forget: one page load is dozens of exchanges, each with its own caching and security rules.",
+    "explanation": "Each step depends on the one before it, which is why any of them can fail on its own terms while the rest look healthy. The last step is the one people forget: one page load is many exchanges, each with its own caching and security rules.",
     "difficulty": "beginner",
     "tags": [
       "web-foundations"
@@ -130,20 +130,27 @@
   {
     "id": "internet-and-the-web-sa1",
     "type": "short-answer",
-    "prompt": "A site loads by IP address but not by name. Name the mechanism that resolves names to addresses — the first thing that symptom implicates.",
+    "prompt": "A site loads by IP address but not by name. Name one of the two things that symptom leaves untested.",
     "accept": [
+      "naming",
+      "name resolution",
+      "names",
       "DNS",
       "the DNS",
       "domain name system",
       "the domain name system",
-      "name resolution",
-      "naming"
+      "virtual host",
+      "virtual hosts",
+      "virtual hosting",
+      "virtual host configuration",
+      "virtual-host configuration",
+      "vhost"
     ],
     "hints": [
-      "Three letters.",
-      "It resolves names through a distributed hierarchy."
+      "Reaching the host by address never used its name at all.",
+      "One suspect turns a name into an address. The other is the server's configuration for that name."
     ],
-    "explanation": "“It works by IP” narrows a problem toward naming or virtual-host configuration. Reaching the host by address exercised everything below, and left exactly those two untested.",
+    "explanation": "“It works by IP” narrows a problem toward naming or virtual-host configuration. Reaching the host by address exercised the layers below it and left those two untested, because the request never used the name that both of them depend on.",
     "difficulty": "beginner",
     "tags": [
       "web-foundations"
@@ -185,8 +192,8 @@
   {
     "id": "internet-and-the-web-card4",
     "type": "flashcard",
-    "front": "The layer stack, top to bottom",
-    "back": "Web app behavior, HTTP messages, TLS protection, TCP or QUIC transport, IP routing, physical and link networks — a reasoning stack rather than a claim that every implementation has identical layers, in which each layer relies on services below and exposes a narrower abstraction above.",
+    "front": "A reasoning stack, not an implementation",
+    "back": "The layer diagram is a reasoning tool, not a claim that every implementation has identical layers. What it fixes is the direction of dependence: each layer relies on services below it and exposes a narrower abstraction above.",
     "tags": [
       "web-foundations"
     ]
