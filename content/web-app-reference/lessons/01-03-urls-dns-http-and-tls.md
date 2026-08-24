@@ -103,18 +103,15 @@ it is benign, nor that anything else about the deployment is correct. And
 application code that trusts an unvalidated `Host` field has taken a
 client-supplied string as authority over which site it serves.
 
-::activity{id="urls-dns-http-and-tls-ms1"}
-
 ## Start with the origin
 
 Four mechanisms and eight affected places is a lot of surface, and the order you
 work through it is not arbitrary: some checks rule out far more than others.
 
-The origin is one fact — scheme, host and port — and the fact cookie scope, CORS
-policy, OAuth redirect URIs and cache keys are all defined against. If it moved,
-the eight places are not eight problems but one problem and its consequences:
-the difference between a text replacement and a migration, established by one
-look at a URL.
+The origin is one fact — scheme, host and port — and moving it is what touches
+cookie scope, CORS policy, OAuth redirect URIs and caches. So the eight places
+are not eight problems but one problem and its consequences: the difference
+between a text replacement and a migration, established by one look at a URL.
 
 Ask what the name resolves to next, because resolution sits under everything
 else: while a client still holds the old address, everything you check above it

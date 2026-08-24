@@ -37,8 +37,6 @@ attach to roles rather than to hosts. Which side chose the format? Which side
 enforces the policy? “The backend” answers neither question. “The server in this
 exchange” answers both.
 
-::activity{id="clients-servers-and-resources-mc1"}
-
 ## A resource is not a row
 
 A resource is the conceptual target identified by a URI. A representation is
@@ -72,8 +70,6 @@ One complication follows. Intermediaries can act as a server on one connection
 and a client on another, so “the server” may in fact be a chain of proxies and
 services with different policy — and calling it one process hides precisely the
 hops where the policy differs.
-
-::activity{id="clients-servers-and-resources-sa1"}
 
 ## Choosing the shape of your nouns
 

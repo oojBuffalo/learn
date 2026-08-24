@@ -64,38 +64,6 @@
     ]
   },
   {
-    "id": "internet-and-the-web-ord1",
-    "type": "ordering",
-    "prompt": "Order what a browser may do when a developer opens `https://shop.example/orders`.",
-    "steps": [
-      {
-        "id": "s1",
-        "text": "Obtain an address for shop.example through DNS"
-      },
-      {
-        "id": "s2",
-        "text": "Create a protected transport connection"
-      },
-      {
-        "id": "s3",
-        "text": "Send an HTTP request naming the authority and the path"
-      },
-      {
-        "id": "s4",
-        "text": "Receive HTML in the response"
-      },
-      {
-        "id": "s5",
-        "text": "Issue the further independent requests that HTML triggers"
-      }
-    ],
-    "explanation": "Each step depends on the one before it, which is why any of them can fail on its own terms while the rest look healthy. The last step is the one people forget: one page load is many exchanges, each with its own caching and security rules.",
-    "difficulty": "beginner",
-    "tags": [
-      "web-foundations"
-    ]
-  },
-  {
     "id": "internet-and-the-web-mat1",
     "type": "matching",
     "prompt": "Match each decision a developer makes to the layer of the stack it is made at.",
@@ -123,35 +91,6 @@
     ],
     "explanation": "Naming the layer a decision belongs to is most of what the stack is for. None of these four decisions lands on routing or the physical network, which is why those two appear here only as distractors.",
     "difficulty": "intermediate",
-    "tags": [
-      "web-foundations"
-    ]
-  },
-  {
-    "id": "internet-and-the-web-sa1",
-    "type": "short-answer",
-    "prompt": "A site loads by IP address but not by name. Name one of the two things that symptom leaves untested.",
-    "accept": [
-      "naming",
-      "name resolution",
-      "names",
-      "DNS",
-      "the DNS",
-      "domain name system",
-      "the domain name system",
-      "virtual host",
-      "virtual hosts",
-      "virtual hosting",
-      "virtual host configuration",
-      "virtual-host configuration",
-      "vhost"
-    ],
-    "hints": [
-      "Reaching the host by address never used its name at all.",
-      "One suspect turns a name into an address. The other is the server's configuration for that name."
-    ],
-    "explanation": "“It works by IP” narrows a problem toward naming or virtual-host configuration. Reaching the host by address exercised the layers below it and left those two untested, because the request never used the name that both of them depend on.",
-    "difficulty": "beginner",
     "tags": [
       "web-foundations"
     ]
@@ -193,7 +132,7 @@
     "id": "internet-and-the-web-card4",
     "type": "flashcard",
     "front": "A reasoning stack, not an implementation",
-    "back": "The layer diagram is a reasoning tool, not a claim that every implementation has identical layers. What it fixes is the direction of dependence: each layer relies on services below it and exposes a narrower abstraction above.",
+    "back": "The layer diagram is a reasoning tool, not a claim that every implementation has identical layers. What it fixes is the direction of dependence: each layer relies on services below it and exposes a narrower abstraction above. The same dependence runs through a page load, which is why one step can fail on its own terms while the rest look healthy.",
     "tags": [
       "web-foundations"
     ]
@@ -204,38 +143,6 @@
     "front": "The intermediary tradeoff",
     "back": "More intermediaries can improve reach, security and caching, and the same intermediaries complicate diagnosis and trust — proxy policy being one of the ways a request fails.",
     "reverse": true,
-    "tags": [
-      "web-foundations"
-    ]
-  },
-  {
-    "id": "request-response-lifecycle-mc1",
-    "type": "multiple-choice",
-    "prompt": "A checkout times out after two seconds. What has that established about the order?",
-    "options": [
-      {
-        "id": "a",
-        "text": "Nothing about the outcome — the server may commit the work after the client stops waiting",
-        "correct": true
-      },
-      {
-        "id": "b",
-        "text": "That no order was created, since the request failed",
-        "feedback": "A timeout is the client giving up, not the server refusing. One of the standard failure modes is exactly this: a client abandoning work that the server later commits."
-      },
-      {
-        "id": "c",
-        "text": "That the order was created and only the confirmation was lost",
-        "feedback": "Just as unsupported as assuming the opposite. Guessing in either direction is the mistake — the outcome is genuinely unknown."
-      },
-      {
-        "id": "d",
-        "text": "That the database was the segment that ran out of time",
-        "feedback": "The timeout says nothing about which segment of the path spent the time, let alone which one failed."
-      }
-    ],
-    "explanation": "A timeout is an unknown outcome unless the operation is queryable or idempotent. Latency and failure accumulate across the whole path, so a client's deadline expiring tells you the client stopped waiting and nothing about what the rest of the path did afterwards.",
-    "difficulty": "beginner",
     "tags": [
       "web-foundations"
     ]
@@ -506,41 +413,6 @@
     ]
   },
   {
-    "id": "urls-dns-http-and-tls-ms1",
-    "type": "multi-select",
-    "prompt": "A browser accepts the certificate presented for `www.example.com`. Which conclusions does that support?",
-    "options": [
-      {
-        "id": "a",
-        "text": "Control of that name under the certificate system",
-        "correct": true
-      },
-      {
-        "id": "b",
-        "text": "The host the client requested matched the certificate presented",
-        "correct": true
-      },
-      {
-        "id": "c",
-        "text": "The application behind the name is benign"
-      },
-      {
-        "id": "d",
-        "text": "The host's DNS records point at the intended server"
-      },
-      {
-        "id": "e",
-        "text": "The hops between an edge and the application are themselves trusted"
-      }
-    ],
-    "partialCredit": true,
-    "explanation": "A valid certificate proves control of a name under the certificate system, and the client's check confirms the certificate is valid for the host it requested. It says nothing about the application's intent, nothing about whether naming sent you to the server you meant, and nothing past the point where TLS terminates — an edge that terminates TLS leaves the internal hops needing an explicit trust model of their own.",
-    "difficulty": "intermediate",
-    "tags": [
-      "web-foundations"
-    ]
-  },
-  {
     "id": "urls-dns-http-and-tls-mat1",
     "type": "matching",
     "prompt": "Match each symptom to the mechanism it implicates.",
@@ -618,39 +490,7 @@
     "id": "urls-dns-http-and-tls-card5",
     "type": "flashcard",
     "front": "TLS terminating at an edge",
-    "back": "Convenient, and it moves the boundary: the internal hops past the edge still need an explicit trust model of their own.",
-    "tags": [
-      "web-foundations"
-    ]
-  },
-  {
-    "id": "clients-servers-and-resources-mc1",
-    "type": "multiple-choice",
-    "prompt": "While handling a browser request, your backend calls a payment provider. What roles is it holding?",
-    "options": [
-      {
-        "id": "a",
-        "text": "Server to the browser and client to the payment provider, within the one request",
-        "correct": true
-      },
-      {
-        "id": "b",
-        "text": "Server throughout, because it is the server process",
-        "feedback": "Server names a role in one interaction, not a kind of machine. The process that initiates the outbound request is a client for as long as that exchange lasts."
-      },
-      {
-        "id": "c",
-        "text": "Client throughout, because it initiated the outbound call",
-        "feedback": "It initiated one exchange and accepted another. Both roles are live at once, which is exactly why role-based language is worth the trouble."
-      },
-      {
-        "id": "d",
-        "text": "Server, with the payment call being a separate interaction that carries no role",
-        "feedback": "Every request has a client. Calling the payment provider is what makes your backend one."
-      }
-    ],
-    "explanation": "Client and server are roles in one interaction. The same backend process is a server to a browser, a client to a payment provider, and perhaps both to peer services — sometimes inside a single request.",
-    "difficulty": "beginner",
+    "back": "Convenient, and it moves the boundary: the internal hops past the edge still need an explicit trust model of their own. And the certificate itself proves control of a name under the certificate system, not that the application behind it is benign.",
     "tags": [
       "web-foundations"
     ]
@@ -683,31 +523,6 @@
     ],
     "explanation": "A resource is the conceptual target identified by a URI; a representation is transferable information about that resource. The current representation and its delivery mechanism are separate design decisions, so changing them is not changing the resource.",
     "difficulty": "beginner",
-    "tags": [
-      "web-foundations"
-    ]
-  },
-  {
-    "id": "clients-servers-and-resources-sa1",
-    "type": "short-answer",
-    "prompt": "Describing one process as “the server” can hide something. What?",
-    "accept": [
-      "a chain of proxies and services",
-      "a chain of proxies",
-      "a chain of intermediaries",
-      "proxies and services",
-      "proxies",
-      "intermediaries",
-      "other services",
-      "a chain of proxies and services with different policy",
-      "intermediaries with different policy"
-    ],
-    "hints": [
-      "Something can be a server on one connection and a client on another.",
-      "There may be more than one thing between the client and the code."
-    ],
-    "explanation": "Intermediaries can act as a server on one connection and a client on another, so “the server” may be a chain of proxies and services with different policy. The single name hides exactly the hops where the policy differs.",
-    "difficulty": "intermediate",
     "tags": [
       "web-foundations"
     ]
@@ -794,7 +609,7 @@
     "id": "clients-servers-and-resources-card2",
     "type": "flashcard",
     "front": "What each role chooses",
-    "back": "Clients select methods, targets, fields and acceptable formats. Servers interpret those semantics, enforce policy, and choose a status and a representation.",
+    "back": "Clients select methods, targets, fields and acceptable formats. Servers interpret those semantics, enforce policy, and choose a status and a representation. Both are roles in one interaction rather than kinds of machine: the same process is a server to a browser and a client to a payment provider.",
     "tags": [
       "web-foundations"
     ]
@@ -821,7 +636,7 @@
     "id": "clients-servers-and-resources-card5",
     "type": "flashcard",
     "front": "What HTTP deliberately hides",
-    "back": "Resource implementation, behind messages and representations — the uniform boundary that lets independently implemented components interoperate.",
+    "back": "Resource implementation, behind messages and representations — the uniform boundary that lets independently implemented components interoperate. It can hide multiplicity too: what you call the server may be a chain of proxies and services with different policy.",
     "reverse": true,
     "examples": [
       "RFC 9110 §3: Terminology and Core Concepts"

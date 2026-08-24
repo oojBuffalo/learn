@@ -64,7 +64,7 @@ routed, and autonomous networks exchange reachability information so routing
 works between them at all. DNS resolves names through a distributed hierarchy —
 and it is not one of the layers in the diagram: it is a lookup that happens
 before any connection exists, beside the stack rather than inside it. A
-transport connection then associates the two endpoints’ addresses and ports. TLS
+transport connection then associates the two endpoints' addresses and ports. TLS
 protects that connection. Only then does HTTP get to say anything interesting:
 it expresses an operation on a resource.
 
@@ -100,8 +100,6 @@ or an application-level timeout.
 independent requests, each with its own caching and security rules. “The page
 loaded” is a statement about many exchanges, not one.
 
-::activity{id="internet-and-the-web-ord1"}
-
 ## Decisions, and the layer each one lives at
 
 Once the layers are visible, familiar arguments turn out to be arguments about
@@ -130,8 +128,6 @@ correct.
 That answers the puzzle this lesson opened with. Packets arriving and a
 connection being accepted were both true, and both silent about the layer that
 was failing.
-
-::activity{id="internet-and-the-web-sa1"}
 
 ## Sources
 

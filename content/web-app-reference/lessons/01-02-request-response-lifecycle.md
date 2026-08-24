@@ -39,8 +39,6 @@ HTTP itself is modest by comparison: a request carries a method and a target, a
 response carries a status and optional content. Everything above is arrangement
 around those two messages.
 
-::activity{id="request-response-lifecycle-mc1"}
-
 ## Four participants, six messages
 
 ```text
