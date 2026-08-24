@@ -4725,5 +4725,763 @@
     "tags": [
       "apis-and-integration"
     ]
+  },
+  {
+    "id": "threat-modeling-ord1",
+    "type": "ordering",
+    "prompt": "Put this lesson's threat-modeling mechanisms into the order it gives them.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Draw the data flow: processes, stores, external actors, and boundaries"
+      },
+      {
+        "id": "s2",
+        "text": "Write abuse cases describing attacker goals"
+      },
+      {
+        "id": "s3",
+        "text": "Run the structured categories over what the diagram exposed"
+      },
+      {
+        "id": "s4",
+        "text": "Give each control an owner and a way to verify it"
+      },
+      {
+        "id": "s5",
+        "text": "Record the residual risk that is left"
+      }
+    ],
+    "explanation": "The mechanisms run in an order, each needing the one before it. Data-flow diagrams expose processes, stores, external actors, and boundaries. Abuse cases then describe attacker goals, which is hard to do honestly against a system nobody has drawn. Structured categories prompt review of impersonation, tampering, repudiation, disclosure, denial of service, and privilege escalation. Controls are assigned owners and verified through tests, monitoring, or operational drills. Residual risk is recorded rather than implied away.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-ms1",
+    "type": "multi-select",
+    "prompt": "The file-sharing model now lists guessed links, malicious file parsing, stale permissions, and resource exhaustion. Which of these does this lesson say still has to happen before those threats count as handled rather than listed?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Each control is assigned an owner",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Each control is verified through tests, monitoring, or operational drills",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Controls and telemetry attach to each path rather than to the product as a whole",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Whatever risk is left over is recorded rather than implied away",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "The threat list is checked against a generic security checklist"
+      },
+      {
+        "id": "f",
+        "text": "The diagram is signed off so the model can be filed"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Controls are assigned owners and verified through tests, monitoring, or operational drills, and residual risk is recorded rather than implied away. The file-sharing example supplies the fourth: controls and telemetry attach to each path, which is what makes visible a control that exists in documentation but not on every entry point. The two rejected proposals run against the lesson. The practice focuses security effort on how this system can fail rather than on a generic checklist alone, and a signed-off diagram put away is how the opening scene ended up with a model that had drifted.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team's threat model considers only attackers arriving anonymously from the internet. Its diagram matches the current architecture, every control has an owner and a verification, and residual risk is written down. Which failure mode does this lesson name?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Teams model only anonymous internet attackers, ignoring insiders and compromised dependencies",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Threats are listed without owners and verification",
+        "feedback": "Every control here has an owner and a way to be checked. What is short is not the follow-through on a threat, but the range of actors considered at all."
+      },
+      {
+        "id": "c",
+        "text": "Diagrams drift after architecture changes",
+        "feedback": "The diagram matches. This model is current about a system it is only ever looking at from one direction."
+      },
+      {
+        "id": "d",
+        "text": "A control exists in documentation but not on every entry point",
+        "feedback": "That is a control that failed to reach everywhere it was needed. Here the controls are attached and verified; it is the list of who might act that stops early."
+      }
+    ],
+    "explanation": "Teams model only anonymous internet attackers, ignore insiders and compromised dependencies, or list threats without owners and verification. This model does the second part well and the first part not at all. Threat models span browser, edge, backend, data, build, operations, people, and third parties — people and third parties included — and every data-flow boundary can change trust or privilege.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-card1",
+    "type": "flashcard",
+    "front": "Threat modeling",
+    "back": "Identifying valuable assets, trust boundaries, plausible attackers, abuse paths, and controls before incidents reveal them — a repeatable design activity, not a one-time document.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-card2",
+    "type": "flashcard",
+    "front": "The structured categories a threat review prompts",
+    "back": "Impersonation, tampering, repudiation, disclosure, denial of service, and privilege escalation.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-card3",
+    "type": "flashcard",
+    "front": "What a control can reduce",
+    "back": "Probability, blast radius, detection time, or recovery time.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-card4",
+    "type": "flashcard",
+    "front": "The three lenses on a threat model",
+    "back": "Asset-centered analysis highlights impact, attacker-centered analysis highlights capabilities, and system decomposition finds boundary mistakes.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "threat-modeling-card5",
+    "type": "flashcard",
+    "front": "Security friction",
+    "back": "It should be proportional to risk, and usable enough that people do not bypass it.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-mc1",
+    "type": "multiple-choice",
+    "prompt": "An internal tool does not render a control for staff who lack the permission, and the API behind that control answers any request carrying a valid session. Which of this lesson's claims settles it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Only server-side enforcement is authoritative",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Multi-factor methods add independent evidence",
+        "feedback": "Independent evidence strengthens confidence in who the caller is. Nobody here is unsure who called; what was never decided is whether that caller may do this."
+      },
+      {
+        "id": "c",
+        "text": "Sessions bind authenticated state to a browser credential and support rotation and revocation",
+        "feedback": "A session that rotates and revokes correctly still carries an identity rather than a permission. Revoking it would end the login, not supply the missing decision."
+      },
+      {
+        "id": "d",
+        "text": "Passwords require salted, adaptive hashing and rate-limited verification",
+        "feedback": "That protects the credential from being recovered or guessed. This request arrived with a perfectly good credential."
+      }
+    ],
+    "explanation": "Authorization occurs throughout frontend affordances, APIs, domain operations, data access, jobs, and administration, and only server-side enforcement is authoritative. Checking permission only when rendering buttons is named here among the common causes of broken access control: an affordance is where authorization gets expressed to a person, not where it is enforced. A valid login never implies universal permission.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-mat1",
+    "type": "matching",
+    "prompt": "Match each choice this lesson offers to the cost it attaches to that choice.",
+    "pairs": [
+      {
+        "left": "A central identity provider",
+        "right": "one more critical dependency"
+      },
+      {
+        "left": "Role-based policy",
+        "right": "role combinations that explode"
+      },
+      {
+        "left": "Attribute or relationship rules",
+        "right": "consistent data, and decisions you can explain"
+      },
+      {
+        "left": "A long session",
+        "right": "a wider window between checks"
+      }
+    ],
+    "distractors": [
+      "permission that is only checked when a button is rendered",
+      "a credential holding more authority than it needs"
+    ],
+    "explanation": "Central identity providers reduce duplicated login logic but become critical dependencies. Role-based policy is understandable until role combinations explode. Attribute or relationship rules express context more precisely but require consistent data and explainability. Long sessions improve convenience, while short lifetimes and step-up checks reduce exposure. Neither distractor is the price of a deliberate choice: checking permission only when rendering buttons is a named cause of broken access control, and a credential with more authority than it needs is what deny by default exists to prevent.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-ms1",
+    "type": "multi-select",
+    "prompt": "Broken access control remains a leading web risk. Which of these does this lesson name among its common causes, rather than among the things that protect a credential?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Trusting object IDs",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Checking permission only when rendering buttons",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Stale authorization in long-lived tokens",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Sessions that survive password reset unexpectedly",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "Verification that is not rate limited"
+      },
+      {
+        "id": "f",
+        "text": "Hashing that is neither salted nor adaptive"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Common causes include trusting object IDs, checking permission only when rendering buttons, stale authorization in long-lived tokens, user enumeration, weak recovery flows, and sessions that survive password reset unexpectedly. The two rejected options belong to the other decision entirely: passwords require salted, adaptive hashing and rate-limited verification, which establishes confidence in an identity and settles nothing about what that identity may do. Keeping the two decisions separate is what prevents role checks from becoming identity checks.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-card1",
+    "type": "flashcard",
+    "front": "Authentication",
+    "back": "Establishing confidence in an identity. It begins at login or workload credential issuance.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-card2",
+    "type": "flashcard",
+    "front": "Authorization",
+    "back": "Deciding whether a principal may perform an action on a resource in the current context. A valid login never implies universal permission.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-card3",
+    "type": "flashcard",
+    "front": "The authorization models",
+    "back": "Roles, attributes, relationships, ownership, and explicit policy.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-card4",
+    "type": "flashcard",
+    "front": "Deny by default",
+    "back": "Give each credential only the authority it needs.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "authentication-and-authorization-card5",
+    "type": "flashcard",
+    "front": "Reauthorization",
+    "back": "A second check that protects sensitive actions after risk changes.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-mat1",
+    "type": "matching",
+    "prompt": "Match each browser mechanism to what this lesson says it controls.",
+    "pairs": [
+      {
+        "left": "CORS",
+        "right": "whether scripts can read selected cross-origin responses"
+      },
+      {
+        "left": "Cookie attributes",
+        "right": "script access, secure transport, cross-site sending, and scope"
+      },
+      {
+        "left": "Content Security Policy",
+        "right": "which sources are executable and loadable"
+      },
+      {
+        "left": "Frame policy",
+        "right": "clickjacking"
+      },
+      {
+        "left": "Subresource integrity",
+        "right": "verification of fixed external assets"
+      },
+      {
+        "left": "CSRF defenses",
+        "right": "whether a credentialed request reflects application intent"
+      }
+    ],
+    "distractors": [
+      "which destinations a page is permitted to navigate to",
+      "whether a direct HTTP client may call the API"
+    ],
+    "explanation": "CORS controls whether scripts can read selected cross-origin responses. Cookie attributes constrain script access, secure transport, cross-site sending, and scope. Content Security Policy restricts executable and loadable sources. Frame policy limits clickjacking. Subresource integrity can verify fixed external assets. CSRF defenses ensure a credentialed request reflects application intent, not merely that cookies were attached. Navigation is one of the policy areas the browser applies but not the job of any of these six, and the second distractor is the one that matters: browser-side checks are not protection against direct HTTP clients, so nothing in this column answers it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team moves its session out of a cookie and into a token its own JavaScript reads, and drops the CSRF policy because cookies are no longer attached automatically. What has this lesson's tradeoff already told them about the move?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Script injection now costs more, because the session is exposed to JavaScript",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing changes, because a bearer token and a cookie identify the same session",
+        "feedback": "They identify the same session and they sit in different places. Cookie-based sessions integrate with browser protections; a token exposed to JavaScript does not, and that difference is the entire subject."
+      },
+      {
+        "id": "c",
+        "text": "The application is now protected against clickjacking, because framing no longer carries the session",
+        "feedback": "Frame policy is what limits clickjacking here, and it is a separate mechanism that this change does not touch."
+      },
+      {
+        "id": "d",
+        "text": "Cross-origin scripts can now read the responses, because CORS no longer applies",
+        "feedback": "CORS controls whether scripts can read selected cross-origin responses no matter where the session is kept. Moving the credential changes nothing about it."
+      }
+    ],
+    "explanation": "Cookie-based sessions integrate with browser protections while requiring CSRF policy; bearer tokens exposed to JavaScript increase the consequences of script injection. These are not a safe option and a risky one but two different bills, and this team has traded a policy it had to build and keep for a standing exposure of the session to any script that runs on the page.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-ms1",
+    "type": "multi-select",
+    "prompt": "A second team copies the account app but serves the API from a separate origin behind a wildcard CORS header, and keeps the session in a token its scripts can read. Everything else in the design is unchanged. Which of the original's properties have they given up?",
+    "options": [
+      {
+        "id": "a",
+        "text": "One origin for application and API, which simplifies credentials",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A session credential the page's scripts cannot read",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "A cookie-based session that browser protections already apply to, along with the CSRF policy that goes with it",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "A restrictive Content Security Policy"
+      },
+      {
+        "id": "e",
+        "text": "Refusal to be framed"
+      },
+      {
+        "id": "f",
+        "text": "Sanitization of permitted rich text before insertion"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "The variant changed two things, and three properties go with them. Moving the API to a separate origin gives up the first: keeping application and API on one origin simplifies credentials, and multiple origins improve isolation when their content is genuinely untrusted, which an API you wrote is not. Moving the session into a readable token gives up the other two: HttpOnly is one of the four things cookie attributes constrain, and cookie-based sessions integrate with browser protections while requiring CSRF policy, so the policy leaves with the cookie. The restrictive CSP, the refusal to be framed and the sanitization are untouched. And the wildcard is worth naming for what it is not — wildcard CORS mistaken for authentication is a failure mode here.",
+    "difficulty": "advanced",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-card1",
+    "type": "flashcard",
+    "front": "An origin",
+    "back": "The scheme, host, and port tuple. Same-origin content has broad interaction; cross-origin interaction is constrained and selectively permitted.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-card2",
+    "type": "flashcard",
+    "front": "The browser's double role",
+    "back": "An untrusted client, and at the same time a security enforcement environment.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-card3",
+    "type": "flashcard",
+    "front": "What the browser mediates between",
+    "back": "Users, multiple origins, extensions, local state, and application servers.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-card4",
+    "type": "flashcard",
+    "front": "A strict Content Security Policy",
+    "back": "It reduces injection impact but requires disciplined script delivery.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "browser-security-card5",
+    "type": "flashcard",
+    "front": "Applications strengthen browser defaults",
+    "back": "Through correct headers and content handling. The browser isolates web content primarily by origin while applying policies around scripts, network access, cookies, framing, navigation, and powerful capabilities.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-fb1",
+    "type": "fill-blank",
+    "prompt": "Complete this lesson's path from input to output.",
+    "template": "Parse shape, validate allowed meaning, preserve {{1}} data, then use a parameterized API or {{2}} for the exact output context.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "typed"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "encode"
+        ]
+      }
+    ],
+    "hints": [
+      "The third step is what keeps a value from being turned back into a string by accident.",
+      "The last step is the alternative when the destination grammar has no parameterized API."
+    ],
+    "explanation": "Parse shape, validate allowed meaning, preserve typed data, then use a parameterized API or encode for the exact output context. Preserving typed data is what keeps the first two steps from being undone: a value that stays a date, a number or an enum cannot be concatenated into somebody else's grammar by accident, because it is not a string yet.",
+    "difficulty": "beginner",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-mc1",
+    "type": "multiple-choice",
+    "prompt": "In the report example, the title is inserted as text rather than HTML, and the export filename is generated from an internal ID rather than from the title. What do the two decisions have in common?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Each keeps a value from being read as syntax by the grammar it is entering",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Each rejects the title as invalid input",
+        "feedback": "Neither decision rejects anything. The title is accepted and displayed; the filter's own validation is the fixed enum and the bounded date range, which happen earlier and to different fields."
+      },
+      {
+        "id": "c",
+        "text": "Each relies on a deny list of characters known to be dangerous",
+        "feedback": "The model this lesson gives explicitly works without deny lists. Both decisions change how the value is constructed at its destination rather than which characters it may contain."
+      },
+      {
+        "id": "d",
+        "text": "Each moves a check from the server to the client",
+        "feedback": "Neither decision moves a check anywhere. Both change how a value is constructed at the boundary it is entering — the browser for the title, a filename grammar for the export."
+      }
+    ],
+    "explanation": "Safety requires validation for meaning and context-appropriate construction or encoding at every interpreter boundary. Inserting the title as text is a DOM text API, which preserves text rather than parsing markup; generating the filename from an internal ID keeps a user-controlled string out of a filename grammar altogether. Both are safe construction rather than validation — validation asks whether data is allowed, and safe construction prevents it from becoming syntax.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-ms1",
+    "type": "multi-select",
+    "prompt": "A service validates every request body against a schema that bounds type, length, range, cardinality, and permitted values. Which of these does this lesson say the schema still does not do?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Stop a value it approved from becoming syntax once it is concatenated into another grammar",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Encode a value for the exact output context it is eventually written into",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Make a stored value safe in the admin interface that renders it later",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Bound the permitted values a field may take"
+      },
+      {
+        "id": "e",
+        "text": "Reject a date range wider than the filter allows"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Validation and encoding are complementary: validation asks whether data is allowed, and safe construction prevents it from becoming syntax. A schema that bounds type, length, range, cardinality, and permitted values has done the first job and none of the second. A safe value becomes unsafe after concatenation into another grammar, escaping for HTML text is reused in attributes or JavaScript, and stored payloads execute later in an admin interface — three failure modes that all begin with a value that passed validation. The two rejected options are exactly what schema validation does bound.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-card1",
+    "type": "flashcard",
+    "front": "Injection",
+    "back": "Data interpreted as commands or syntax by a downstream language.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-card2",
+    "type": "flashcard",
+    "front": "The boundaries input crosses",
+    "back": "HTTP parsers, application types, database queries, templates, browsers, file paths, command runners, and third-party APIs — each with its own grammar.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-card3",
+    "type": "flashcard",
+    "front": "A parameterized query",
+    "back": "It separates SQL structure from values.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-card4",
+    "type": "flashcard",
+    "front": "HTML sanitization",
+    "back": "Required when a product intentionally accepts a constrained markup language, and rich text creates lasting security maintenance.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "input-injection-and-output-safety-card5",
+    "type": "flashcard",
+    "front": "Executing operating-system commands",
+    "back": "Sometimes necessary, but it should use argument arrays and fixed executables rather than shell strings.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-sa1",
+    "type": "short-answer",
+    "prompt": "Automated scanning prioritizes known risk. What does this lesson say it does not do?",
+    "accept": [
+      "prove safety",
+      "proves safety",
+      "it does not prove safety",
+      "prove it is safe",
+      "prove that it is safe",
+      "prove anything is safe",
+      "prove the dependencies are safe",
+      "prove the code is safe"
+    ],
+    "match": "fold",
+    "hints": [
+      "It is a claim about what a report with no findings is not.",
+      "Two words: a verb, and the property it fails to establish."
+    ],
+    "explanation": "Automated scanning prioritizes known risk but does not prove safety. That is why the deployment example's payoff is stated as a capability rather than a guarantee: a compromised library can be located, rebuilt, and rolled out without changing application configuration.",
+    "difficulty": "beginner",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-ms1",
+    "type": "multi-select",
+    "prompt": "A library the application depends on turns out to be vulnerable, and the team has to find it, rebuild, and roll out. Which of these does this lesson say makes that response possible?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Lockfiles and immutable artifact identifiers, which make dependency resolution reproducible",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A software bill of materials describing the included components",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Provenance connecting an artifact to the build process that produced it",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Building once and promoting the same immutable artifact",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "A scanner report with no findings, which establishes that the dependency graph is safe"
+      },
+      {
+        "id": "f",
+        "text": "One credential shared across environments, so the rebuild can deploy anywhere"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Lockfiles and immutable artifact identifiers make dependency resolution reproducible. Software bills of materials describe included components, and provenance can connect an artifact to its build process. The deployment example builds once and promotes the same immutable artifact, so the thing tested and the thing running are one object. Its payoff is exactly this response: a compromised library can be located, rebuilt, and rolled out without changing application configuration. The two rejected options are named failures rather than capabilities — automated scanning prioritizes known risk but does not prove safety, and one credential spanning environments is what turned the opening scene's deleted key into an incident.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team wants to shorten the window in which a known-vulnerable dependency is still running, and they already have strong tests and a controlled rollout. Which of these choices does this lesson say shortens exposure?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Automatic updates",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Vendoring every dependency",
+        "feedback": "Vendoring improves availability and reviewability while increasing update work. It makes a dependency easier to read and its update slower to do, which is the wrong direction for exposure."
+      },
+      {
+        "id": "c",
+        "text": "Pinning versions",
+        "feedback": "Pinning versions improves reproducibility, and teams still need a process to advance pins. It fixes what is running rather than shortening how long a vulnerable version runs."
+      },
+      {
+        "id": "d",
+        "text": "A managed build system",
+        "feedback": "Managed build systems reduce maintenance but remain privileged dependencies. That is a choice about who operates the build, not about how fast a dependency can be moved."
+      }
+    ],
+    "explanation": "Automatic updates shorten exposure but require strong tests and controlled rollout — the two things this team already has, which is what makes the choice available to them rather than merely attractive. Each of the four choices in that section buys something and leaves a job behind, and the job automatic updates leave is exactly those tests and that rollout control.",
+    "difficulty": "intermediate",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-card1",
+    "type": "flashcard",
+    "front": "The software supply chain",
+    "back": "What connects source, build, artifact, deployment, and update systems. Compromise in any link can become application compromise.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-card2",
+    "type": "flashcard",
+    "front": "What a secret manager does",
+    "back": "Encrypts values, authenticates workloads, authorizes reads, rotates versions, and audits access.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-card3",
+    "type": "flashcard",
+    "front": "The aims of supply-chain security",
+    "back": "Minimize trusted material, limit its authority and lifetime, verify provenance, and retain a practical response path when components are vulnerable.",
+    "reverse": true,
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-card4",
+    "type": "flashcard",
+    "front": "Why a rotation plan fails",
+    "back": "Because consumers cannot overlap old and new credentials.",
+    "tags": [
+      "security"
+    ]
+  },
+  {
+    "id": "secrets-dependencies-and-supply-chain-card5",
+    "type": "flashcard",
+    "front": "Short-lived credentials",
+    "back": "They reduce stored secrets; the deployment example authenticates to the cloud through short-lived workload identity.",
+    "tags": [
+      "security"
+    ]
   }
 ]

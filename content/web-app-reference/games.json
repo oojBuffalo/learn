@@ -159,5 +159,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-security-match",
+    "template": "matching",
+    "title": "Security — match them up",
+    "source": {
+      "tags": [
+        "security"
+      ]
+    }
+  },
+  {
+    "id": "game-security-speed",
+    "template": "timed-round",
+    "title": "Security — quick fire",
+    "source": {
+      "tags": [
+        "security"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]

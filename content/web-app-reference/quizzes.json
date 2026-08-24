@@ -144,5 +144,27 @@
       "third-party-integrations-sa1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-security",
+    "title": "Security check",
+    "items": [
+      "threat-modeling-ord1",
+      "threat-modeling-ms1",
+      "threat-modeling-mc1",
+      "authentication-and-authorization-mc1",
+      "authentication-and-authorization-mat1",
+      "authentication-and-authorization-ms1",
+      "browser-security-mat1",
+      "browser-security-mc1",
+      "browser-security-ms1",
+      "input-injection-and-output-safety-fb1",
+      "input-injection-and-output-safety-mc1",
+      "input-injection-and-output-safety-ms1",
+      "secrets-dependencies-and-supply-chain-sa1",
+      "secrets-dependencies-and-supply-chain-ms1",
+      "secrets-dependencies-and-supply-chain-mc1"
+    ],
+    "passThreshold": 0.75
   }
 ]
