@@ -48,7 +48,8 @@ which is why the third question is never answered once.
 This lesson sets the mechanisms out in the order the source writes them.
 
 Data-flow diagrams expose processes, stores, external actors, and boundaries.
-Abuse cases describe attacker goals. Structured categories prompt review of
+Abuse cases describe attacker goals, so each one names a plausible attacker and
+something that attacker wants. Structured categories prompt review of
 impersonation, tampering, repudiation, disclosure, denial of service, and
 privilege escalation, so a review covers six kinds of harm rather than the ones
 the room happens to fear.
@@ -113,9 +114,7 @@ This lesson sorts them by what an answer costs: what a document settles about
 itself first, then what needs the system.
 
 Does the diagram match the architecture? Diagrams drift after architecture
-changes, and the check is two things laid side by side. The opening document
-fails here, which is why its problem was never hard to find — only never looked
-for.
+changes, and the check is two things laid side by side.
 
 Does every threat have a name against it? Threats listed without owners and
 verification show in the list itself: you are checking for a column, not a
@@ -130,6 +129,10 @@ every entry point, which means enumerating entry points rather than reading a
 page. And availability and integrity threats receive less attention than
 confidentiality — not a lookup but a judgment about how a whole model spent its
 attention.
+
+The opening document sits at the cheap end of this order: a drifted diagram,
+and a list with no names against it, both answerable from the page by anyone
+willing to reopen it.
 
 ::activity{id="threat-modeling-mc1"}
 
