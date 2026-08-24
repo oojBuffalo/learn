@@ -875,5 +875,602 @@
     "tags": [
       "web-foundations"
     ]
+  },
+  {
+    "id": "rendering-and-the-dom-mat1",
+    "type": "matching",
+    "prompt": "Match each stage of the rendering pipeline to what it produces.",
+    "pairs": [
+      {
+        "left": "Parsing",
+        "right": "Nodes and relationships"
+      },
+      {
+        "left": "The cascade",
+        "right": "Which styles apply"
+      },
+      {
+        "left": "Layout",
+        "right": "Sizes and positions"
+      },
+      {
+        "left": "Paint",
+        "right": "Drawing operations"
+      },
+      {
+        "left": "Compositing",
+        "right": "Combined layers"
+      }
+    ],
+    "distractors": [
+      "Default semantics and keyboard behaviour",
+      "Pixels and accessibility information"
+    ],
+    "explanation": "Each stage has one product, and naming it is what lets you place a symptom at a stage rather than at “the browser”. The two distractors are real, but neither belongs to a stage: default semantics and keyboard behaviour are what native elements contribute, and pixels together with accessibility information are what the whole pipeline turns network-delivered resources and application state into.",
+    "difficulty": "beginner",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-ms1",
+    "type": "multi-select",
+    "prompt": "A gallery ships with images that declare no width or height, off-screen slides moved out of view by a style rather than removed from the tree, and a script that looks up its nodes before the markup below has been parsed. It never measures layout. Which problems does that page invite?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Cumulative layout shift, because dimensions stay unknown until the late-loading images arrive",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Null references or flashes, from an invalid assumption about element timing",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Content that is visually hidden yet still exposed to assistive technology",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Layout thrashing, from alternating DOM writes and measurements"
+      },
+      {
+        "id": "e",
+        "text": "Paint produced before layout, so the drawing operations never composite"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "The first three are named failure modes and this page walks into each one: dimensions unknown until late-loading resources arrive, an assumption about when an element exists, and content that is visually hidden while still exposed to assistive technology. Layout thrashing alternates DOM writes and measurements, and this page never measures layout, so that failure is not available to it. And paint cannot come before layout: the pipeline derives sizes and positions before it produces drawing operations.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-mc1",
+    "type": "multiple-choice",
+    "prompt": "A gallery component adds a class to each thumbnail and then reads that thumbnail's height, one after another down the list. Which change removes the forced synchronization?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Write every class first, then measure once the batch is done",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Read each height before writing its class, rather than after",
+        "feedback": "The alternation is the problem, not its direction. Writes and measurements are still interleaved, and every read still follows the previous write."
+      },
+      {
+        "id": "c",
+        "text": "Reserve a width and height for every thumbnail",
+        "feedback": "Reserved dimensions stop late-loading resources from shifting content. They do not change how often this loop makes the browser synchronize work."
+      },
+      {
+        "id": "d",
+        "text": "Render fewer thumbnails, so the tree the loop walks is smaller",
+        "feedback": "A smaller tree lowers traversal, style, memory and accessibility costs, and the loop still alternates a write with a measurement at every step."
+      }
+    ],
+    "explanation": "Layout thrashing alternates DOM writes and measurements, and reading layout immediately after writing styles may force the browser to synchronize work. The rebuilt gallery batches DOM updates and measures layout after the batch — the only one of these four changes that stops the alternating.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-card1",
+    "type": "flashcard",
+    "front": "The DOM",
+    "back": "An API-facing tree, not the screen. Rendering turns network-delivered resources and application state into pixels and accessibility information, and those two outputs can disagree: content can be visually hidden yet exposed to assistive technology, or the reverse.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-card2",
+    "type": "flashcard",
+    "front": "Native elements",
+    "back": "They contribute default semantics and keyboard behaviour. Native controls are less customizable but bring robust behaviour, so replacing one with a custom control trades those defaults for design.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-card3",
+    "type": "flashcard",
+    "front": "What the HTML standard leaves open",
+    "back": "It specifies document behaviour and offers default rendering guidance while allowing user agents implementation freedom, which is why browsers may stream and overlap the rendering stages rather than running them in strict turns.",
+    "examples": [
+      "WHATWG, HTML Living Standard: Rendering"
+    ],
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-card4",
+    "type": "flashcard",
+    "front": "Server rendering and client rendering",
+    "back": "Server-rendered HTML can expose meaningful content early; client rendering can support rich local interaction but requires code and data before completion.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "rendering-and-the-dom-card5",
+    "type": "flashcard",
+    "front": "What a large DOM costs",
+    "back": "It simplifies “render everything” logic while increasing traversal, style, memory, and accessibility costs.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-ord1",
+    "type": "ordering",
+    "prompt": "Put one turn of the event loop in order.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Take a task"
+      },
+      {
+        "id": "s2",
+        "text": "Run JavaScript to completion"
+      },
+      {
+        "id": "s3",
+        "text": "Drain eligible microtasks"
+      },
+      {
+        "id": "s4",
+        "text": "Allow rendering and host work"
+      },
+      {
+        "id": "s5",
+        "text": "Take another task"
+      }
+    ],
+    "explanation": "The chain is the loop's own: take a task, run JavaScript to completion, drain eligible microtasks, allow rendering and host work, take another task. The order is why long tasks delay input and rendering — the fourth step waits on the second — and why a loop that continually enqueues microtasks can starve other work at the third.",
+    "difficulty": "beginner",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-sa1",
+    "type": "short-answer",
+    "prompt": "A page stops repainting and stops responding to input, yet nothing it runs takes more than a fraction of a millisecond. What is happening?",
+    "accept": [
+      "microtask starvation",
+      "microtask loop",
+      "a microtask loop",
+      "a loop that continually enqueues microtasks",
+      "a loop that keeps enqueuing microtasks",
+      "continually enqueuing microtasks",
+      "microtasks",
+      "starvation by microtasks",
+      "the microtask queue never drains"
+    ],
+    "hints": [
+      "Rendering and host work get their turn at only one point in the loop.",
+      "Something is refilling a queue that has to be emptied before that point is reached."
+    ],
+    "explanation": "A loop that continually enqueues microtasks can starve other work. Eligible jobs are drained before the loop allows rendering and host work, so a queue that refills itself never lets the turn reach that step — and because every individual job is short, nothing here looks like a long task. The symptom rules the obvious cause out rather than confirming it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-mc1",
+    "type": "multiple-choice",
+    "prompt": "A loader awaits the profile, then awaits the settings, then awaits the notifications. None of the three depends on the others. What has that bought, and what has it spent?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Sequential readability, at the cost of accidentally serializing three independent operations",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Explicit dependency order, at the cost of cancelling the other two if one fails",
+        "feedback": "Promises do make dependency order explicit, but they do not cancel underlying work by themselves, and nothing here cancels anything."
+      },
+      {
+        "id": "c",
+        "text": "Neither — `await` is how a promise is consumed, and the three still proceed together",
+        "feedback": "`async`/`await` improves sequential readability while accidentally serializing independent operations if used carelessly. Awaiting each in turn is that carelessness."
+      },
+      {
+        "id": "d",
+        "text": "Responsiveness, at the cost of moving the work off this agent",
+        "feedback": "Moving work off the agent is what workers do, and they add serialization, lifecycle and coordination overhead of their own. Nothing here leaves the agent."
+      }
+    ],
+    "explanation": "`async`/`await` improves sequential readability while accidentally serializing independent operations if used carelessly. These three have no dependency between them, so the sequence is paid for in elapsed time and buys only the shape of the source.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-card1",
+    "type": "flashcard",
+    "front": "Language and host",
+    "back": "The language defines values, functions, execution contexts, modules, promises, and jobs. The browser supplies DOM, timers, networking, events, and an event loop that schedules host work.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-card2",
+    "type": "flashcard",
+    "front": "Run to completion",
+    "back": "ECMAScript jobs run only when no other execution context is active, and a started job runs to completion. It protects one job from interruption and says nothing about which job runs first.",
+    "examples": [
+      "Ecma International, ECMAScript Language Specification: Jobs"
+    ],
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-card3",
+    "type": "flashcard",
+    "front": "Closures, and stale closures",
+    "back": "Closures retain lexical bindings. A stale closure is that same mechanism read later: a callback running against the values it captured rather than the current ones.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-card4",
+    "type": "flashcard",
+    "front": "What promises do not do",
+    "back": "Promises make dependency order explicit but do not cancel underlying work by themselves, which is why a search box has to discard an older answer on arrival rather than prevent it.",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "javascript-runtime-card5",
+    "type": "flashcard",
+    "front": "Workers",
+    "back": "Separate agents with message-based coordination and constrained shared memory. They preserve UI responsiveness for CPU-heavy tasks but add serialization, lifecycle, and coordination overhead.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-mat1",
+    "type": "matching",
+    "prompt": "Match each fact the news app holds to the store it is kept in.",
+    "pairs": [
+      {
+        "left": "Article assets",
+        "right": "HTTP cache"
+      },
+      {
+        "left": "The selected theme",
+        "right": "Local storage"
+      },
+      {
+        "left": "Saved-reading metadata",
+        "right": "IndexedDB"
+      },
+      {
+        "left": "Account state",
+        "right": "The server, as authority"
+      }
+    ],
+    "distractors": [
+      "A secure, HTTP-only cookie",
+      "The service-worker cache"
+    ],
+    "explanation": "Each placement answers the same five axes — lifetime, sensitivity, size, consistency and server visibility. Article assets are reusable responses; the theme is simple client state kept locally because losing it is acceptable; saved-reading metadata is larger structured client data; account state has to agree with the server, so the server is authority for it. Both distractors are real mechanisms that this app does not use for these four facts: a secure, HTTP-only cookie is where a server session identifier belongs when frontend code does not need to read it, and a service-worker cache is a programmable resource cache the worker itself decides about.",
+    "difficulty": "beginner",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-mc1",
+    "type": "multiple-choice",
+    "prompt": "An app writes an offline save to IndexedDB and immediately shows it to the reader as saved. Which assumption has it made that the platform does not support?",
+    "options": [
+      {
+        "id": "a",
+        "text": "That local data is durable — browsers may evict storage under pressure, and users can clear it",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "That IndexedDB can hold larger structured client data",
+        "feedback": "It can; that is its primary use. What fails here is a claim about permanence rather than about shape."
+      },
+      {
+        "id": "c",
+        "text": "That the browser will keep the stored record in the same shape across releases",
+        "feedback": "Versioning stored schemas is the application's job, and nothing in this scenario changes the schema. The claim that fails is “saved”."
+      },
+      {
+        "id": "d",
+        "text": "That origin-scoped storage keeps other sites out",
+        "feedback": "Origin-scoped APIs do prevent arbitrary sites from reading one another's state. That is a promise the platform makes rather than one it withholds."
+      }
+    ],
+    "explanation": "Assuming local data is durable is one of the named mistakes: browsers may evict storage under pressure, and users can clear it. The news app is careful about exactly this — offline saves carry unique operation IDs and display “pending sync” until acknowledged, which is a weaker and truer claim than “saved”.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-ms1",
+    "type": "multi-select",
+    "prompt": "A team adds an offline mutation queue so readers can act without a connection. Which obligations does that take on?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Conflict rules, for work the server has already seen differently",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Retry rules, for work that has to be attempted again later",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Identity rules, so an operation can be recognised when it is sent again",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "A guarantee that the queue survives until the connection returns"
+      },
+      {
+        "id": "e",
+        "text": "Presenting queued work as already applied, so the interface stays simple"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Offline mutation queues improve resilience but require conflict, retry, and identity rules — three obligations that arrive with the feature rather than later. The fourth option is not on offer: browsers may evict storage under pressure and users can clear it, so nothing guarantees the queue survives. The fifth is a named mistake, presenting stale offline data as current; the news app displays “pending sync” until the server acknowledges instead.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-card1",
+    "type": "flashcard",
+    "front": "Where browser storage sits",
+    "back": "Between volatile frontend memory and authoritative server data. It is generally partitioned and governed by origin and browser policy, and it is not an unlimited local database.",
+    "reverse": true,
+    "examples": [
+      "WHATWG, Storage Standard"
+    ],
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-card2",
+    "type": "flashcard",
+    "front": "Which stores travel with a request",
+    "back": "The HTTP cache is applied by fetch machinery and cookies go according to cookie policy. Session and local storage and IndexedDB are not sent automatically, and for a service-worker cache the worker decides.",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-card3",
+    "type": "flashcard",
+    "front": "Freshness and validators",
+    "back": "HTTP freshness can avoid revalidation; validators allow conditional requests.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-card4",
+    "type": "flashcard",
+    "front": "Origin scoping, and its limit",
+    "back": "Origin-scoped APIs prevent arbitrary sites from reading one another's state. They do not coordinate an origin with itself: multiple tabs can update shared origin storage without application-level coordination.",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-storage-and-caching-card5",
+    "type": "flashcard",
+    "front": "What aggressive caching costs",
+    "back": "It improves latency while raising staleness and invalidation costs.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-mc1",
+    "type": "multiple-choice",
+    "prompt": "The network panel records a response arriving; the script that made the call has an error and no data. Which step of the browser's algorithm accounts for the gap?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Filtering the response for the caller",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Applying credentials, origin and cache policy",
+        "feedback": "Policy is applied while the request is being constructed and sent, and this request was sent — the panel recorded a response coming back. What the caller receives is decided after that."
+      },
+      {
+        "id": "c",
+        "text": "Resolving or reusing the connection",
+        "feedback": "A connection was resolved and the response travelled over it. Connection pools amortize DNS, transport and TLS work; none of that withholds a body."
+      },
+      {
+        "id": "d",
+        "text": "Following the network and redirects",
+        "feedback": "That step ended with a response arriving, which is exactly what the panel records. The gap opens after it."
+      }
+    ],
+    "explanation": "Application code requests a resource; the browser applies a larger security and protocol algorithm whose last step filters the response for the caller. That is why a request seen in developer tools may differ from application options, and why a server response can arrive on the network yet remain unavailable to frontend code.",
+    "difficulty": "beginner",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-ms1",
+    "type": "multi-select",
+    "prompt": "A reader navigates away and the dashboard aborts its in-flight fetches. Which of these are true of that abort?",
+    "options": [
+      {
+        "id": "a",
+        "text": "It communicates that the caller no longer needs the result",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The server may already be processing the request",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "A mutation already under way is governed by idempotency and server-side deadlines rather than by the abort",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "The server has stopped working on the request"
+      },
+      {
+        "id": "e",
+        "text": "The response body may now be consumed a second time"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Abort signals communicate that a caller no longer needs a result, though the server may already be processing it — and the dashboard is explicit about the division: navigating away aborts local interest, while idempotency and server-side deadlines govern any mutation already in progress. Treating abort as proof the server stopped is a named failure, and consuming a response body twice is a separate one that an abort does nothing to license.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-mc2",
+    "type": "multiple-choice",
+    "prompt": "A dashboard that fetched three data sets concurrently is changed to fetch twelve from the same origin, and elapsed time gets worse. What happened?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Parallel fetches reduce elapsed time until connection, server, or client limits turn them into contention",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The fetches serialized, because a browser runs one fetch at a time",
+        "feedback": "Navigation, subresource loading and script-initiated fetches share infrastructure, and connection pools exist so concurrent work can reuse connections. Concurrency is not what was removed."
+      },
+      {
+        "id": "c",
+        "text": "CORS checks ran twelve times instead of three",
+        "feedback": "CORS is a browser rule about exposing selected cross-origin responses to scripts, and these fetches are same-origin. Nothing here crosses an origin."
+      },
+      {
+        "id": "d",
+        "text": "The waterfall grew, because each fetch had to discover the next",
+        "feedback": "Waterfalls are caused by discovering critical resources late, and these twelve were all started together. That is contention rather than a waterfall."
+      }
+    ],
+    "explanation": "Parallel fetches reduce elapsed time until connection, server, or client limits turn them into contention. The ceiling has three possible owners — the connections, the server, or the client — which is why the dashboard keeps to three independent data sets and gives each one a deadline and a visible partial-error state.",
+    "difficulty": "intermediate",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-card1",
+    "type": "flashcard",
+    "front": "What CORS is not",
+    "back": "CORS is a browser rule that lets a server opt into exposing selected cross-origin responses to scripts. It is not server authentication.",
+    "examples": [
+      "WHATWG, Fetch Standard"
+    ],
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-card2",
+    "type": "flashcard",
+    "front": "Connection pools",
+    "back": "They amortize DNS, transport, and TLS work, which is why resolving a connection is often reusing one that already exists.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-card3",
+    "type": "flashcard",
+    "front": "Three kinds of fetch, one infrastructure",
+    "back": "Navigation, subresource loading, and script-initiated fetches share infrastructure but have different destinations and policy.",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-card4",
+    "type": "flashcard",
+    "front": "Why a browser error says so little",
+    "back": "Browser errors often intentionally omit security-sensitive details from scripts, so a thin message is policy rather than a defect.",
+    "tags": [
+      "browser-platform"
+    ]
+  },
+  {
+    "id": "browser-networking-card5",
+    "type": "flashcard",
+    "front": "What prefetching costs",
+    "back": "Prefetching hides latency but spends bandwidth and may trigger unwanted work.",
+    "reverse": true,
+    "tags": [
+      "browser-platform"
+    ]
   }
 ]

@@ -44,5 +44,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-browser-platform-match",
+    "template": "matching",
+    "title": "Browser platform — match them up",
+    "source": {
+      "tags": [
+        "browser-platform"
+      ]
+    }
+  },
+  {
+    "id": "game-browser-platform-speed",
+    "template": "timed-round",
+    "title": "Browser platform — quick fire",
+    "source": {
+      "tags": [
+        "browser-platform"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]

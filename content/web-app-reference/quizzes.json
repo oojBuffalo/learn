@@ -31,5 +31,24 @@
       "clients-servers-and-resources-ms1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-browser-platform",
+    "title": "Browser platform check",
+    "items": [
+      "rendering-and-the-dom-mat1",
+      "rendering-and-the-dom-ms1",
+      "rendering-and-the-dom-mc1",
+      "javascript-runtime-ord1",
+      "javascript-runtime-sa1",
+      "javascript-runtime-mc1",
+      "browser-storage-and-caching-mat1",
+      "browser-storage-and-caching-mc1",
+      "browser-storage-and-caching-ms1",
+      "browser-networking-mc1",
+      "browser-networking-ms1",
+      "browser-networking-mc2"
+    ],
+    "passThreshold": 0.75
   }
 ]
