@@ -4441,7 +4441,7 @@
     "pairs": [
       {
         "left": "A receiver that accepts any token whose signature verifies",
-        "right": "read the issuer and audience the token already carries"
+        "right": "constrain the credential's audience"
       },
       {
         "left": "A queued job still holding the credential it started with",
