@@ -188,5 +188,30 @@
       "reliability-and-performance-mc1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-delivery-and-operations",
+    "title": "Delivery and operations check",
+    "items": [
+      "environments-and-configuration-fb1",
+      "environments-and-configuration-ms1",
+      "environments-and-configuration-mc1",
+      "continuous-integration-and-delivery-ord1",
+      "continuous-integration-and-delivery-mc1",
+      "continuous-integration-and-delivery-sa1",
+      "hosting-and-compute-mc1",
+      "hosting-and-compute-mat1",
+      "hosting-and-compute-ms1",
+      "containers-and-orchestration-mc1",
+      "containers-and-orchestration-sa1",
+      "containers-and-orchestration-ms1",
+      "cdns-edge-and-load-balancing-ms1",
+      "cdns-edge-and-load-balancing-mc1",
+      "cdns-edge-and-load-balancing-mat1",
+      "monitoring-and-incident-response-ord1",
+      "monitoring-and-incident-response-ms1",
+      "monitoring-and-incident-response-mc1"
+    ],
+    "passThreshold": 0.75
   }
 ]

@@ -205,5 +205,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-delivery-and-operations-match",
+    "template": "matching",
+    "title": "Delivery and operations — match them up",
+    "source": {
+      "tags": [
+        "delivery-and-operations"
+      ]
+    }
+  },
+  {
+    "id": "game-delivery-and-operations-speed",
+    "template": "timed-round",
+    "title": "Delivery and operations — quick fire",
+    "source": {
+      "tags": [
+        "delivery-and-operations"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]

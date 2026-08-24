@@ -6236,5 +6236,902 @@
     "tags": [
       "quality-and-observability"
     ]
+  },
+  {
+    "id": "environments-and-configuration-fb1",
+    "type": "fill-blank",
+    "prompt": "Complete this lesson's sentence about the one mechanism in the list that decides when a behavior starts.",
+    "template": "Feature flags separate {{1}} of code from {{2}} of behavior.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "release",
+          "the release"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "activation",
+          "the activation"
+        ]
+      }
+    ],
+    "hints": [
+      "Neither word names a mechanism. Both name a moment: when the code arrives, and when the behavior starts.",
+      "The lesson gives the pair in a single sentence, and the first of the two is what a flag makes safe to do early."
+    ],
+    "explanation": "Feature flags separate release of code from activation of behavior. Of the mechanisms listed beside it, environment variables, files, and configuration services deliver values, secret managers deliver credentials separately, startup validation rejects missing or malformed settings, and environment identity is enforced through accounts, networks, and permissions. None of those four decides when a behavior starts.",
+    "difficulty": "beginner",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-ms1",
+    "type": "multi-select",
+    "prompt": "This lesson keeps two things apart: what clear separation between environments produces, and the mechanisms that make configuration work. Which of these does it name as what the separation produces?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Releases become reproducible",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Environment-specific code branches are prevented",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Accidental access across development, test, staging, and production is limited",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Missing or malformed settings are rejected before traffic arrives"
+      },
+      {
+        "id": "e",
+        "text": "Credentials are delivered separately from other values"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Clear separation makes releases reproducible, prevents environment-specific code branches, and limits accidental access across development, test, staging, and production. The two rejected options are mechanisms rather than outcomes of the separation: startup validation rejects missing or malformed settings, and secret managers deliver credentials separately, which keeps a credential out of the thing being promoted.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team moves its operational limits out of the artifact and into a service that can change them while the process is running, rather than binding them only at deployment or startup. Which of this lesson's four purchases is the one they just made?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Dynamic configuration: rapid response, charged in state that is harder to reproduce",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Production-like staging: better rehearsal, charged in money and in traffic and data it still cannot match",
+        "feedback": "That purchase is about how faithful a second environment is. Nothing here adds an environment; a value that already existed simply moved to somewhere it can be changed later."
+      },
+      {
+        "id": "c",
+        "text": "Feature flags: reduced rollout risk, charged in branches that need owners and expiry",
+        "feedback": "A flag decides whether behavior in the artifact is switched on. What moved here is a value the application reads, and no branch was added to be owned or retired."
+      },
+      {
+        "id": "d",
+        "text": "Per-developer environments: isolated work, charged in provisioning and cleanup",
+        "feedback": "That one is about who gets a context of their own. It answers a question about how many environments exist, not about when a value is bound or who may change it."
+      }
+    ],
+    "explanation": "Dynamic configuration enables rapid response but makes state harder to reproduce. Configuration services are named among the things that deliver values, and moving a value somewhere it can be changed while the service runs is exactly the purchase this tradeoff describes: the response gets faster, and saying what the service was configured with at a past moment gets harder.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-card1",
+    "type": "flashcard",
+    "front": "An environment",
+    "back": "A running context with particular identities, data, dependencies, policies, and capacity.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-card2",
+    "type": "flashcard",
+    "front": "Configuration",
+    "back": "Values that vary across deployments without changing the built artifact, treated as typed, validated input to the application.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-card3",
+    "type": "flashcard",
+    "front": "Startup validation",
+    "back": "It rejects missing or malformed settings, failing before traffic is accepted.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-card4",
+    "type": "flashcard",
+    "front": "How environment identity is enforced",
+    "back": "Through accounts, networks, and permissions, not naming convention alone.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "environments-and-configuration-card5",
+    "type": "flashcard",
+    "front": "Environment drift",
+    "back": "It makes a tested artifact behave differently after promotion.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-ord1",
+    "type": "ordering",
+    "prompt": "Put this lesson's ladder from a change to its fate in production into the order it gives.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Commit"
+      },
+      {
+        "id": "s2",
+        "text": "Verify"
+      },
+      {
+        "id": "s3",
+        "text": "Build once"
+      },
+      {
+        "id": "s4",
+        "text": "Identify the artifact"
+      },
+      {
+        "id": "s5",
+        "text": "Deploy"
+      },
+      {
+        "id": "s6",
+        "text": "Observe"
+      },
+      {
+        "id": "s7",
+        "text": "Promote, or roll back"
+      }
+    ],
+    "explanation": "Commit, verify, build once, identify artifact, deploy, observe, promote or roll back. Every later environment receives the same artifact with different configuration, which is what makes building once a rule rather than an optimization: a second build produces a second artifact, and what was verified is no longer what is deployed. Preserving artifact identity is one of the four things the pipeline exists to do.",
+    "difficulty": "beginner",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-mc1",
+    "type": "multiple-choice",
+    "prompt": "A small production cohort is serving the new artifact. Every instance reports itself ready and the infrastructure graphs are clean, so the pipeline prepares to send the artifact further. Which of this lesson's claims says that evidence was never the thing that decides?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Health checks govern admission; user-facing signals govern promotion",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Every later environment receives the same artifact with different configuration",
+        "feedback": "That is what makes the thing being advanced the same thing that was verified. It settles what travels through the ladder, not what decides whether it travels any further."
+      },
+      {
+        "id": "c",
+        "text": "Feature flags decouple exposure",
+        "feedback": "A flag decides whether behavior is switched on for anyone. That is a separate control from whether this artifact travels further, and it is still available after the artifact stops moving."
+      },
+      {
+        "id": "d",
+        "text": "Required checks validate structure, tests, security policy, and compatibility",
+        "feedback": "Those run before the artifact reaches production at all. They can pass on a change that then fails for real users, which is why there is a later gate."
+      }
+    ],
+    "explanation": "Health checks govern admission: they decide whether an instance may take traffic. User-facing signals govern promotion: they decide whether the artifact goes further. Green infrastructure health masks user failure is the named failure mode, and the worked example uses the other kind of evidence, comparing error and latency objectives on a small production cohort before promoting or restoring the previous artifact.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-sa1",
+    "type": "short-answer",
+    "prompt": "Automatic production deployment requires trustworthy rollback. A change ships alongside a migration, and for part of the rollout both versions of the code will be answering. What property does this lesson require of that migration?",
+    "accept": [
+      "backward compatible",
+      "backward-compatible",
+      "backwards compatible",
+      "backwards-compatible",
+      "backward compatibility",
+      "backwards compatibility",
+      "backward compatible migration",
+      "backward-compatible migration"
+    ],
+    "match": "fold",
+    "hints": [
+      "The property is named in the same phrase as the migrations that support overlapping versions.",
+      "This lesson names the opposite case as the reason a rollback becomes impossible: a destructive migration."
+    ],
+    "explanation": "Backward-compatible migrations support overlapping versions, which is what lets two versions answer at once during a rollout. Rollback is impossible after a destructive migration, so the demand that automatic production deployment makes for trustworthy rollback reaches back into the migration that shipped beside the code.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-card1",
+    "type": "flashcard",
+    "front": "Continuous integration",
+    "back": "Merging small changes into a shared line with automated feedback.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-card2",
+    "type": "flashcard",
+    "front": "Continuous delivery",
+    "back": "Keeping a verified artifact deployable through controlled promotion.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-card3",
+    "type": "flashcard",
+    "front": "Deployment strategies",
+    "back": "Rolling, blue-green, and canary rollout.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-card4",
+    "type": "flashcard",
+    "front": "Release provenance",
+    "back": "It protects the software supply chain, alongside reproducible builds that produce immutable artifacts.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "continuous-integration-and-delivery-card5",
+    "type": "flashcard",
+    "front": "What every later environment receives",
+    "back": "The same artifact, with different configuration.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team moves a workload onto a function platform and plans for it as though whatever the workload asks for will simply be there, because nobody is running machines any more. Which of this lesson's claims corrects that expectation most directly?",
+    "options": [
+      {
+        "id": "a",
+        "text": "“Serverless” changes ownership; it does not remove servers or limits",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The right abstraction matches workload lifecycle, state, networking, scaling, compliance, and operational capability, not merely the language runtime",
+        "feedback": "That says what a choice should be matched against, and it is a good reason to be careful here. It does not say what survives the move once the choice is made."
+      },
+      {
+        "id": "c",
+        "text": "Compute options assign different responsibilities to the team and the provider",
+        "feedback": "True, and one step short. It says the split moves. The correction this team needs is about the part that does not move at all."
+      },
+      {
+        "id": "d",
+        "text": "Hosting provides the environments where web workloads execute",
+        "feedback": "The definition, which says where a workload runs. The team's mistake is about what it can run out of, which the definition never addressed."
+      }
+    ],
+    "explanation": "“Serverless” changes ownership; it does not remove servers or limits. Function platforms invoke code for events with platform-defined limits, so the limits are not only still present, they are set by somebody else. The model this lesson gives is a question about who manages machine provisioning, operating-system updates, runtime lifecycle, scaling, health, isolation, networking, and incident response — eight answers that move, over machines that do not stop existing.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-mat1",
+    "type": "matching",
+    "prompt": "Match each of this lesson's five compute entries to what it provides.",
+    "pairs": [
+      {
+        "left": "A virtual machine",
+        "right": "provides a durable operating-system instance"
+      },
+      {
+        "left": "A container",
+        "right": "packages a process filesystem and metadata, sharing a host kernel"
+      },
+      {
+        "left": "An application platform",
+        "right": "accepts an artifact and manages runtime instances"
+      },
+      {
+        "left": "A function platform",
+        "right": "invokes code for events, within platform-defined limits"
+      },
+      {
+        "left": "Regions and zones",
+        "right": "define failure and latency domains"
+      }
+    ],
+    "distractors": [
+      "removes servers and the limits that come with them",
+      "makes the language runtime the thing the choice turns on"
+    ],
+    "explanation": "Virtual machines provide durable operating-system instances. Containers package a process filesystem and metadata while sharing a host kernel. Application platforms accept an artifact and manage runtime instances. Function platforms invoke code for events with platform-defined limits. Regions and zones define failure and latency domains, which is the one entry that is not somewhere a process runs. Neither distractor describes anything on the list: “serverless” changes ownership rather than removing servers or limits, and the right abstraction matches workload lifecycle, state, networking, scaling, compliance, and operational capability, not merely the language runtime.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-ms1",
+    "type": "multi-select",
+    "prompt": "The conventional API runs as stateless managed containers in two zones, keeps session and database state outside the instance, scales on concurrency within a database connection budget, and drains requests during rollout. Which of this lesson's named hosting failures does that description not address at all?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Startup exceeds health deadlines",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Instance identity is shared",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "A regional architecture still depends on one global control or secret service",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Local disk is treated as durable"
+      },
+      {
+        "id": "e",
+        "text": "Scaling floods a fixed database"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Six failures are named here, and this description answers two of them. External session and database storage means nothing held locally is trusted to survive, so local disk is not being treated as durable. The connection budget lets scaling follow concurrency only as far as the database can answer, so scaling does not flood it. The three selected options are untouched: nothing in the description concerns how long the workload takes to become ready, nothing distinguishes one instance's identity from another's, and two zones is not two regions, so a dependency on a single global control or secret service is neither created nor ruled out here.",
+    "difficulty": "advanced",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-card1",
+    "type": "flashcard",
+    "front": "Hosting",
+    "back": "It provides the environments where web workloads execute.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-card2",
+    "type": "flashcard",
+    "front": "The eight questions a compute choice answers",
+    "back": "Who manages machine provisioning, operating-system updates, runtime lifecycle, scaling, health, isolation, networking, and incident response.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-card3",
+    "type": "flashcard",
+    "front": "Autoscaling",
+    "back": "It follows metrics with delay and needs capacity limits.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-card4",
+    "type": "flashcard",
+    "front": "Colocating compute with data",
+    "back": "It reduces latency, where multi-region deployment instead improves reach or resilience and complicates consistency.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "hosting-and-compute-card5",
+    "type": "flashcard",
+    "front": "Lower-level compute",
+    "back": "It offers control and portability at higher operational cost.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-mc1",
+    "type": "multiple-choice",
+    "prompt": "An operator deletes one of the running instances by hand. Moments later an equivalent one is in its place, and nobody deployed anything. Which of this lesson's claims accounts for that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Desired state declares what should run; controllers compare it with observed state and continuously reconcile differences",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Orchestration schedules, connects, replaces, and scales many such workloads",
+        "feedback": "This names replacement among the operations and stops one step short of the answer. It says the machinery can replace things; it does not say what makes it decide to."
+      },
+      {
+        "id": "c",
+        "text": "A container is an isolated process created from an image",
+        "feedback": "That says a container is cheap to discard and cheap to recreate. It says nothing about anything noticing that one is gone."
+      },
+      {
+        "id": "d",
+        "text": "Orchestration adds a distributed control plane and a resource model",
+        "feedback": "That names what the machinery costs to run. The control plane is where the comparison happens, but the claim being asked for is the comparison itself."
+      }
+    ],
+    "explanation": "Desired state declares what should run; controllers compare it with observed state and continuously reconcile differences. Kubernetes, for example, provides declarative management of containerized workloads and services. Nothing in that model is an instruction to act — actions are what a difference produces, which is why deleting an instance is itself the trigger for its replacement.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-sa1",
+    "type": "short-answer",
+    "prompt": "An orchestrated service is under heavy load. It is still answering, only slowly, and it would recover if the load eased. One of this lesson's three instance-level checks will instead have it replaced. Which one?",
+    "accept": [
+      "liveness",
+      "a liveness check",
+      "the liveness check",
+      "liveness check",
+      "liveness checks"
+    ],
+    "match": "fold",
+    "hints": [
+      "Of the three, one decides whether requests arrive, one decides what happens to work in flight, and one decides whether the instance goes on existing.",
+      "This lesson names it in the same sentence as replacement, and the opening scene is this check doing exactly what it was told."
+    ],
+    "explanation": "Readiness controls traffic, liveness can trigger replacement, and graceful termination supports draining. Liveness checks restart overloaded but recoverable processes is the named failure: the check cannot tell a process that will never answer from one that is merely answering late, so replacement lands on something that would have come back, and the work it was partway through goes with it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-ms1",
+    "type": "multi-select",
+    "prompt": "A team adopting an orchestrator writes down what they will no longer have to build for themselves. Which items on that list does this lesson say the orchestrator does not supply?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Application-level retries",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Transactions",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Backups",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Stable discovery over changing instances"
+      },
+      {
+        "id": "e",
+        "text": "Placement according to resources and constraints"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Teams assume the orchestrator supplies application-level retries, transactions, or backups — a named failure mode, and the reason the worked example leaves persistent data in managed storage rather than expecting the fleet machinery to keep it. The two rejected options are things the machinery genuinely provides: services provide stable discovery over changing instances, and schedulers place workloads according to resources and constraints.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-card1",
+    "type": "flashcard",
+    "front": "A container image",
+    "back": "It packages an application filesystem and launch metadata; a container is an isolated process created from it.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-card2",
+    "type": "flashcard",
+    "front": "Runtime isolation",
+    "back": "It uses operating-system mechanisms, and is not a complete security boundary by itself.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-card3",
+    "type": "flashcard",
+    "front": "Sidecars",
+    "back": "They package cross-cutting behavior while consuming capacity and coupling lifecycle.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-card4",
+    "type": "flashcard",
+    "front": "Mutable tags",
+    "back": "They hide version identity.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "containers-and-orchestration-card5",
+    "type": "flashcard",
+    "front": "When orchestration is worth its cost",
+    "back": "For many services or specialized placement; a managed application platform may be simpler for a small estate.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-ms1",
+    "type": "multi-select",
+    "prompt": "A request crosses several edge hops before an application instance sees it. Which of these does this lesson say every hop has to carry forward through trusted fields?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The original scheme",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The original host",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The client context",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "The deadline",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "The trace information",
+        "correct": true
+      },
+      {
+        "id": "f",
+        "text": "Which of the hops accepted the traffic first"
+      },
+      {
+        "id": "g",
+        "text": "Which origin was found healthy"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "At each hop, preserve the original scheme, host, client context, deadline, and trace information through trusted fields. The two rejected options are things this layer decides rather than things it carries: edge systems accept traffic near users and route requests toward healthy origins, and load balancers distribute work across endpoints according to health and routing rules. Both facts are produced at a hop rather than handed down from the one before it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team wants some traffic sent to a different set of endpoints from the rest, and the thing that decides is what the request is asking for. Which of this lesson's mechanisms can make that decision?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Layer-7 balancing, which can inspect HTTP targets and fields",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Layer-4 balancing, which routes connections",
+        "feedback": "A connection is the whole of what it sees. There is nothing in it to read the request out of, so it cannot sort traffic by what is being asked for."
+      },
+      {
+        "id": "c",
+        "text": "Anycast or DNS routing, which selects an edge location",
+        "feedback": "That settles which edge a client reaches, before any request has been read at all. It is a choice about place rather than about content."
+      },
+      {
+        "id": "d",
+        "text": "Health checks, which remove unsuitable origins",
+        "feedback": "They decide which endpoints are eligible to receive anything. Eligibility is not the same question as which endpoints a particular request belongs on."
+      }
+    ],
+    "explanation": "Layer-4 balancing routes connections; layer-7 balancing can inspect HTTP targets and fields, which is what makes routing on what a request is asking for possible at all. Load balancers distribute work across endpoints according to health and routing rules, and the layer decides how much of the request the rule is allowed to look at.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-mat1",
+    "type": "matching",
+    "prompt": "Match each edge choice to what this lesson says it is charged for.",
+    "pairs": [
+      {
+        "left": "Caching personalized content",
+        "right": "private or carefully varied keys are required"
+      },
+      {
+        "left": "Sticky sessions",
+        "right": "balancing and failover are impaired"
+      },
+      {
+        "left": "Global routing",
+        "right": "propagation and regional consistency become visible"
+      },
+      {
+        "left": "Edge computation",
+        "right": "code and observability are dispersed"
+      }
+    ],
+    "distractors": [
+      "origin load falls, with no further condition attached",
+      "the public origin stops being authenticated"
+    ],
+    "explanation": "Caching static and public content reduces origin load; personalized content needs private or carefully varied keys. Sticky sessions simplify instance-local state but impair balancing and failover. Global routing improves reach while making propagation and regional consistency visible. Edge computation reduces latency but disperses code and observability. Neither distractor is a charge: reduced origin load is what caching static and public content buys rather than what it costs, and TLS termination authenticates the public origin, which nothing on this list gives up.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-card1",
+    "type": "flashcard",
+    "front": "Edge systems",
+    "back": "They accept traffic near users, terminate connections, apply policy, cache responses, and route requests toward healthy origins.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-card2",
+    "type": "flashcard",
+    "front": "TLS termination at the edge",
+    "back": "It authenticates the public origin.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-card3",
+    "type": "flashcard",
+    "front": "Rate limiting and request-size limits",
+    "back": "They reject abuse early.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-card4",
+    "type": "flashcard",
+    "front": "Cache keys and freshness",
+    "back": "They determine which responses can be reused.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "cdns-edge-and-load-balancing-card5",
+    "type": "flashcard",
+    "front": "Missing cache dimensions",
+    "back": "They leak private data.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-ord1",
+    "type": "ordering",
+    "prompt": "Put this lesson's sequence for what happens during an incident into the order it gives.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Establish command"
+      },
+      {
+        "id": "s2",
+        "text": "Bound impact"
+      },
+      {
+        "id": "s3",
+        "text": "Stabilize"
+      },
+      {
+        "id": "s4",
+        "text": "Investigate in parallel"
+      },
+      {
+        "id": "s5",
+        "text": "Communicate"
+      },
+      {
+        "id": "s6",
+        "text": "Verify recovery"
+      },
+      {
+        "id": "s7",
+        "text": "Capture follow-up work"
+      }
+    ],
+    "explanation": "Establish command, bound impact, stabilize, investigate in parallel, communicate, verify recovery, and capture follow-up work. Incident response coordinates detection, mitigation, communication, recovery, and learning when impact requires focused action, and the goal is to reduce user harm and recovery time while preserving a clear operating picture. The worked example runs the middle of this sequence with three people at once: the lead declares scope, two responders investigate in parallel, and communication reports affected regions.",
+    "difficulty": "beginner",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-ms1",
+    "type": "multi-select",
+    "prompt": "This lesson allows two kinds of thing to page a person, and refuses the rest. Which of these would its rule admit?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A user-facing journey that is failing for people right now",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A resource that will be exhausted shortly",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Recent failure spending an error budget at a rate the budget cannot absorb",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "An exception raised inside the application, whether or not anyone can act on it"
+      },
+      {
+        "id": "e",
+        "text": "A dashboard that has stopped showing deployment markers"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Alert on actionable user-visible symptoms or imminent exhaustion. A journey failing for people now is the first kind; a resource that will not last long enough is the second; and an SLO burn-rate alert relates recent failure to an error budget, which is that budget being exhausted at a rate rather than by a tally. The two rejected options are not conditions this rule admits. Every exception pages someone is a named failure, and the goal is to reduce user harm and recovery time, not to produce the maximum number of alerts — an alert nobody can act on has spent attention without buying anything. Dashboards that omit deployment markers is a failure of the operating picture rather than something a page could be raised on.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-mc1",
+    "type": "multiple-choice",
+    "prompt": "An incident is about to be closed. The graphs have returned to where they were, the alert has cleared, and no new reports are arriving. Which of this lesson's named failures is the team walking into?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Recovery is declared when metrics normalize but queued work remains corrupt or delayed",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Communication waits for perfect certainty",
+        "feedback": "That failure sits at the other end of the incident, where a team says nothing until it is sure. It delays the telling rather than the closing, and this team is about to say something rather than nothing."
+      },
+      {
+        "id": "c",
+        "text": "Monitoring depends on the failed system",
+        "feedback": "That makes the signals untrustworthy while the incident is running. Here the signals are believed and are accurate; the question is what they were never measuring."
+      },
+      {
+        "id": "d",
+        "text": "Every exception pages someone",
+        "feedback": "An alerting failure, about what gets a person's attention in the first place. It says nothing about when an incident may be declared over."
+      }
+    ],
+    "explanation": "Recovery is declared when metrics normalize but queued work remains corrupt or delayed. Verify recovery is a step of its own in the sequence, before capture follow-up work, and the worked example shows what satisfying it looks like: recovery includes draining backlogs and verifying payments before closure. A graph returning to where it was is the same signal that raised the alarm, answering the same question it always answered.",
+    "difficulty": "intermediate",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-card1",
+    "type": "flashcard",
+    "front": "Monitoring",
+    "back": "It evaluates signals against expected service behavior.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-card2",
+    "type": "flashcard",
+    "front": "Incident response",
+    "back": "It coordinates detection, mitigation, communication, recovery, and learning when impact requires focused action.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-card3",
+    "type": "flashcard",
+    "front": "SLO burn-rate alerts",
+    "back": "They relate recent failure to an error budget.",
+    "reverse": true,
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-card4",
+    "type": "flashcard",
+    "front": "Synthetic probes and real-user monitoring",
+    "back": "Synthetic probes test controlled journeys; real-user monitoring captures actual experience.",
+    "tags": [
+      "delivery-and-operations"
+    ]
+  },
+  {
+    "id": "monitoring-and-incident-response-card5",
+    "type": "flashcard",
+    "front": "What to alert on",
+    "back": "Actionable user-visible symptoms, or imminent exhaustion.",
+    "tags": [
+      "delivery-and-operations"
+    ]
   }
 ]
