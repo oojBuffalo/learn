@@ -6556,7 +6556,7 @@
         "feedback": "The definition, which says where a workload runs. The team's mistake is about what it can run out of, which the definition never addressed."
       }
     ],
-    "explanation": "“Serverless” changes ownership; it does not remove servers or limits. Function platforms invoke code for events with platform-defined limits, so the limits are not only still present, they are set by somebody else. The model this lesson gives is a question about who manages machine provisioning, operating-system updates, runtime lifecycle, scaling, health, isolation, networking, and incident response — eight answers that move, over machines that do not stop existing.",
+    "explanation": "“Serverless” changes ownership; it does not remove servers or limits. The model here is a question about who manages machine provisioning, operating-system updates, runtime lifecycle, scaling, health, isolation, networking, and incident response — eight answers that a compute option redistributes, over machines and limits that do not stop existing because the answers moved. Compute options range from virtual machines and containers to managed application platforms and functions, each assigning different responsibilities to the team and the provider, which is the split the word describes and the only thing it describes.",
     "difficulty": "intermediate",
     "tags": [
       "delivery-and-operations"
@@ -6685,7 +6685,7 @@
   {
     "id": "containers-and-orchestration-mc1",
     "type": "multiple-choice",
-    "prompt": "An operator deletes one of the running instances by hand. Moments later an equivalent one is in its place, and nobody deployed anything. Which of this lesson's claims accounts for that?",
+    "prompt": "Someone deletes one of the running instances by hand. Moments later an equivalent one is in its place, and nobody deployed anything. Which of this lesson's claims accounts for that?",
     "options": [
       {
         "id": "a",
@@ -6695,12 +6695,12 @@
       {
         "id": "b",
         "text": "Orchestration schedules, connects, replaces, and scales many such workloads",
-        "feedback": "This names replacement among the operations and stops one step short of the answer. It says the machinery can replace things; it does not say what makes it decide to."
+        "feedback": "This names replacing among the operations and stops one step short of the answer. It says the machinery can replace things; it does not say what makes it decide to."
       },
       {
         "id": "c",
         "text": "A container is an isolated process created from an image",
-        "feedback": "That says a container is cheap to discard and cheap to recreate. It says nothing about anything noticing that one is gone."
+        "feedback": "That defines what a container is. Nothing in the definition says that anything notices when one of them is gone, or that another one follows."
       },
       {
         "id": "d",
@@ -6708,7 +6708,7 @@
         "feedback": "That names what the machinery costs to run. The control plane is where the comparison happens, but the claim being asked for is the comparison itself."
       }
     ],
-    "explanation": "Desired state declares what should run; controllers compare it with observed state and continuously reconcile differences. Kubernetes, for example, provides declarative management of containerized workloads and services. Nothing in that model is an instruction to act — actions are what a difference produces, which is why deleting an instance is itself the trigger for its replacement.",
+    "explanation": "Desired state declares what should run; controllers compare it with observed state and continuously reconcile differences. Kubernetes, for example, provides declarative management of containerized workloads and services. Nothing in that model is an instruction to act — actions are what a difference produces, which is why deleting an instance is itself the difference that gets it replaced.",
     "difficulty": "intermediate",
     "tags": [
       "delivery-and-operations"
@@ -6717,7 +6717,7 @@
   {
     "id": "containers-and-orchestration-sa1",
     "type": "short-answer",
-    "prompt": "An orchestrated service is under heavy load. It is still answering, only slowly, and it would recover if the load eased. One of this lesson's three instance-level checks will instead have it replaced. Which one?",
+    "prompt": "An orchestrated service is under heavy load. It is still answering, only slowly, and it would recover if the load eased. One of the two checks this lesson names will instead have it replaced. Which one?",
     "accept": [
       "liveness",
       "a liveness check",
@@ -6727,7 +6727,7 @@
     ],
     "match": "fold",
     "hints": [
-      "Of the three, one decides whether requests arrive, one decides what happens to work in flight, and one decides whether the instance goes on existing.",
+      "Of the two, one decides whether requests arrive and the other decides whether the instance goes on existing.",
       "This lesson names it in the same sentence as replacement, and the opening scene is this check doing exactly what it was told."
     ],
     "explanation": "Readiness controls traffic, liveness can trigger replacement, and graceful termination supports draining. Liveness checks restart overloaded but recoverable processes is the named failure: the check cannot tell a process that will never answer from one that is merely answering late, so replacement lands on something that would have come back, and the work it was partway through goes with it.",
@@ -6979,41 +6979,23 @@
     ]
   },
   {
-    "id": "monitoring-and-incident-response-ord1",
-    "type": "ordering",
-    "prompt": "Put this lesson's sequence for what happens during an incident into the order it gives.",
-    "steps": [
-      {
-        "id": "s1",
-        "text": "Establish command"
-      },
-      {
-        "id": "s2",
-        "text": "Bound impact"
-      },
-      {
-        "id": "s3",
-        "text": "Stabilize"
-      },
-      {
-        "id": "s4",
-        "text": "Investigate in parallel"
-      },
-      {
-        "id": "s5",
-        "text": "Communicate"
-      },
-      {
-        "id": "s6",
-        "text": "Verify recovery"
-      },
-      {
-        "id": "s7",
-        "text": "Capture follow-up work"
-      }
+    "id": "monitoring-and-incident-response-sa1",
+    "type": "short-answer",
+    "prompt": "An alert fires and several people join. Everyone is investigating, and nobody has said who is deciding what happens next. Which step of this lesson’s incident sequence has been skipped?",
+    "accept": [
+      "establish command",
+      "establishing command",
+      "command",
+      "establish incident command",
+      "incident command"
     ],
-    "explanation": "Establish command, bound impact, stabilize, investigate in parallel, communicate, verify recovery, and capture follow-up work. Incident response coordinates detection, mitigation, communication, recovery, and learning when impact requires focused action, and the goal is to reduce user harm and recovery time while preserving a clear operating picture. The worked example runs the middle of this sequence with three people at once: the lead declares scope, two responders investigate in parallel, and communication reports affected regions.",
-    "difficulty": "beginner",
+    "match": "fold",
+    "hints": [
+      "Six of the seven steps are about the failure. The skipped one is about the people working on it.",
+      "It is the first step in the sequence, and nothing after it can be assigned until it has happened."
+    ],
+    "explanation": "The sequence runs: establish command, bound impact, stabilize, investigate in parallel, communicate, verify recovery, and capture follow-up work. Establish command is the step that settles who is deciding, and investigating in parallel is a later step that presumes somebody is coordinating the parallel work. Incident response coordinates detection, mitigation, communication, recovery, and learning when impact requires focused action, and this lesson reads coordination as the part that has to exist before any of the rest can be handed out.",
+    "difficulty": "intermediate",
     "tags": [
       "delivery-and-operations"
     ]
@@ -7025,7 +7007,7 @@
     "options": [
       {
         "id": "a",
-        "text": "A user-facing journey that is failing for people right now",
+        "text": "A journey that is failing for people right now",
         "correct": true
       },
       {
@@ -7035,12 +7017,12 @@
       },
       {
         "id": "c",
-        "text": "Recent failure spending an error budget at a rate the budget cannot absorb",
+        "text": "Recent failure spending an error budget faster than its tolerance allows",
         "correct": true
       },
       {
         "id": "d",
-        "text": "An exception raised inside the application, whether or not anyone can act on it"
+        "text": "An exception, whether or not anyone can act on it"
       },
       {
         "id": "e",
@@ -7048,7 +7030,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "Alert on actionable user-visible symptoms or imminent exhaustion. A journey failing for people now is the first kind; a resource that will not last long enough is the second; and an SLO burn-rate alert relates recent failure to an error budget, which is that budget being exhausted at a rate rather than by a tally. The two rejected options are not conditions this rule admits. Every exception pages someone is a named failure, and the goal is to reduce user harm and recovery time, not to produce the maximum number of alerts — an alert nobody can act on has spent attention without buying anything. Dashboards that omit deployment markers is a failure of the operating picture rather than something a page could be raised on.",
+    "explanation": "Alert on actionable user-visible symptoms or imminent exhaustion. A journey failing for people now is the first kind; a resource that will not last long enough is the second; and an SLO burn-rate alert relates recent failure to an error budget, which is that tolerance being spent at a rate rather than by a tally. The two rejected options are not conditions this rule admits. Every exception pages someone is a named failure, and the goal is to reduce user harm and recovery time, not to produce the maximum number of alerts — an alert nobody can act on has spent attention without buying anything. Dashboards that omit deployment markers is a failure of the operating picture rather than something a page could be raised on.",
     "difficulty": "intermediate",
     "tags": [
       "delivery-and-operations"

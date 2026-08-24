@@ -48,7 +48,7 @@ The incident itself is a sequence. Establish command, bound impact, stabilize,
 investigate in parallel, communicate, verify recovery, and capture follow-up
 work.
 
-::activity{id="monitoring-and-incident-response-ord1"}
+::activity{id="monitoring-and-incident-response-sa1"}
 
 ## Burn rate, probes, runbooks, roles, and the record
 
@@ -71,7 +71,7 @@ someone, and communication waits for perfect certainty.
 
 ::activity{id="monitoring-and-incident-response-ms1"}
 
-## One checkout alert, three people, and a closure that waited
+## One checkout alert, three roles, and a closure that waited
 
 A checkout SLO burn alert pages the service owner. The incident lead declares
 scope, one responder disables an optional dependency, another checks the
@@ -81,9 +81,10 @@ draining backlogs and verifying payments before closure.
 The alert is a burn-rate alert, so what paged somebody was a rate of failure
 against a budget rather than an exception. The lead declaring scope is bounding
 impact. The two responders are investigating in parallel: one acts on the
-system, one reads the change history. Neither of them is the person reporting
-affected regions, because incident roles separate coordination, technical
-response, and communication.
+system, one reads the change history. Count actors in that scene and there are
+four; count roles and there are three, because incident roles separate
+coordination, technical response, and communication, and both responders sit
+inside the second of those.
 
 The final sentence is the hinge. Draining backlogs and verifying payments
 before closure is the verify-recovery step done against the work rather than

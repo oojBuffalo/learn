@@ -98,7 +98,7 @@ than to tuning. The fourth is about distance, and it splits in two: nearness to
 data buys latency, and spread across regions buys reach or resilience and
 charges consistency.
 
-## The decision you are making, and what it charges
+## How much of the compute operation you are buying, and what it charges
 
 The decision is not which platform is best. It is how many of the eight
 management questions you intend to answer yourself, and every answer has a

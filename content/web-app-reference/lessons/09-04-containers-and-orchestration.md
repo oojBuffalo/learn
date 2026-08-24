@@ -45,19 +45,20 @@ hosts that run them.
 
 ::activity{id="containers-and-orchestration-mc1"}
 
-## Layers, placement, and three checks on one instance
+## Layers, placement, and what governs a single instance
 
 Images are layered, immutable inputs. Runtime isolation uses operating-system
 mechanisms; it is not a complete security boundary by itself. Schedulers place
 workloads according to resources and constraints. Services provide stable
 discovery over changing instances.
 
-Three more govern a single instance's life, and they are easy to confuse
-because all three watch the same process. Readiness controls traffic: it
-decides whether requests arrive. Liveness can trigger replacement: it decides
-whether the instance continues to exist. Graceful termination supports
-draining: it decides what happens to work already in flight when the instance
-is going away.
+Three more govern a single instance's life, and this lesson groups them because
+they are easy to confuse rather than because the source ranks them. Readiness
+controls traffic: it decides whether requests arrive. Liveness can trigger
+replacement: it decides whether the instance continues to exist. Those two
+watch the process. Graceful termination supports draining, which decides what
+happens to work already in flight when the instance is going away, and it
+watches nothing at all.
 
 ::activity{id="containers-and-orchestration-sa1"}
 

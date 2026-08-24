@@ -49,8 +49,9 @@ thing being promoted. Startup validation rejects missing or malformed settings.
 Feature flags separate release of code from activation of behavior.
 
 Environment identity is the one of these a name can imitate. It is enforced
-through accounts, networks, and permissions, not naming convention alone. A prefix on a name is a label. An account that cannot reach the
-production database is a boundary.
+through accounts, networks, and permissions, not naming convention alone. A
+prefix on a name is a label. An account that cannot reach the production
+database is a boundary.
 
 ::activity{id="environments-and-configuration-fb1"}
 
