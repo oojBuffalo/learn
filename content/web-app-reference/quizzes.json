@@ -122,5 +122,27 @@
       "migrations-backups-and-recovery-ms1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-apis-and-integration",
+    "title": "APIs and integration check",
+    "items": [
+      "api-design-mc1",
+      "api-design-ms1",
+      "api-design-mat1",
+      "rest-graphql-and-rpc-mat1",
+      "rest-graphql-and-rpc-ms1",
+      "rest-graphql-and-rpc-mc1",
+      "realtime-and-event-driven-communication-mc1",
+      "realtime-and-event-driven-communication-ord1",
+      "realtime-and-event-driven-communication-ms1",
+      "identity-across-system-boundaries-mat1",
+      "identity-across-system-boundaries-mc1",
+      "identity-across-system-boundaries-ms1",
+      "third-party-integrations-mc1",
+      "third-party-integrations-ms1",
+      "third-party-integrations-sa1"
+    ],
+    "passThreshold": 0.75
   }
 ]

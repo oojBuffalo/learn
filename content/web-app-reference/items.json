@@ -3980,5 +3980,750 @@
       "data"
     ],
     "reverse": true
+  },
+  {
+    "id": "api-design-ms1",
+    "type": "multi-select",
+    "prompt": "The API from the opening scene goes into a full design review, and five changes are proposed. Which of them does this lesson support?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Distinguish success, client correction, conflict, rate limiting, dependency failure, and unknown server failure in the response itself",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Establish credentials and idempotency on the requests that need them",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Publish a machine-readable description, so the contract can support validation, documentation, and client generation",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Keep the single status, and put a richer error string in every body"
+      },
+      {
+        "id": "e",
+        "text": "Derive the resource shapes from the existing database tables, so the contract matches storage"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Responses distinguish success, client correction, conflict, rate limiting, dependency failure, and unknown server failure. Requests identify an operation, carry typed input, and establish credentials and idempotency where needed. Machine-readable descriptions can support validation, documentation, and client generation. The two rejected proposals are the ones this lesson argues against directly: returning `200` for every outcome weakens generic tooling, and a richer body leaves that in place because anything reading the status never sees it. And design runs from use cases outward, never beginning with database tables.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "api-design-mc1",
+    "type": "multiple-choice",
+    "prompt": "A client team's code branches on a string inside the response body at every call site, because the status is identical whether a request succeeded, was malformed, or hit a conflict. Which failure does this lesson name?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Returning `200` for every outcome weakens generic tooling",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Leaking internal exception text exposes implementation",
+        "feedback": "That failure gives a caller too much of the wrong detail. Here the caller is given too little of the right detail, and nothing internal is exposed at all."
+      },
+      {
+        "id": "c",
+        "text": "Changing enum meaning without versioning breaks clients even if the wire type is still a string",
+        "feedback": "That failure is about a field whose meaning moved between releases. Nothing here changed; the outcomes were never distinguishable in the first place."
+      },
+      {
+        "id": "d",
+        "text": "Unbounded filters or expansions create denial-of-service paths",
+        "feedback": "A real failure of this API's operational limits, but it costs availability rather than legibility. The symptom described is a caller unable to tell outcomes apart."
+      }
+    ],
+    "explanation": "Returning `200` for every outcome weakens generic tooling. Responses are supposed to distinguish success, client correction, conflict, rate limiting, dependency failure, and unknown server failure, and an API that collapses all six into one status leaves the distinction readable only by something that parses the prose.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "api-design-mat1",
+    "type": "matching",
+    "prompt": "Match each design choice to the cost this lesson attaches to it.",
+    "pairs": [
+      {
+        "left": "Coarse operations",
+        "right": "more data and behavior coupled together"
+      },
+      {
+        "left": "Fine-grained resources",
+        "right": "chatty workflows"
+      },
+      {
+        "left": "Explicit versions",
+        "right": "more supported surfaces to keep alive"
+      },
+      {
+        "left": "Tolerant reading of input",
+        "right": "misspelled fields that go concealed"
+      }
+    ],
+    "distractors": [
+      "page boundaries that shift under concurrent inserts",
+      "implementation details visible in an error body"
+    ],
+    "explanation": "Coarse operations reduce round trips but couple more data and behavior. Fine-grained resources improve composition but create chatty workflows. Explicit versions simplify breaking change boundaries while multiplying supported surfaces. Tolerant reading helps evolution but can conceal misspelled fields. The two distractors are failure modes rather than the price of a deliberate choice: offset pagination becomes unstable under concurrent inserts, and leaking internal exception text exposes implementation.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "api-design-card1",
+    "type": "flashcard",
+    "front": "An API",
+    "back": "A contract for requesting behavior or information across a boundary. Contracts let clients and providers change independently, and turn undocumented assumptions into reviewable decisions that can be tested and observed.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "api-design-card2",
+    "type": "flashcard",
+    "front": "What good API design makes predictable",
+    "back": "Vocabulary, identity, validation, errors, evolution, and operational limits.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "api-design-card3",
+    "type": "flashcard",
+    "front": "The outcomes a response distinguishes",
+    "back": "Success, client correction, conflict, rate limiting, dependency failure, and unknown server failure.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "api-design-card4",
+    "type": "flashcard",
+    "front": "Design from use cases outward",
+    "back": "Caller intent, then the authorized operation, then stable domain vocabulary, then transport representation — and not database tables or framework controller shapes.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "api-design-card5",
+    "type": "flashcard",
+    "front": "An idempotency key on a create command",
+    "back": "Repeated delivery of the same key returns the original result.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "rest-graphql-and-rpc-mat1",
+    "type": "matching",
+    "prompt": "Match each name to what this lesson says it is.",
+    "pairs": [
+      {
+        "left": "REST-oriented HTTP",
+        "right": "an interface centered on resources and representations"
+      },
+      {
+        "left": "GraphQL",
+        "right": "an interface centered on a typed graph and a selection set"
+      },
+      {
+        "left": "RPC",
+        "right": "an interface centered on procedures and messages"
+      },
+      {
+        "left": "JSON",
+        "right": "a text interchange format, and not an interface style"
+      }
+    ],
+    "distractors": [
+      "a transport that removes distributed-system failure",
+      "a schema whose resolvers are generated from procedures"
+    ],
+    "explanation": "REST, GraphQL, and RPC are interface styles with different centers of gravity: standardized resource transfer, client-selected graph queries, and explicit remote operations. JSON is a language-independent text interchange format, not an API style, which is why comparing styles by contracts and workloads beats treating them as competing serialization formats. Neither distractor is on offer: none of the three styles removes distributed-system failure, and resolvers belong to GraphQL while generated clients belong to RPC.",
+    "difficulty": "beginner",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "rest-graphql-and-rpc-ms1",
+    "type": "multi-select",
+    "prompt": "A team runs the three boundaries from this lesson's example in three styles, and proposes one shared client configuration covering all of them. Which of these does the example say each boundary has separately?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Timeouts",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Identity",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Compatibility",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Telemetry",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "Query-cost controls"
+      },
+      {
+        "id": "f",
+        "text": "A serialization format"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "The example closes on the sentence teams skip: each boundary has separate timeouts, identity, compatibility, and telemetry. Query-cost controls are something GraphQL specifically requires, alongside resolver batching and field-level policy, rather than something every boundary carries. And a serialization format is not what separates these boundaries at all — JSON is a language-independent text interchange format, not an API style.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "rest-graphql-and-rpc-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team moves an internal boundary to typed RPC with generated clients, and argues that the generated types now rule out compatibility breaks. Which sentence from this lesson corrects them?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Generated types can create false confidence when semantic compatibility still changes",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "RPC offers strong operation names and efficient schemas",
+        "feedback": "True, and probably why the team chose RPC. It says nothing about what generated types do or do not guarantee."
+      },
+      {
+        "id": "c",
+        "text": "RPC clients retry non-idempotent procedures automatically",
+        "feedback": "A real RPC failure mode, but about what a client does after a call fails rather than about whether a contract has quietly changed meaning."
+      },
+      {
+        "id": "d",
+        "text": "GraphQL requires query-cost controls, resolver batching, and field-level policy",
+        "feedback": "Requirements belonging to a different style, and to a different problem than compatibility."
+      }
+    ],
+    "explanation": "Generated types can create false confidence when semantic compatibility still changes: the types keep agreeing while the meaning underneath moves. It sits under the claim this lesson opens with — REST, GraphQL, and RPC are interface styles with different centers of gravity, and none of them removes distributed-system failure.",
+    "difficulty": "advanced",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "rest-graphql-and-rpc-card1",
+    "type": "flashcard",
+    "front": "REST, GraphQL, and RPC",
+    "back": "Interface styles with different centers of gravity: standardized resource transfer, client-selected graph queries, and explicit remote operations. None removes distributed-system failure.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "rest-graphql-and-rpc-card2",
+    "type": "flashcard",
+    "front": "JSON",
+    "back": "A language-independent text interchange format, and not an API style.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "rest-graphql-and-rpc-card3",
+    "type": "flashcard",
+    "front": "What GraphQL asks for in exchange",
+    "back": "It reduces client over-fetching and under-fetching, but requires query-cost controls, resolver batching, and field-level policy.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "rest-graphql-and-rpc-card4",
+    "type": "flashcard",
+    "front": "What an interface style shapes",
+    "back": "Client composition, caching, observability, authorization, schema evolution, and how transport semantics map to application behavior.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "rest-graphql-and-rpc-card5",
+    "type": "flashcard",
+    "front": "Where REST-oriented HTTP gains, and where it costs",
+    "back": "It gains from standard HTTP behavior, and can require multiple resources for one screen.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "realtime-and-event-driven-communication-mc1",
+    "type": "multiple-choice",
+    "prompt": "Two designs for a build system are on the table. Proposal A publishes the status event and then commits the status. Proposal B commits the status and then publishes an outbox event. Which does this lesson support, and on what grounds?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Proposal B, because publishing before a database commit exposes facts that may roll back",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Proposal A, because publishing first shortens the delay before consumers see the change",
+        "feedback": "Persistent connections are how this lesson buys update delay down. Publishing ahead of the commit buys it by announcing something that may turn out never to have happened."
+      },
+      {
+        "id": "c",
+        "text": "Proposal B, because at-least-once delivery requires idempotent consumers",
+        "feedback": "At-least-once delivery does require idempotent consumers, and both proposals need that equally. It is not what separates them."
+      },
+      {
+        "id": "d",
+        "text": "Either, provided consumers deduplicate by event ID",
+        "feedback": "Deduplication handles the same message arriving twice. A message describing a change that was later rolled back is not a duplicate, and deduplicating it changes nothing."
+      }
+    ],
+    "explanation": "Publishing before a database commit exposes facts that may roll back, which is why the worked example commits build status and then publishes an outbox event. It follows from separating transport delivery from application truth: a message says “something was delivered”, an authoritative record says “this effect is committed”, and Proposal A lets the first sentence run ahead of the second.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "realtime-and-event-driven-communication-ord1",
+    "type": "ordering",
+    "prompt": "Put the build system's steps into the order this lesson gives them.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "The build system commits the build status"
+      },
+      {
+        "id": "s2",
+        "text": "It publishes an outbox event"
+      },
+      {
+        "id": "s3",
+        "text": "Workers and notification consumers deduplicate by event ID"
+      },
+      {
+        "id": "s4",
+        "text": "A browser client receives a hint over the stream, or misses it"
+      },
+      {
+        "id": "s5",
+        "text": "After reconnect, the client refetches the current build representation"
+      }
+    ],
+    "explanation": "The commit comes first, because publishing before a database commit exposes facts that may roll back. Then the outbox event, then consumers that deduplicate by event ID rather than trusting the transport to deliver once. The browser sits on its own path at the end: a hint may simply not arrive, and the refetch after reconnect is what keeps a missed hint from corrupting state.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "realtime-and-event-driven-communication-ms1",
+    "type": "multi-select",
+    "prompt": "A team moves a queue from at-most-once delivery to at-least-once. According to this lesson, which of these now follow?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Consumers have to be idempotent",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Consumers processing duplicates becomes a live concern",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Globally exactly-once business effects usually still require narrower transactional definitions",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Ordering becomes global across partitions"
+      },
+      {
+        "id": "e",
+        "text": "Poison messages stop retrying forever"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "At-most-once delivery may lose work; at-least-once requires idempotent consumers. Duplicates are what is bought with that, and consumers processing duplicates is one of this lesson's named failure modes — the worked example answers it by deduplicating on event ID. Globally exactly-once business effects usually require narrower transactional definitions, so the stronger promise is not what this move delivers. The last two options are separate entries on the same failure list: consumers assume global order across partitions, and poison messages retry forever.",
+    "difficulty": "advanced",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "realtime-and-event-driven-communication-card1",
+    "type": "flashcard",
+    "front": "Realtime, and event-driven",
+    "back": "Realtime delivers updates while a client remains interested; event-driven publishes facts or commands for asynchronous processing.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "realtime-and-event-driven-communication-card2",
+    "type": "flashcard",
+    "front": "A message, against an authoritative record",
+    "back": "A message says something was delivered; an authoritative record says this effect is committed.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "realtime-and-event-driven-communication-card3",
+    "type": "flashcard",
+    "front": "What a consumer should be able to do",
+    "back": "Reconnect, deduplicate, and reconstruct state.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "realtime-and-event-driven-communication-card4",
+    "type": "flashcard",
+    "front": "Queues, and append-only logs",
+    "back": "Queues distribute jobs; append-only logs retain ordered records for consumer positions.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "realtime-and-event-driven-communication-card5",
+    "type": "flashcard",
+    "front": "At-most-once, at-least-once, exactly-once",
+    "back": "At-most-once may lose work; at-least-once requires idempotent consumers; globally exactly-once business effects usually require narrower transactional definitions.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "identity-across-system-boundaries-mat1",
+    "type": "matching",
+    "prompt": "Match each identity mechanism to what this lesson says it does.",
+    "pairs": [
+      {
+        "left": "Session credentials",
+        "right": "associate a browser with server state"
+      },
+      {
+        "left": "Signed access tokens",
+        "right": "carry issuer, subject, audience, expiry, and scopes"
+      },
+      {
+        "left": "Mutual TLS or platform workload identity",
+        "right": "authenticate service instances"
+      },
+      {
+        "left": "Token exchange",
+        "right": "replace a broad credential with one for a downstream audience"
+      },
+      {
+        "left": "Trace and audit context",
+        "right": "carry actor and delegation metadata outside the credential"
+      }
+    ],
+    "distractors": [
+      "make the receiver's authorization decision on its behalf",
+      "guarantee that a credential cannot be replayed"
+    ],
+    "explanation": "Session credentials associate a browser with server state. Signed access tokens can carry issuer, subject, audience, expiry, and scopes. Mutual TLS or platform workload identity authenticates service instances. Token exchange can replace a broad credential with one intended for a downstream audience. Trace and audit context carries actor and delegation metadata separately from security credentials. Neither distractor is available from any of them: each receiver must make its own authorization decision, and short-lived, audience-specific tokens limit replay rather than ruling it out.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "identity-across-system-boundaries-mc1",
+    "type": "multiple-choice",
+    "prompt": "In the worked example, the document service records both the reporting workload and the delegated user before applying its own resource permission. What does recording both accomplish that recording either one alone would not?",
+    "options": [
+      {
+        "id": "a",
+        "text": "It names the caller and keeps the original actor, which no single record does",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "It lets the document service skip its own authorization decision, since the reporting API already made one",
+        "feedback": "Each receiver must establish trust in the credential, constrain its audience and lifetime, and make its own authorization decision. Nothing upstream discharges that, which is why the example ends with the document service applying its own resource permission."
+      },
+      {
+        "id": "c",
+        "text": "It extends the five-minute token's lifetime for as long as the report is being produced",
+        "feedback": "Lifetime is a property of the exchanged token. What goes into an audit record does not reach back and change it."
+      },
+      {
+        "id": "d",
+        "text": "It establishes that the reporting workload and the user are the same subject",
+        "feedback": "They are deliberately not. A service may authenticate another service while acting on behalf of a user with narrower delegated permission — two subjects, one request."
+      }
+    ],
+    "explanation": "Human identity, workload identity, and delegated authority are related but not interchangeable, so a record naming one of them is not a record of the others. Service credentials clearly identify the caller but can erase user context, and explicit identity design is what prevents audit records that lose the original actor. Recording both keeps “which workload called” and “on whose behalf” from having to be one answer.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "identity-across-system-boundaries-ms1",
+    "type": "multi-select",
+    "prompt": "A downstream document service must end up holding a credential it cannot present anywhere else, and cannot present for long. According to this lesson, which of these move toward that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Exchange the incoming credential for one intended for that downstream audience",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Give the issued token an audience naming only that service",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Give the issued token a short lifetime",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Forward the original user token unchanged"
+      },
+      {
+        "id": "e",
+        "text": "Authenticate the calling service instance with mutual TLS"
+      },
+      {
+        "id": "f",
+        "text": "Record the delegated user alongside the calling workload in the audit context"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Token exchange can replace a broad credential with one intended for a downstream audience, and short-lived, audience-specific tokens limit replay at the cost of issuance infrastructure. The worked example does all three at once: a session becomes a five-minute token valid only for the document service. Forwarding moves the other way, because propagating the original user token is simple but broadens its exposure and audience. Mutual TLS or platform workload identity authenticates service instances, which establishes who is calling rather than narrowing what the credential can open. And recording the delegated user is worth doing — it is how an audit keeps the original actor — but trace and audit context is carried separately from security credentials, so it constrains nothing.",
+    "difficulty": "advanced",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "identity-across-system-boundaries-card1",
+    "type": "flashcard",
+    "front": "Identity propagation",
+    "back": "Communicating who or what initiated work across a boundary.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "identity-across-system-boundaries-card2",
+    "type": "flashcard",
+    "front": "The three subjects to track",
+    "back": "The end actor, the calling workload, and the authority being exercised.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "identity-across-system-boundaries-card3",
+    "type": "flashcard",
+    "front": "What every receiver owes at a boundary",
+    "back": "Establish trust in the credential, constrain its audience and lifetime, and make its own authorization decision.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "identity-across-system-boundaries-card4",
+    "type": "flashcard",
+    "front": "Token exchange",
+    "back": "Replacing a broad credential with one intended for a downstream audience.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "identity-across-system-boundaries-card5",
+    "type": "flashcard",
+    "front": "Forwarding the user token, or using service credentials?",
+    "back": "Forwarding is simple but broadens the token's exposure and audience; service credentials clearly identify the caller but can erase user context.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "third-party-integrations-mc1",
+    "type": "multiple-choice",
+    "prompt": "An outbound call to a payment provider passes its deadline with no response. Before anything else happens, what has that established?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Nothing about whether the effect happened, because timeouts leave unknown outcomes",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "That the provider is unavailable, since a healthy provider answers inside the deadline",
+        "feedback": "The deadline belongs to the outbound call, not to the provider. A timeout does not distinguish a request that never arrived from a response that never came back."
+      },
+      {
+        "id": "c",
+        "text": "That the call did not reach the provider, so it is safe to send again",
+        "feedback": "That is the assumption this lesson exists to remove. Sending again on that assumption is how provider retries duplicate work."
+      },
+      {
+        "id": "d",
+        "text": "That the provider's rate limits were exceeded",
+        "feedback": "API quotas cause cascading retries, which is a different failure with a different signature. A deadline passing says nothing about which limit, if any, was involved."
+      }
+    ],
+    "explanation": "Timeouts leave unknown outcomes. That is the entire finding, and it is why the mental model asks you to persist enough local state to reconcile after timeouts or delayed callbacks: the unknown is not preventable, so the design has to survive it. A third-party integration places part of a workflow behind an independently operated contract, and the provider's availability and limits are not readable from this side of it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "third-party-integrations-ms1",
+    "type": "multi-select",
+    "prompt": "A webhook handler verifies the signature, then does all of its work before responding, and never checks whether it has seen the event before. Which of the duties this lesson gives a webhook handler is it failing to perform?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Acknowledge quickly",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Deduplicate event IDs",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Process asynchronously",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Verify origin or signatures"
+      },
+      {
+        "id": "e",
+        "text": "Map provider results into application outcomes"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Webhooks verify origin or signatures, acknowledge quickly, deduplicate event IDs, and process asynchronously. This handler performs the first and none of the other three: work finished before the response is neither a quick acknowledgement nor asynchronous processing, and nothing looks at the event ID. Structured error mapping is a duty of outbound calls rather than of inbound webhooks — it is how provider results become application outcomes on the way back.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "third-party-integrations-sa1",
+    "type": "short-answer",
+    "prompt": "The payment adapter creates a local payment attempt and sends that attempt's ID to the provider. What does it send the ID as?",
+    "accept": [
+      "idempotency key",
+      "an idempotency key",
+      "the idempotency key",
+      "provider idempotency key",
+      "the provider idempotency key",
+      "as the idempotency key",
+      "idempotency key for the provider"
+    ],
+    "hints": [
+      "The point is that sending it twice must mean the same attempt, not a second one.",
+      "It is one of the five things this lesson says outbound calls use."
+    ],
+    "explanation": "A payment adapter creates a local payment attempt and sends its ID as the provider idempotency key. That is what makes a retry after the ambiguous timeout a question about the same attempt rather than a second one, which is the answer to provider retries duplicating work.",
+    "difficulty": "intermediate",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "third-party-integrations-card1",
+    "type": "flashcard",
+    "front": "A third-party integration",
+    "back": "Part of an application workflow placed behind an independently operated contract.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "third-party-integrations-card2",
+    "type": "flashcard",
+    "front": "What a provider brings with it",
+    "back": "Its own availability, limits, security posture, release schedule, and data lifecycle.",
+    "tags": [
+      "apis-and-integration"
+    ]
+  },
+  {
+    "id": "third-party-integrations-card3",
+    "type": "flashcard",
+    "front": "An integration adapter",
+    "back": "It translates stable application intent into provider calls, and provider results into application outcomes.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "third-party-integrations-card4",
+    "type": "flashcard",
+    "front": "What a webhook handler does",
+    "back": "Verifies origin or signatures, acknowledges quickly, deduplicates event IDs, and processes asynchronously.",
+    "tags": [
+      "apis-and-integration"
+    ],
+    "reverse": true
+  },
+  {
+    "id": "third-party-integrations-card5",
+    "type": "flashcard",
+    "front": "Synchronous calls, or asynchronous workflows?",
+    "back": "Synchronous calls give immediate feedback but couple user latency and availability to the provider; asynchronous workflows remain responsive but expose pending states.",
+    "tags": [
+      "apis-and-integration"
+    ]
   }
 ]

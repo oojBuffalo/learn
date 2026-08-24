@@ -136,5 +136,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-apis-and-integration-match",
+    "template": "matching",
+    "title": "APIs and integration — match them up",
+    "source": {
+      "tags": [
+        "apis-and-integration"
+      ]
+    }
+  },
+  {
+    "id": "game-apis-and-integration-speed",
+    "template": "timed-round",
+    "title": "APIs and integration — quick fire",
+    "source": {
+      "tags": [
+        "apis-and-integration"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]
