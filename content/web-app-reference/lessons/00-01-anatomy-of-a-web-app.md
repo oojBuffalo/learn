@@ -30,7 +30,7 @@ server-side application logic, and one or more data systems, and the visible
 page is only the edge of that arrangement.
 
 Reading it that way buys two things. Every later concept — a cache, a queue, a
-migration, a deploy — arrives with somewhere to live. And debugging becomes
+load balancer, a deploy — arrives with somewhere to live. And debugging becomes
 more disciplined: when an action fails, the question is which boundary did not
 preserve the intended request, identity, data, or response. That question has
 an owner attached; “the app is broken” does not.
