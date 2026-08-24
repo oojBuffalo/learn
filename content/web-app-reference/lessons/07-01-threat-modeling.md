@@ -22,7 +22,7 @@ a person.
 Nothing on that page is false about the system it described. It is no longer
 describing this one. Diagrams drift after architecture changes, and threats get
 listed without owners and verification — two failure modes named here, inside a
-document that looks finished the entire time.
+document that looks finished.
 
 ## Five questions, asked again every time
 
@@ -45,19 +45,18 @@ which is why the third question is never answered once.
 
 ## From a diagram to an owner
 
-The mechanisms run in an order, each needing the one before it.
+This lesson sets the mechanisms out in the order the source writes them.
 
 Data-flow diagrams expose processes, stores, external actors, and boundaries.
-Abuse cases then describe attacker goals, hard to do honestly against a system
-nobody has drawn. Structured categories prompt review of impersonation,
-tampering, repudiation, disclosure, denial of service, and privilege
-escalation, so a review covers six kinds of harm rather than the ones the room
-happens to fear.
+Abuse cases describe attacker goals. Structured categories prompt review of
+impersonation, tampering, repudiation, disclosure, denial of service, and
+privilege escalation, so a review covers six kinds of harm rather than the ones
+the room happens to fear.
 
 Controls are assigned owners and verified through tests, monitoring, or
-operational drills. Two demands, and the opening scene met neither: an owner is
-who answers for the control, and verification is what separates a control from
-a paragraph about one.
+operational drills. Two demands, and the opening scene met neither: an owner
+answers for the control, and verification separates a control from a paragraph
+about one.
 
 Residual risk is recorded rather than implied away, because a risk nobody wrote
 down is indistinguishable from a risk nobody found.
@@ -79,9 +78,9 @@ Resource exhaustion arrives through the same upload path as everything
 legitimate.
 
 Then the clause that closes the example: controls and telemetry attach to each
-path. Not to the product and not to the document — to each path. A control that
-exists in documentation but not on every entry point is a failure mode named
-here, and per-path attachment is what makes its absence visible.
+path. Not to the product and not to the document — to each path. A control in
+documentation but not on every entry point is a failure mode named here, and
+per-path attachment is what makes its absence visible.
 
 ::activity{id="threat-modeling-ms1"}
 
@@ -106,30 +105,31 @@ time. Four levers, and not interchangeable: shortening detection time changes
 nothing about the chance of the event, only what it costs.
 
 Security friction should be proportional to risk and usable enough that people
-do not bypass it. A control people route around is weaker in practice than on
-the page.
+do not bypass it.
 
-## The verdict on the model nobody had reopened
+## The cheapest question to ask a threat model you did not write
 
-Back to the filed document.
+This lesson sorts them by what an answer costs: what a document settles about
+itself first, then what needs the system.
 
-Was it wrong when written? No. It described the system in front of it,
-thoroughly.
+Does the diagram match the architecture? Diagrams drift after architecture
+changes, and the check is two things laid side by side. The opening document
+fails here, which is why its problem was never hard to find — only never looked
+for.
 
-Is it wrong now? In two ways named here. Diagrams drift after architecture
-changes, so the path added since is unmodeled — not judged safe, simply never
-asked about. And threats listed without owners and verification leave nobody
-who would have noticed, because the list made it nobody's job.
+Does every threat have a name against it? Threats listed without owners and
+verification show in the list itself: you are checking for a column, not a
+judgment.
 
-The rest of the list is worth reading against it. Teams model only anonymous
-internet attackers, or ignore insiders and compromised dependencies. A control
-exists in documentation but not on every entry point. Availability and
-integrity threats receive less attention than confidentiality.
+Who is on the actor list? Teams model only anonymous internet attackers and
+ignore insiders and compromised dependencies, and reading who was considered
+costs no more than reading what was.
 
-The repair is not a better document. It is the sentence from the top: a
-repeatable design activity, not a one-time document. Reopening it when the
-architecture changes catches the drift; owners give the reopening someone to do
-it.
+Then the two that need real work. A control exists in documentation but not on
+every entry point, which means enumerating entry points rather than reading a
+page. And availability and integrity threats receive less attention than
+confidentiality — not a lookup but a judgment about how a whole model spent its
+attention.
 
 ::activity{id="threat-modeling-mc1"}
 

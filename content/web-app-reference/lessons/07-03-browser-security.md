@@ -3,7 +3,7 @@ id: browser-security
 title: "Browser Security"
 summary: Why a header that tells other pages what they may read gets filed as a lock on the door, and what each browser-side symptom eliminates once you stop treating the browser as one thing.
 objectives:
-  - Read every browser policy as a variation on the origin tuple
+  - Read browser policy against the origin tuple, and notice which mechanisms do not turn on origin at all
   - Hold the browser as an untrusted client and an enforcement environment at once
   - Weigh one origin against several, and a cookie session against a token scripts can read
 estimatedMinutes: 12
@@ -27,7 +27,7 @@ says; the mistake is about what kind of sentence it is.
 
 An origin is the scheme, host, and port tuple. Same-origin content has broad
 interaction; cross-origin interaction is constrained and selectively permitted.
-Every policy in this lesson is a variation on that one line.
+Most of the policies in this lesson are a variation on that one line.
 
 The browser is an untrusted client but also a security enforcement environment.
 Both halves are true at once, and holding only one produces a predictable

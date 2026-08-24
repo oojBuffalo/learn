@@ -4752,7 +4752,7 @@
         "text": "Record the residual risk that is left"
       }
     ],
-    "explanation": "The mechanisms run in an order, each needing the one before it. Data-flow diagrams expose processes, stores, external actors, and boundaries. Abuse cases then describe attacker goals, which is hard to do honestly against a system nobody has drawn. Structured categories prompt review of impersonation, tampering, repudiation, disclosure, denial of service, and privilege escalation. Controls are assigned owners and verified through tests, monitoring, or operational drills. Residual risk is recorded rather than implied away.",
+    "explanation": "This is the order the lesson sets the mechanisms out in, taken from the order the source writes them; nothing here claims one of them is impossible without another. Data-flow diagrams expose processes, stores, external actors, and boundaries. Abuse cases describe attacker goals. Structured categories prompt review of impersonation, tampering, repudiation, disclosure, denial of service, and privilege escalation. Controls are assigned owners and verified through tests, monitoring, or operational drills. Residual risk is recorded rather than implied away.",
     "difficulty": "intermediate",
     "tags": [
       "security"
@@ -5038,28 +5038,28 @@
     "prompt": "Match each browser mechanism to what this lesson says it controls.",
     "pairs": [
       {
-        "left": "CORS",
-        "right": "whether scripts can read selected cross-origin responses"
-      },
-      {
-        "left": "Cookie attributes",
-        "right": "script access, secure transport, cross-site sending, and scope"
-      },
-      {
-        "left": "Content Security Policy",
-        "right": "which sources are executable and loadable"
-      },
-      {
         "left": "Frame policy",
         "right": "clickjacking"
       },
       {
-        "left": "Subresource integrity",
-        "right": "verification of fixed external assets"
+        "left": "CSRF defenses",
+        "right": "whether the application meant to send a request, rather than whether a cookie rode along"
       },
       {
-        "left": "CSRF defenses",
-        "right": "whether a credentialed request reflects application intent"
+        "left": "Cookie attributes",
+        "right": "scope, cross-site sending, secure transport, and script access"
+      },
+      {
+        "left": "Subresource integrity",
+        "right": "verifying an external asset that does not change"
+      },
+      {
+        "left": "CORS",
+        "right": "whether a script may read selected responses from another origin"
+      },
+      {
+        "left": "Content Security Policy",
+        "right": "which sources a page may execute and load from"
       }
     ],
     "distractors": [
@@ -5138,7 +5138,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "The variant changed two things, and three properties go with them. Moving the API to a separate origin gives up the first: keeping application and API on one origin simplifies credentials, and multiple origins improve isolation when their content is genuinely untrusted, which an API you wrote is not. Moving the session into a readable token gives up the other two: HttpOnly is one of the four things cookie attributes constrain, and cookie-based sessions integrate with browser protections while requiring CSRF policy, so the policy leaves with the cookie. The restrictive CSP, the refusal to be framed and the sanitization are untouched. And the wildcard is worth naming for what it is not — wildcard CORS mistaken for authentication is a failure mode here.",
+    "explanation": "The variant changed two things, and three properties go with them. Moving the API to a separate origin gives up the first: keeping application and API on one origin simplifies credentials, and multiple origins improve isolation when their content is genuinely untrusted, which an API you wrote is not. Moving the session into a readable token gives up the other two: HttpOnly is the attribute that constrains script access, one of the four things cookie attributes constrain, and cookie-based sessions integrate with browser protections while requiring CSRF policy, so the policy leaves with the cookie. The restrictive CSP, the refusal to be framed and the sanitization are untouched. And the wildcard is worth naming for what it is not — wildcard CORS mistaken for authentication is a failure mode here.",
     "difficulty": "advanced",
     "tags": [
       "security"
@@ -5214,9 +5214,9 @@
     ],
     "hints": [
       "The third step is what keeps a value from being turned back into a string by accident.",
-      "The last step is the alternative when the destination grammar has no parameterized API."
+      "The last step and the parameterized API are the two branches of an or, not a fallback for when the first is unavailable."
     ],
-    "explanation": "Parse shape, validate allowed meaning, preserve typed data, then use a parameterized API or encode for the exact output context. Preserving typed data is what keeps the first two steps from being undone: a value that stays a date, a number or an enum cannot be concatenated into somebody else's grammar by accident, because it is not a string yet.",
+    "explanation": "Parse shape, validate allowed meaning, preserve typed data, then use a parameterized API or encode for the exact output context. Preserving typed data is what keeps the first two steps from being undone: a value that stays an enum or a bounded date cannot be concatenated into somebody else's grammar by accident, because it is not a string yet.",
     "difficulty": "beginner",
     "tags": [
       "security"
@@ -5248,7 +5248,7 @@
         "feedback": "Neither decision moves a check anywhere. Both change how a value is constructed at the boundary it is entering — the browser for the title, a filename grammar for the export."
       }
     ],
-    "explanation": "Safety requires validation for meaning and context-appropriate construction or encoding at every interpreter boundary. Inserting the title as text is a DOM text API, which preserves text rather than parsing markup; generating the filename from an internal ID keeps a user-controlled string out of a filename grammar altogether. Both are safe construction rather than validation — validation asks whether data is allowed, and safe construction prevents it from becoming syntax.",
+    "explanation": "Safety requires validation for meaning and context-appropriate construction or encoding at every interpreter boundary. Inserting the title as text is a DOM text API, which preserves text rather than parsing markup; generating the filename from an internal ID keeps a supplied string out of a filename grammar altogether. Both are safe construction rather than validation — validation asks whether data is allowed, and safe construction prevents it from becoming syntax.",
     "difficulty": "intermediate",
     "tags": [
       "security"
@@ -5341,24 +5341,23 @@
   {
     "id": "secrets-dependencies-and-supply-chain-sa1",
     "type": "short-answer",
-    "prompt": "Automated scanning prioritizes known risk. What does this lesson say it does not do?",
+    "prompt": "A team can list every control they have switched on, and cannot say which credentials exist in production or who is able to change them. What does this lesson say they started without?",
     "accept": [
-      "prove safety",
-      "proves safety",
-      "it does not prove safety",
-      "prove it is safe",
-      "prove that it is safe",
-      "prove anything is safe",
-      "prove the dependencies are safe",
-      "prove the code is safe"
+      "an inventory",
+      "inventory",
+      "the inventory",
+      "taking an inventory",
+      "an inventory of what enters production",
+      "the inventory step",
+      "inventorying what enters production"
     ],
     "match": "fold",
     "hints": [
-      "It is a claim about what a report with no findings is not.",
-      "Two words: a verb, and the property it fails to establish."
+      "This lesson's model begins as one kind of list, and they built the other kind.",
+      "It is what the section heading puts before mechanism."
     ],
-    "explanation": "Automated scanning prioritizes known risk but does not prove safety. That is why the deployment example's payoff is stated as a capability rather than a guarantee: a compromised library can be located, rebuilt, and rolled out without changing application configuration.",
-    "difficulty": "beginner",
+    "explanation": "The model starts as an inventory rather than a control list, and its questions are what enters production, who can change it, how identity is established, where credentials exist, and how a compromised version is detected, revoked, and replaced. A list of switched-on controls can be complete and answer none of them.",
+    "difficulty": "intermediate",
     "tags": [
       "security"
     ]
