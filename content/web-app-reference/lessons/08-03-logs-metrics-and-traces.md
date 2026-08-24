@@ -35,7 +35,7 @@ operation spend time and fail?” Profiles can answer “which code consumed
 resources.”
 
 The fourth is the only one hedged. Metrics, logs and traces answer; profiles
-can answer, and what they answer about is code rather than a request.
+can answer, and about code rather than a request.
 
 Telemetry should answer operational questions and connect symptoms to affected
 users and dependencies without collecting secrets or unbounded data. Read those
@@ -54,12 +54,12 @@ histograms aggregate measurements. Trace spans carry parent relationships,
 duration, status, and attributes. Correlation identifiers link signals.
 Sampling bounds cost. Semantic conventions make common operations comparable.
 
-Two of those six are about joining rather than recording. A parent relationship
-on a span says which work this work belongs to. A correlation identifier says
-which other signals describe the same thing. Propagation is what moves either
-of them across a boundary the request does not stay inside. Sampling and
-semantic conventions do neither job: one bounds what all this costs, the other
-makes common operations comparable.
+Those six do not all do the same kind of work. Two are about joining. A parent
+relationship on a span says which work this work belongs to. A correlation
+identifier says which other signals describe the same thing. Propagation is
+what moves either of them across a boundary the request does not stay inside.
+Sampling and semantic conventions neither join nor record: one bounds what all
+this costs, the other makes common operations comparable.
 
 ::activity{id="logs-metrics-and-traces-sa1"}
 

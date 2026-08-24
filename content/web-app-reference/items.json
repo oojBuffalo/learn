@@ -5643,30 +5643,30 @@
   {
     "id": "contract-and-end-to-end-testing-mc1",
     "type": "multiple-choice",
-    "prompt": "During a rollout, two versions of a provider are live at the same time and one consumer has to work against both. Which of this lesson's mechanisms is aimed at exactly that?",
+    "prompt": "A provider is midway through replacing an old implementation with a new one. For a while both are live, and one consumer has to be correct against either. Which of this lesson's mechanisms is aimed at exactly that?",
     "options": [
       {
         "id": "a",
-        "text": "Compatibility matrices, which cover versions that coexist during rollout",
+        "text": "Compatibility matrices",
         "correct": true
       },
       {
         "id": "b",
-        "text": "Schema checks, which catch structural incompatibility",
-        "feedback": "A schema check compares one shape against one expectation. It says nothing about which versions happen to be live together."
+        "text": "Schema checks",
+        "feedback": "A schema check compares one shape against one expectation. It catches structural incompatibility and says nothing about what is answering at the same time as what."
       },
       {
         "id": "c",
-        "text": "Provider tests, which execute examples against the real boundary",
-        "feedback": "Those run against the boundary as it is at that moment — one version at a time, which is the thing in question."
+        "text": "Provider tests",
+        "feedback": "Provider tests execute examples against the real boundary — the boundary as it stands at that moment, which is one of the two. The window is about both at once."
       },
       {
         "id": "d",
-        "text": "End-to-end suites, which assert user-visible outcomes",
-        "feedback": "An end-to-end run traverses whichever version it happened to reach. It can fail, but it will not tell you the pair of live versions was the reason."
+        "text": "End-to-end suites",
+        "feedback": "An end-to-end run traverses whichever implementation it happened to reach and asserts a user-visible outcome. It can fail without telling you that the two being live together was the reason."
       }
     ],
-    "explanation": "Schema checks catch structural incompatibility. Provider tests execute examples against the real boundary. Consumer-driven contracts publish expectations for provider verification. Compatibility matrices cover versions that coexist during rollout, which is precisely the situation described. End-to-end suites create isolated data, act through public interfaces, and assert user-visible outcomes.",
+    "explanation": "Compatibility matrices cover versions that coexist during rollout, which is exactly the window described. Schema checks catch structural incompatibility. Provider tests execute examples against the real boundary. Consumer-driven contracts publish expectations for provider verification. End-to-end suites create isolated data, act through public interfaces, and assert user-visible outcomes.",
     "difficulty": "intermediate",
     "tags": [
       "quality-and-observability"
@@ -5791,21 +5791,23 @@
   {
     "id": "logs-metrics-and-traces-sa1",
     "type": "short-answer",
-    "prompt": "A request is traced up to the point where it is put on a queue. The consumer's work on the far side shows up as a separate trace with no parent. This lesson names one thing that connects signals across a boundary like that. What is it?",
+    "prompt": "A team can already see that an error rate rose, and can read the individual failures one by one. What they cannot say is where inside a single failing operation the time went, or which call failed. Which of this lesson's signals are they missing?",
     "accept": [
-      "context propagation",
-      "propagation",
-      "propagating context",
-      "trace context propagation",
-      "the context propagation",
-      "context propagation across boundaries"
+      "traces",
+      "trace",
+      "a trace",
+      "the traces",
+      "tracing",
+      "distributed traces",
+      "trace spans",
+      "spans"
     ],
     "match": "fold",
     "hints": [
-      "Instrumentation exists in browsers, edges, applications, data systems, queues, and platforms, and this lesson names one thing that connects signals across all of them.",
-      "The failure is described as missing context; the answer is the mechanism that was supposed to carry it."
+      "They already hold two of the four. Work out which question is the one left over.",
+      "The missing signal is the only one of the four whose question is about a single operation rather than about a count, an event, or code."
     ],
-    "explanation": "Context propagation connects signals across boundaries, and missing context breaks traces at queues is the failure it prevents. A parent relationship on a span says which work this work belongs to, and a correlation identifier says which other signals describe the same thing; propagation is what moves either of them across a boundary the request does not stay inside.",
+    "explanation": "Metrics answer “how much or how often?”, which is what the error rate already gives them. Logs answer “what event occurred?”, which is what reading the individual failures gives them. Traces answer “where did this operation spend time and fail?”, and trace spans carry parent relationships, duration, status, and attributes — the only one of the four that follows a single operation. Profiles can answer “which code consumed resources,” which is a question about code rather than about this operation's path.",
     "difficulty": "intermediate",
     "tags": [
       "quality-and-observability"
@@ -5846,27 +5848,29 @@
   {
     "id": "logs-metrics-and-traces-fb1",
     "type": "fill-blank",
-    "prompt": "Complete this lesson's split of questions across the signals.",
-    "template": "Metrics answer how much or how often. Logs answer what {{1}} occurred. Traces answer where an operation spent {{2}} and failed.",
+    "prompt": "Name the three shapes this lesson gives for aggregating measurements.",
+    "template": "Counters, {{1}}, and {{2}} aggregate measurements.",
     "blanks": [
       {
         "slot": 1,
         "accept": [
-          "event"
+          "gauges",
+          "gauge"
         ]
       },
       {
         "slot": 2,
         "accept": [
-          "time"
+          "histograms",
+          "histogram"
         ]
       }
     ],
     "hints": [
-      "The first blank is the thing a log records discretely; the second is what a span carries alongside status and attributes.",
-      "Profiles are the fourth question, and they answer about code rather than about either of these."
+      "Both missing words are metric shapes, not a log, a span, or an identifier.",
+      "The lesson names all three in a single sentence, and counters is the first of them."
     ],
-    "explanation": "Metrics answer “how much or how often?” Logs answer “what event occurred?” Traces answer “where did this operation spend time and fail?” Profiles can answer “which code consumed resources.” Logs record discrete events, metrics aggregate measurements, and traces connect work across a request or workflow.",
+    "explanation": "Counters, gauges, and histograms aggregate measurements, which is how metrics answer “how much or how often?” The other entries in that same list are not metric shapes: structured logs use stable event names and typed fields, trace spans carry parent relationships, correlation identifiers link signals, sampling bounds cost, and semantic conventions make common operations comparable.",
     "difficulty": "beginner",
     "tags": [
       "quality-and-observability"
@@ -5885,8 +5889,8 @@
   {
     "id": "logs-metrics-and-traces-card2",
     "type": "flashcard",
-    "front": "Counters, gauges, and histograms",
-    "back": "The three shapes that aggregate measurements.",
+    "front": "Context propagation",
+    "back": "It connects signals across boundaries. Missing context is what breaks traces at queues.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -6156,7 +6160,7 @@
   {
     "id": "reliability-and-performance-mc1",
     "type": "multiple-choice",
-    "prompt": "A team's latency objective is computed only over requests that returned successfully. The dashboard shows the objective comfortably met, and support keeps hearing about failures. Which named mistake is this?",
+    "prompt": "A team's speed objective is comfortably met. Its indicator is built only from the responses that came back correctly — anything that errored never enters the calculation at all. Support keeps hearing that the product is broken. Which named mistake is this?",
     "options": [
       {
         "id": "a",
@@ -6165,21 +6169,21 @@
       },
       {
         "id": "b",
-        "text": "Targeting 100%",
-        "feedback": "That is a target with no misses left to tolerate. This team's target is being met; what is wrong is which events were allowed to count toward it."
+        "text": "Counting a fast error as good latency",
+        "feedback": "That is the mirror image of this one. There a request that failed quickly is admitted and counted as a good time; here the failures are never admitted, so the number cannot see them at all."
       },
       {
         "id": "c",
-        "text": "Optimizing a component that is not on the critical path",
-        "feedback": "That is effort spent where it cannot show. Nothing here has been optimized — a measurement has been narrowed."
+        "text": "Reporting an average where the distribution was needed",
+        "feedback": "Averages are compact but hide slow cohorts, which buries a slow group inside a number that did include it. The problem here is which events reach the number, not how the ones that do are summarized."
       },
       {
         "id": "d",
-        "text": "Redundancy that shares the same failure domain",
-        "feedback": "That is a reliability mechanism turning out not to be independent. This is a measurement problem: the failures are real and simply outside the number."
+        "text": "Measuring on the server where a client measurement was needed",
+        "feedback": "Client measurements include network and rendering; server measurements isolate backend behavior. That choice changes what is inside the timing rather than which events are counted."
       }
     ],
-    "explanation": "Teams target 100%, alert on every error, exclude failed requests from latency, or optimize a component that is not on the critical path. Availability ratios count successful eligible events, and this lesson reads successful as the word that keeps a fast error out of the count and eligible as what decides which events the objective was ever about. Both reliability and performance should be defined from user-visible outcomes and managed as distributions, and a latency objective that drops every failure has stopped describing what users met.",
+    "explanation": "Teams target 100%, alert on every error, exclude failed requests from latency, or optimize a component that is not on the critical path. Availability ratios count successful eligible events, and this lesson reads successful as the word that keeps a fast error out of the count and eligible as what decides which events the objective was ever about. Here nothing that errored is eligible, so the objective describes only the population that already worked. The three rejected options are real mistakes from the same territory and none of them is this one: a fast error counted as good latency is the opposite admission, an average hides a slow cohort inside a number that did include it, and a server measurement rather than a client one changes what the timing covers rather than which events are counted.",
     "difficulty": "intermediate",
     "tags": [
       "quality-and-observability"

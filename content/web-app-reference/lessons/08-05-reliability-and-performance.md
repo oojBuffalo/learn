@@ -17,11 +17,11 @@ tags: [quality-and-observability]
 A dashboard reports the latency objective is met. Support reports the
 application is unusable for some people. Both describe the same system.
 
-The number on the dashboard is an average, and it is computed only over
-requests that returned successfully. Teams exclude failed requests from
-latency, and averages are compact but hide slow cohorts — a failure mode and a
-tradeoff stacked on each other. The failing requests and the slow cohort are
-both outside that number.
+The number on the dashboard is an average, computed only over requests that
+returned successfully. Teams exclude failed requests from latency, and averages
+are compact but hide slow cohorts — a failure mode and a tradeoff stacked on
+each other. The failing requests and the slow cohort are both outside that
+number.
 
 ## An indicator, a target, and a budget for missing it
 
@@ -69,7 +69,7 @@ by device class. It tracks p50, p95, and p99, budgets edge and backend time,
 and degrades optional recommendations when the remaining error budget is low.
 
 Successful view availability is an availability ratio, with successful doing
-the job described above. Time to usable content, split by device class, is an
+the job above. Time to usable content, split by device class, is an
 indicator taken from what a reader notices rather than what a server finds easy
 to emit. The three percentiles are the distribution asked for instead of an
 isolated average. Budgeting edge and backend time is a performance budget
@@ -93,20 +93,21 @@ rendering; server measurements isolate backend behavior. Synthetic probes are
 controlled; real-user signals represent actual diversity.
 
 Three pairs, none with a winner. Read each as a question about what the
-measurement is allowed to include: a slow cohort, the network and the
-rendering, or the diversity of real circumstances.
+measurement may include: a slow cohort, the network and the rendering, or the
+diversity of real circumstances.
 
-The failure modes are those choices left unmade. Teams target 100%, alert on
-every error, exclude failed requests from latency, or optimize a component that
-is not on the critical path. Load tests omit downstream limits. Redundancy
-shares the same failure domain. A fast error is counted as good latency.
+The failure modes are a separate list, and none of them is one of those three
+pairs decided the wrong way. Teams target 100%, alert on every error, exclude
+failed requests from latency, or optimize a component that is not on the
+critical path. Load tests omit downstream limits. Redundancy shares the same
+failure domain. A fast error is counted as good latency.
 
 ::activity{id="reliability-and-performance-mat1"}
 
 ## How much reliability you are buying, and in what currency
 
-The decision left is not whether to be reliable. It is how much, and the price
-is already stated: money, complexity, and delivery speed.
+The decision left is not whether to be reliable but how much, and the price is
+already stated: money, complexity, and delivery speed.
 
 The error budget is what makes it a decision rather than a preference.
 Objectives set targets and budgets express tolerated misses over a window, so
@@ -114,8 +115,8 @@ Objectives set targets and budgets express tolerated misses over a window, so
 what it has left and drops the optional recommendations rather than the content
 itself.
 
-Two things the budget does not buy. Targeting 100% is on the list of mistakes
-here, and a target that tolerates nothing leaves nothing to spend. And a budget
+Two things the budget does not buy. Targeting 100% is on the mistakes list,
+and a target that tolerates nothing leaves nothing to spend. And a budget
 says nothing about where the time went: budgeting edge and backend time is a
 separate instrument.
 
@@ -124,8 +125,8 @@ objective with a budget expects some misses; alerting on each treats the budget
 as though it were zero.
 
 The opening dashboard never made any of these decisions. Its number was easy to
-produce and was not selected from what users care about — the first thing on
-this list you have to buy, and what it costs is the number you already had.
+produce and was not selected from what users care about — the first thing you
+have to buy here, and it costs the number you already had.
 
 ::activity{id="reliability-and-performance-mc1"}
 

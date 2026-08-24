@@ -91,7 +91,7 @@ not a technique for making them cheaper.
 
 ::activity{id="contract-and-end-to-end-testing-mc2"}
 
-## What each of these symptoms rules out
+## What each contract and end-to-end symptom rules out
 
 Take each of them as an elimination rather than a diagnosis.
 
