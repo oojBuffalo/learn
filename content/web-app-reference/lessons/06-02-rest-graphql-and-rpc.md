@@ -21,8 +21,8 @@ latency-sensitive neighboring service, and those three have almost nothing in
 common except the team that owns them.
 
 Somebody eventually asks whether JSON counts as a fourth option, and the room
-splits again. Two confusions are now loose in the room, and neither one is about
-which style is better.
+splits again. Two confusions are loose here, and neither is about which style is
+better.
 
 ## Three centers of gravity, not three formats
 
@@ -85,9 +85,12 @@ tunnels with inconsistent status behavior. This lesson reads the two as
 connected — the tunnel is what gets built once the screen wins the argument.
 
 GraphQL reduces over-fetching and under-fetching but requires query-cost
-controls, resolver batching, and field-level policy. Those three are not
-optional extras. Without them the style produces N+1 dependency calls or allows
-unbounded nested queries.
+controls, resolver batching, and field-level policy. Separately, this lesson
+names two GraphQL failures: N+1 dependency calls, and unbounded nested queries.
+Two of the three requirements read as answers to those two — resolver batching
+to the first, query-cost controls to the second — and that reading is this
+lesson's, not the source's. Field-level policy answers neither, and is required
+anyway.
 
 RPC offers strong operation names and efficient schemas but can make network
 calls look deceptively local, and clients retry non-idempotent procedures
@@ -97,14 +100,14 @@ too: the types line up while semantic compatibility still changes.
 
 ::activity{id="rest-graphql-and-rpc-mc1"}
 
-## The decision you are actually making, and what it costs
+## The style decision, and the four things each boundary repeats
 
 Teams may use more than one style at distinct boundaries. That single sentence
 dissolves the design review, and it replaces one comfortable decision with
 several uncomfortable ones.
 
 The comfortable version picks a style once and applies it everywhere. It is
-cheap to decide and cheap to staff, and it leaves at least one boundary served by
+cheap to decide, and it leaves at least one boundary served by
 a style centered somewhere other than where that boundary lives — a public
 audience under a style built for typed internal calls, say, or a
 latency-sensitive neighbor paying for intermediaries nobody asked for.
@@ -116,8 +119,8 @@ therefore never only another endpoint; it is another compatibility contract to
 maintain and another stream of telemetry somebody has to read.
 
 That is the decision now on the table. Not which style the company is, but how
-many boundaries the company is willing to operate deliberately — and whether the
-fit each style buys at its own boundary is worth another set of four.
+many boundaries it is willing to operate deliberately — and whether the fit each
+style buys is worth another set of four.
 
 ## Sources
 

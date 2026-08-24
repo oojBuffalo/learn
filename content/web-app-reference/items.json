@@ -4246,8 +4246,8 @@
   {
     "id": "rest-graphql-and-rpc-card2",
     "type": "flashcard",
-    "front": "JSON",
-    "back": "A language-independent text interchange format, and not an API style.",
+    "front": "What RPC defines",
+    "back": "Procedures and typed request and response messages, often with generated clients.",
     "tags": [
       "apis-and-integration"
     ],
@@ -4363,20 +4363,24 @@
       },
       {
         "id": "c",
-        "text": "Globally exactly-once business effects usually still require narrower transactional definitions",
+        "text": "The possibility that work is simply lost goes away",
         "correct": true
       },
       {
         "id": "d",
-        "text": "Ordering becomes global across partitions"
+        "text": "Globally exactly-once business effects become available without further work"
       },
       {
         "id": "e",
+        "text": "Ordering becomes global across partitions"
+      },
+      {
+        "id": "f",
         "text": "Poison messages stop retrying forever"
       }
     ],
     "partialCredit": true,
-    "explanation": "At-most-once delivery may lose work; at-least-once requires idempotent consumers. Duplicates are what is bought with that, and consumers processing duplicates is one of this lesson's named failure modes — the worked example answers it by deduplicating on event ID. Globally exactly-once business effects usually require narrower transactional definitions, so the stronger promise is not what this move delivers. The last two options are separate entries on the same failure list: consumers assume global order across partitions, and poison messages retry forever.",
+    "explanation": "At-most-once delivery may lose work, and at-least-once requires idempotent consumers, so the move trades a loss risk for a duplication risk — both halves of that trade change on the day the switch is made. Consumers processing duplicates is one of this lesson's named failure modes, and the worked example answers it by deduplicating on event ID. The move does not reach the stronger promise: globally exactly-once business effects usually require narrower transactional definitions. The last two options are separate entries on the same failure list, unmoved by the delivery semantics — consumers assume global order across partitions, and poison messages retry forever.",
     "difficulty": "advanced",
     "tags": [
       "apis-and-integration"
@@ -4433,35 +4437,31 @@
   {
     "id": "identity-across-system-boundaries-mat1",
     "type": "matching",
-    "prompt": "Match each identity mechanism to what this lesson says it does.",
+    "prompt": "Match each thing you might find at a boundary to what this lesson says was left undone.",
     "pairs": [
       {
-        "left": "Session credentials",
-        "right": "associate a browser with server state"
+        "left": "A receiver that accepts any token whose signature verifies",
+        "right": "read the issuer and audience the token already carries"
       },
       {
-        "left": "Signed access tokens",
-        "right": "carry issuer, subject, audience, expiry, and scopes"
+        "left": "A queued job still holding the credential it started with",
+        "right": "constrain the credential's lifetime"
       },
       {
-        "left": "Mutual TLS or platform workload identity",
-        "right": "authenticate service instances"
+        "left": "A service that believes an identity header supplied by whoever called it",
+        "right": "establish trust in the credential itself"
       },
       {
-        "left": "Token exchange",
-        "right": "replace a broad credential with one for a downstream audience"
-      },
-      {
-        "left": "Trace and audit context",
-        "right": "carry actor and delegation metadata outside the credential"
+        "left": "An audit record naming only a shared account",
+        "right": "carry the actor separately, in trace and audit context"
       }
     ],
     "distractors": [
-      "make the receiver's authorization decision on its behalf",
-      "guarantee that a credential cannot be replayed"
+      "authenticate the service instance with mutual TLS or platform workload identity",
+      "associate the browser with server state using a session credential"
     ],
-    "explanation": "Session credentials associate a browser with server state. Signed access tokens can carry issuer, subject, audience, expiry, and scopes. Mutual TLS or platform workload identity authenticates service instances. Token exchange can replace a broad credential with one intended for a downstream audience. Trace and audit context carries actor and delegation metadata separately from security credentials. Neither distractor is available from any of them: each receiver must make its own authorization decision, and short-lived, audience-specific tokens limit replay rather than ruling it out.",
-    "difficulty": "intermediate",
+    "explanation": "Three of these are a receiver obligation left undone. Each receiver must establish trust in the credential, constrain its audience and lifetime, and make its own authorization decision. A signature that verifies says nothing about the issuer and audience a signed access token can carry, so the audience was never constrained; a credential still sitting in a queued job is one whose lifetime was never bounded; and an identity header supplied by the caller is trust that was never established. The fourth is not an obligation but a missing mechanism — an audit naming only a shared account needs trace and audit context, which carries actor and delegation metadata separately from security credentials. Neither distractor helps: mutual TLS or platform workload identity authenticates service instances rather than narrowing what a credential opens, and session credentials associate a browser with server state.",
+    "difficulty": "advanced",
     "tags": [
       "apis-and-integration"
     ]
@@ -4528,11 +4528,11 @@
       },
       {
         "id": "f",
-        "text": "Record the delegated user alongside the calling workload in the audit context"
+        "text": "Have the document service make its own authorization decision"
       }
     ],
     "partialCredit": true,
-    "explanation": "Token exchange can replace a broad credential with one intended for a downstream audience, and short-lived, audience-specific tokens limit replay at the cost of issuance infrastructure. The worked example does all three at once: a session becomes a five-minute token valid only for the document service. Forwarding moves the other way, because propagating the original user token is simple but broadens its exposure and audience. Mutual TLS or platform workload identity authenticates service instances, which establishes who is calling rather than narrowing what the credential can open. And recording the delegated user is worth doing — it is how an audit keeps the original actor — but trace and audit context is carried separately from security credentials, so it constrains nothing.",
+    "explanation": "Token exchange can replace a broad credential with one intended for a downstream audience, and short-lived, audience-specific tokens limit replay at the cost of issuance infrastructure. The worked example does all three at once: a session becomes a five-minute token valid only for the document service. Forwarding moves the other way, because propagating the original user token is simple but broadens its exposure and audience. Mutual TLS or platform workload identity authenticates service instances, which establishes who is calling rather than narrowing what the credential opens. And each receiver must make its own authorization decision in any case — that is required whatever credential arrives, so it constrains nothing about the credential.",
     "difficulty": "advanced",
     "tags": [
       "apis-and-integration"
