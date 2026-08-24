@@ -166,5 +166,27 @@
       "secrets-dependencies-and-supply-chain-mc1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-quality-and-observability",
+    "title": "Quality and observability check",
+    "items": [
+      "testing-strategy-mc1",
+      "testing-strategy-mat1",
+      "testing-strategy-ms1",
+      "contract-and-end-to-end-testing-mc1",
+      "contract-and-end-to-end-testing-mc2",
+      "contract-and-end-to-end-testing-ms1",
+      "logs-metrics-and-traces-sa1",
+      "logs-metrics-and-traces-fb1",
+      "logs-metrics-and-traces-mc1",
+      "debugging-production-systems-ord1",
+      "debugging-production-systems-mc1",
+      "debugging-production-systems-ms1",
+      "reliability-and-performance-ms1",
+      "reliability-and-performance-mat1",
+      "reliability-and-performance-mc1"
+    ],
+    "passThreshold": 0.75
   }
 ]

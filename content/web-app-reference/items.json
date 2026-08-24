@@ -5482,5 +5482,755 @@
     "tags": [
       "security"
     ]
+  },
+  {
+    "id": "testing-strategy-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team needs evidence that one domain rule decides correctly. They write a browser journey that signs in, places an order, and cancels it, so that the rule runs at the end. Which of this lesson's claims says they reached too far?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Use the narrowest test that can disprove the important behavior",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Add broader tests for boundary wiring and a small number of critical journeys",
+        "feedback": "That is what breadth is for — wiring, and a few journeys. A single domain rule is neither, so this claim does not license the journey they wrote."
+      },
+      {
+        "id": "c",
+        "text": "Production monitoring covers conditions pre-release tests cannot reproduce fully",
+        "feedback": "That is about conditions no pre-release test can reproduce. A domain rule is deterministic behavior, which is exactly what a narrow test can disprove before release."
+      },
+      {
+        "id": "d",
+        "text": "Tests should document expectations without freezing implementation details",
+        "feedback": "A constraint on how a test is written rather than on how broad it should be. This journey freezes nothing internal; it is simply not the narrowest thing that could have disproved the rule."
+      }
+    ],
+    "explanation": "Use the narrowest test that can disprove the important behavior, then add broader tests for boundary wiring and a small number of critical journeys. Unit tests exercise deterministic behavior through a module's public interface, which is what a single domain rule is. End-to-end tests observe a user journey through deployed components, and this rule is not a user journey.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-mat1",
+    "type": "matching",
+    "prompt": "Match each line of the order-cancellation example to what this lesson says that line is.",
+    "pairs": [
+      {
+        "left": "Focused tests on the cancellation rule",
+        "right": "unit tests, through the module's public interface"
+      },
+      {
+        "left": "A database test that verifies concurrency",
+        "right": "an integration test, using a real boundary implementation"
+      },
+      {
+        "left": "A check on the API's conflict semantics",
+        "right": "a contract test, over assumptions shared by independently changing parties"
+      },
+      {
+        "left": "A browser run that cancels and sees an accessible result",
+        "right": "an end-to-end test, observing a user journey through deployed components"
+      },
+      {
+        "left": "Cancellation errors tracked by reason after release",
+        "right": "production monitoring, which is not a pre-release test at all"
+      }
+    ],
+    "distractors": [
+      "property tests, exploring invariants across generated inputs",
+      "human checks, which a strategy also chooses where to place"
+    ],
+    "explanation": "Unit tests exercise deterministic behavior through a module's public interface. Integration tests use real boundary implementations such as a database or HTTP adapter. Contract tests verify assumptions shared by independently changing parties. End-to-end tests observe a user journey through deployed components, and accessibility conformance applies to complete processes and full pages. The fifth line is not a test: production monitoring covers conditions pre-release tests cannot reproduce fully. Neither distractor appears in the example. Property tests explore invariants across generated inputs, and nothing here generates inputs; a testing strategy also chooses where human checks provide useful evidence, and no line of this example is one.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-ms1",
+    "type": "multi-select",
+    "prompt": "This lesson keeps two lists apart: prices a team decides to pay for a kind of evidence, and failure modes. Which of these does it name as failure modes?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Tests assert private calls",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Excessive mocking verifies an imagined collaboration",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Only happy paths are tested",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Flaky tests become ignored signals",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "Real dependencies cost setup and diagnosis"
+      },
+      {
+        "id": "f",
+        "text": "Browser tests are slower"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "The failure modes named here are tests that assert private calls, share mutable fixtures, depend on timing, or pass when the feature is broken; excessive mocking that verifies an imagined collaboration; only happy paths being tested; flaky tests becoming ignored signals; and coverage percentages treated as correctness. The two rejected options are prices rather than failures. Real dependencies improve fidelity but cost setup and diagnosis, and browser tests catch integration and accessibility failures while being slower — both are bought deliberately for the evidence they produce.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-card1",
+    "type": "flashcard",
+    "front": "Testing strategy",
+    "back": "A choice about where automated and human checks provide useful evidence about behavior. It favors stable public boundaries and risk over maximizing test counts or one test shape.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-card2",
+    "type": "flashcard",
+    "front": "Snapshot tests",
+    "back": "Useful for deliberate serialized structures, not as a substitute for semantic assertions.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-card3",
+    "type": "flashcard",
+    "front": "Accessibility conformance",
+    "back": "It applies to complete processes and full pages, which is the level an end-to-end journey works at.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-card4",
+    "type": "flashcard",
+    "front": "What tests are for",
+    "back": "Making change safer, localizing defects, and documenting expectations without freezing implementation details.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "testing-strategy-card5",
+    "type": "flashcard",
+    "front": "Test data builders",
+    "back": "They improve intent if they do not hide required fields.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-mc1",
+    "type": "multiple-choice",
+    "prompt": "During a rollout, two versions of a provider are live at the same time and one consumer has to work against both. Which of this lesson's mechanisms is aimed at exactly that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Compatibility matrices, which cover versions that coexist during rollout",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Schema checks, which catch structural incompatibility",
+        "feedback": "A schema check compares one shape against one expectation. It says nothing about which versions happen to be live together."
+      },
+      {
+        "id": "c",
+        "text": "Provider tests, which execute examples against the real boundary",
+        "feedback": "Those run against the boundary as it is at that moment — one version at a time, which is the thing in question."
+      },
+      {
+        "id": "d",
+        "text": "End-to-end suites, which assert user-visible outcomes",
+        "feedback": "An end-to-end run traverses whichever version it happened to reach. It can fail, but it will not tell you the pair of live versions was the reason."
+      }
+    ],
+    "explanation": "Schema checks catch structural incompatibility. Provider tests execute examples against the real boundary. Consumer-driven contracts publish expectations for provider verification. Compatibility matrices cover versions that coexist during rollout, which is precisely the situation described. End-to-end suites create isolated data, act through public interfaces, and assert user-visible outcomes.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-mc2",
+    "type": "multiple-choice",
+    "prompt": "An integration depends on a third party whose test environment is rate limited, billed per call, and occasionally unavailable. What does this lesson say most cases do about it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Use recorded or simulated boundaries, plus a small live probe",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Call the real third party on every run, because fidelity outranks the other costs",
+        "feedback": "Testing real third parties does improve fidelity. The rate, cost, and instability are exactly why this lesson does not make it the default."
+      },
+      {
+        "id": "c",
+        "text": "Leave the boundary untested and let the deployed journeys cover it",
+        "feedback": "End-to-end tests traverse several contracts at once, so a failure there says the path broke without saying which contract did."
+      },
+      {
+        "id": "d",
+        "text": "Publish a consumer-driven contract and have the third party verify it",
+        "feedback": "Consumer-driven contracts publish expectations for provider verification and require governance. That is an arrangement between parties who agree to it, and it answers nothing about rate, cost, and instability."
+      }
+    ],
+    "explanation": "Testing real third parties improves fidelity while adding rate, cost, and instability, so most cases use recorded or simulated boundaries plus a small live probe. This lesson reads the probe as the part that keeps the recording honest, and the recorded boundary as the part that keeps the suite runnable.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-ms1",
+    "type": "multi-select",
+    "prompt": "An end-to-end suite seeds each case through an internal setup endpoint, runs in an environment shared with other suites, and asserts by reading a database row once the journey finishes. Which of this lesson's requirements for end-to-end suites does it break?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Create isolated data",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Act through public interfaces",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Assert user-visible outcomes",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Traverse several contracts at once"
+      },
+      {
+        "id": "e",
+        "text": "Justify its expense for a critical flow"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "End-to-end suites create isolated data, act through public interfaces, and assert user-visible outcomes. This suite breaks all three: tests call internal setup endpoints unavailable to users, shared environments leak state between runs, and a database row is not a user-visible outcome. The two rejected options are not requirements this description breaks. End-to-end tests traverse several such contracts at once whatever else they do, and whether a flow justifies the expense is a decision about which flows to cover.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-card1",
+    "type": "flashcard",
+    "front": "A provider contract",
+    "back": "It states supported inputs and observable outputs.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-card2",
+    "type": "flashcard",
+    "front": "A consumer assumption",
+    "back": "The subset of a provider contract actually relied upon.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-card3",
+    "type": "flashcard",
+    "front": "Consumer-driven contracts",
+    "back": "They publish expectations for provider verification, revealing actual dependencies while requiring governance.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-card4",
+    "type": "flashcard",
+    "front": "Provider tests",
+    "back": "They execute examples against the real boundary.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "contract-and-end-to-end-testing-card5",
+    "type": "flashcard",
+    "front": "What end-to-end evidence asks",
+    "back": "Whether a real user goal survives the integrated path.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-sa1",
+    "type": "short-answer",
+    "prompt": "A request is traced up to the point where it is put on a queue. The consumer's work on the far side shows up as a separate trace with no parent. This lesson names one thing that connects signals across a boundary like that. What is it?",
+    "accept": [
+      "context propagation",
+      "propagation",
+      "propagating context",
+      "trace context propagation",
+      "the context propagation",
+      "context propagation across boundaries"
+    ],
+    "match": "fold",
+    "hints": [
+      "Instrumentation exists in browsers, edges, applications, data systems, queues, and platforms, and this lesson names one thing that connects signals across all of them.",
+      "The failure is described as missing context; the answer is the mechanism that was supposed to carry it."
+    ],
+    "explanation": "Context propagation connects signals across boundaries, and missing context breaks traces at queues is the failure it prevents. A parent relationship on a span says which work this work belongs to, and a correlation identifier says which other signals describe the same thing; propagation is what moves either of them across a boundary the request does not stay inside.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team adds the user ID to their telemetry so a symptom can be connected to affected users. They put it on the log lines, on the trace spans, and on the metric as a dimension. Which of the three does this lesson say is the expensive one, and why?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The metric dimension, because cardinality drives metric memory cost",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The trace spans, because a span already carries duration, status, and attributes",
+        "feedback": "High-cardinality identifiers are useful in traces. An identifier arriving as one more span attribute is what traces are for."
+      },
+      {
+        "id": "c",
+        "text": "The log lines, because free-form logs cannot be queried reliably",
+        "feedback": "That is a different problem — an unstructured log line instead of typed fields. High-cardinality identifiers are useful in logs, and a typed field holding one is a structured log doing its job."
+      },
+      {
+        "id": "d",
+        "text": "All three equally, since it is the same value in each place",
+        "feedback": "It is the same value carrying different prices. High-cardinality identifiers are useful in traces and logs but expensive as metric dimensions."
+      }
+    ],
+    "explanation": "High-cardinality identifiers are useful in traces and logs but expensive as metric dimensions; OpenTelemetry notes that cardinality drives metric memory cost. User IDs or raw paths explode metric cardinality, which is the named failure. On a log line or a span, the same identifier is what connects a symptom to affected users and dependencies.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-fb1",
+    "type": "fill-blank",
+    "prompt": "Complete this lesson's split of questions across the signals.",
+    "template": "Metrics answer how much or how often. Logs answer what {{1}} occurred. Traces answer where an operation spent {{2}} and failed.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "event"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "time"
+        ]
+      }
+    ],
+    "hints": [
+      "The first blank is the thing a log records discretely; the second is what a span carries alongside status and attributes.",
+      "Profiles are the fourth question, and they answer about code rather than about either of these."
+    ],
+    "explanation": "Metrics answer “how much or how often?” Logs answer “what event occurred?” Traces answer “where did this operation spend time and fail?” Profiles can answer “which code consumed resources.” Logs record discrete events, metrics aggregate measurements, and traces connect work across a request or workflow.",
+    "difficulty": "beginner",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-card1",
+    "type": "flashcard",
+    "front": "Structured logs",
+    "back": "They use stable event names and typed fields.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-card2",
+    "type": "flashcard",
+    "front": "Counters, gauges, and histograms",
+    "back": "The three shapes that aggregate measurements.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-card3",
+    "type": "flashcard",
+    "front": "Head sampling and tail sampling",
+    "back": "Head sampling decides early; tail sampling retains interesting completed traces at greater infrastructure cost.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-card4",
+    "type": "flashcard",
+    "front": "What more retention buys and costs",
+    "back": "Better investigation, against higher privacy and storage obligations.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "logs-metrics-and-traces-card5",
+    "type": "flashcard",
+    "front": "Semantic conventions",
+    "back": "They make common operations comparable.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-ord1",
+    "type": "ordering",
+    "prompt": "Put this lesson's production-debugging method into the order it gives.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Observe the symptom"
+      },
+      {
+        "id": "s2",
+        "text": "Bound affected users and time"
+      },
+      {
+        "id": "s3",
+        "text": "Identify recent changes"
+      },
+      {
+        "id": "s4",
+        "text": "Map the dependency path"
+      },
+      {
+        "id": "s5",
+        "text": "Form a falsifiable hypothesis"
+      },
+      {
+        "id": "s6",
+        "text": "Choose the safest discriminating check"
+      },
+      {
+        "id": "s7",
+        "text": "Mitigate, or continue"
+      }
+    ],
+    "explanation": "Observe the symptom, bound affected users and time, identify recent changes, map the dependency path, form a falsifiable hypothesis, choose the safest discriminating check, then mitigate or continue. Production debugging is evidence-guided reduction of uncertainty under safety constraints, and the goal is to restore service, preserve evidence, and test hypotheses without expanding impact.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-mc1",
+    "type": "multiple-choice",
+    "prompt": "An incident is live and the team is down to two hypotheses. By this lesson's method, what decides which action comes next?",
+    "options": [
+      {
+        "id": "a",
+        "text": "It should be the safest check whose result would separate the two hypotheses",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "It should be the change most likely to restore service, applied straight away",
+        "feedback": "Restoring service is one of the three goals, and the method still puts a check before the mitigation: choose the safest discriminating check, then mitigate or continue. A change applied first is also a variable changed."
+      },
+      {
+        "id": "c",
+        "text": "It should be whichever check produces the most detail about the failing dependency",
+        "feedback": "More output is not the criterion. A discriminating check separates the hypotheses; detail consistent with both leaves you where you started."
+      },
+      {
+        "id": "d",
+        "text": "It should be a restart, since it is quick and the symptom may not return",
+        "feedback": "A restart is what the opening scene reached for. It cleared the symptom quickly, the symptom came back, and nothing had been separated."
+      }
+    ],
+    "explanation": "The method runs: observe the symptom, bound affected users and time, identify recent changes, map the dependency path, form a falsifiable hypothesis, choose the safest discriminating check, then mitigate or continue. A falsifiable hypothesis is one a check can come back against, and a discriminating check separates the hypotheses rather than adding output. In the worked incident the configuration diff plays that part: a reduced pool explains both the saturation and the connection wait, and the diff can come back either way.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-ms1",
+    "type": "multi-select",
+    "prompt": "One of the three goals is to preserve evidence. Which of these does this lesson say leaves an investigation with evidence it cannot trust or cannot get back?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Restarting, which clears symptoms quickly but destroys state and can hide leaks",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Changing several variables together, so the graph moves and nothing names a cause",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Clock skew and sampling, which mislead timelines",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Reading structured logs for event detail"
+      },
+      {
+        "id": "e",
+        "text": "Contrasting the unhealthy region with a healthy one"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "The goal is to restore service, preserve evidence, and test hypotheses without expanding impact, and restoring service quickly is frequently the same act that removes the evidence. Restarting clears symptoms quickly but destroys state and can hide leaks. Teams change several variables together, which is why the opening scene could not say which change moved the graph. Clock skew and sampling mislead timelines. The two rejected options produce evidence rather than spending it: structured logs provide event detail, and differential comparison contrasts healthy and unhealthy cohorts, versions, regions, or tenants.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-card1",
+    "type": "flashcard",
+    "front": "Production debugging",
+    "back": "Evidence-guided reduction of uncertainty under safety constraints. The goal is to restore service, preserve evidence, and test hypotheses without expanding impact.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-card2",
+    "type": "flashcard",
+    "front": "The golden signals",
+    "back": "Latency, traffic, errors, and saturation.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-card3",
+    "type": "flashcard",
+    "front": "Safe mitigations",
+    "back": "Rollback, traffic shift, feature disablement, and load shedding.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-card4",
+    "type": "flashcard",
+    "front": "Why a rollback fails",
+    "back": "Because data migrations or flags were not backward compatible.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "debugging-production-systems-card5",
+    "type": "flashcard",
+    "front": "Interactive production shells",
+    "back": "Powerful but difficult to audit; purpose-built read-only tools are safer.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-ms1",
+    "type": "multi-select",
+    "prompt": "The document viewer degrades optional recommendations when the remaining error budget is low. Which of this lesson's claims make that a planned response rather than an improvisation?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Error budgets express tolerated misses over a window, so there is a quantity that can be low",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Degradation is one of the mechanisms this lesson lists as addressing failure",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Objectives turn vague goals into engineering constraints, monitoring, capacity decisions, and acceptable risk",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Every layer contributes latency and failure"
+      },
+      {
+        "id": "e",
+        "text": "Load tests discover capacity and bottlenecks"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Service-level indicators measure outcomes, objectives set targets, and error budgets express tolerated misses over a window, which is what makes low a quantity the viewer can read off something. Redundancy, failover, degradation, and recovery drills address failure, so dropping the optional recommendations is one of the listed mechanisms. And objectives are what turn vague goals into engineering constraints, monitoring, capacity decisions, and acceptable risk. The two rejected options are true elsewhere in this lesson and idle here: every layer contributes latency and failure, which says where the time and the failures come from rather than what to do when the budget runs low, and load tests discover capacity and bottlenecks, which is about finding a limit rather than responding to one.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-mat1",
+    "type": "matching",
+    "prompt": "Match each measurement choice to what this lesson says comes with it.",
+    "pairs": [
+      {
+        "left": "An average",
+        "right": "compact, and it hides slow cohorts"
+      },
+      {
+        "left": "A percentile",
+        "right": "the tail becomes visible, and the aggregation has to be careful"
+      },
+      {
+        "left": "A client-side measurement",
+        "right": "the network and the rendering are included"
+      },
+      {
+        "left": "A server-side measurement",
+        "right": "backend behavior is isolated"
+      },
+      {
+        "left": "A synthetic probe",
+        "right": "the conditions are controlled"
+      },
+      {
+        "left": "A real-user signal",
+        "right": "the actual diversity of users is represented"
+      }
+    ],
+    "distractors": [
+      "failed requests are dropped from the result",
+      "the target becomes an agreement with consequences"
+    ],
+    "explanation": "Averages are compact but hide slow cohorts; percentiles reveal tails while requiring careful aggregation. Client measurements include network and rendering; server measurements isolate backend behavior. Synthetic probes are controlled; real-user signals represent actual diversity. Neither distractor is a property of a measurement choice: excluding failed requests from latency is a named mistake, and an agreement with consequences is what makes an SLA rather than an SLO.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team's latency objective is computed only over requests that returned successfully. The dashboard shows the objective comfortably met, and support keeps hearing about failures. Which named mistake is this?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Excluding failed requests from latency",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Targeting 100%",
+        "feedback": "That is a target with no misses left to tolerate. This team's target is being met; what is wrong is which events were allowed to count toward it."
+      },
+      {
+        "id": "c",
+        "text": "Optimizing a component that is not on the critical path",
+        "feedback": "That is effort spent where it cannot show. Nothing here has been optimized — a measurement has been narrowed."
+      },
+      {
+        "id": "d",
+        "text": "Redundancy that shares the same failure domain",
+        "feedback": "That is a reliability mechanism turning out not to be independent. This is a measurement problem: the failures are real and simply outside the number."
+      }
+    ],
+    "explanation": "Teams target 100%, alert on every error, exclude failed requests from latency, or optimize a component that is not on the critical path. Availability ratios count successful eligible events, and this lesson reads successful as the word that keeps a fast error out of the count and eligible as what decides which events the objective was ever about. Both reliability and performance should be defined from user-visible outcomes and managed as distributions, and a latency objective that drops every failure has stopped describing what users met.",
+    "difficulty": "intermediate",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-card1",
+    "type": "flashcard",
+    "front": "An SLI, an SLO, and an SLA",
+    "back": "An SLI is a measurement, an SLO is its target, and an SLA is an agreement with consequences.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-card2",
+    "type": "flashcard",
+    "front": "Availability ratios",
+    "back": "They count successful eligible events.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-card3",
+    "type": "flashcard",
+    "front": "Timeouts and retries",
+    "back": "Timeouts bound waiting; retries consume an explicit budget.",
+    "reverse": true,
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-card4",
+    "type": "flashcard",
+    "front": "How to choose an indicator",
+    "back": "From what users care about rather than from what is easiest to measure.",
+    "tags": [
+      "quality-and-observability"
+    ]
+  },
+  {
+    "id": "reliability-and-performance-card5",
+    "type": "flashcard",
+    "front": "Performance budgets",
+    "back": "They limit frontend and backend regressions.",
+    "tags": [
+      "quality-and-observability"
+    ]
   }
 ]

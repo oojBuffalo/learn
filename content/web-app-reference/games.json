@@ -182,5 +182,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-quality-and-observability-match",
+    "template": "matching",
+    "title": "Quality and observability — match them up",
+    "source": {
+      "tags": [
+        "quality-and-observability"
+      ]
+    }
+  },
+  {
+    "id": "game-quality-and-observability-speed",
+    "template": "timed-round",
+    "title": "Quality and observability — quick fire",
+    "source": {
+      "tags": [
+        "quality-and-observability"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]
