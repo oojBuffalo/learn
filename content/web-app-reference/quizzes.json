@@ -75,5 +75,27 @@
       "frontend-performance-mc2"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-backend",
+    "title": "Backend check",
+    "items": [
+      "server-runtimes-mc1",
+      "server-runtimes-ms1",
+      "server-runtimes-mat1",
+      "backend-request-lifecycle-ord1",
+      "backend-request-lifecycle-mc1",
+      "backend-request-lifecycle-ms1",
+      "domain-and-application-logic-mc1",
+      "domain-and-application-logic-ms1",
+      "domain-and-application-logic-mc2",
+      "sessions-files-and-background-jobs-ord1",
+      "sessions-files-and-background-jobs-mc1",
+      "sessions-files-and-background-jobs-ms1",
+      "scaling-and-resilience-mc1",
+      "scaling-and-resilience-mat1",
+      "scaling-and-resilience-mc2"
+    ],
+    "passThreshold": 0.75
   }
 ]

@@ -90,5 +90,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-backend-match",
+    "template": "matching",
+    "title": "Backend — match them up",
+    "source": {
+      "tags": [
+        "backend"
+      ]
+    }
+  },
+  {
+    "id": "game-backend-speed",
+    "template": "timed-round",
+    "title": "Backend — quick fire",
+    "source": {
+      "tags": [
+        "backend"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]

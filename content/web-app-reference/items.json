@@ -2342,5 +2342,748 @@
     "tags": [
       "frontend"
     ]
+  },
+  {
+    "id": "server-runtimes-mc1",
+    "type": "multiple-choice",
+    "prompt": "An endpoint that resizes images is added to an event-driven service. It works. But three unrelated endpoints on the same service — none of them touching images — get much slower at the same time. What accounts for that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "CPU work can stall all requests on that loop, and blocking an event loop inflates unrelated latency",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The resizing is holding a thread from the pool, so fewer threads are left for the rest",
+        "feedback": "That is how a thread-per-request runtime would fail: thread pools isolate blocking work until the pool is exhausted. This runtime multiplexes many I/O operations through loops and callbacks, so there is no per-request thread to hold."
+      },
+      {
+        "id": "c",
+        "text": "Leaked thread-local or global state is crossing requests",
+        "feedback": "That failure shows up as one request seeing another's data. It does not make endpoints that share nothing get slower together."
+      },
+      {
+        "id": "d",
+        "text": "Unbounded concurrency has exhausted memory or downstream connections",
+        "feedback": "Unbounded concurrency exhausts memory or downstream connections, and that is a failure of admission. Nothing here says either ran out; what changed is that CPU work joined the loop."
+      }
+    ],
+    "explanation": "Event loops efficiently wait on I/O but CPU work can stall all requests on a loop, and blocking an event loop inflates unrelated latency. The unrelated endpoints are the evidence: they did nothing different, they share the loop, and the loop is where the resizing went. Concurrency should match workload — which is why the image endpoint in this lesson delegates resizing to a bounded CPU worker pool instead.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-ms1",
+    "type": "multi-select",
+    "prompt": "A deploy replaces the image service. The old process stops admission, waits within a deadline, then exits. Which of these does that sequence achieve?",
+    "options": [
+      {
+        "id": "a",
+        "text": "New work stops entering before the waiting begins",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The wait has an upper bound, so the exit is certain",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "It avoids the dropped in-flight work that an abrupt shutdown causes",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Every request already admitted is guaranteed to finish"
+      },
+      {
+        "id": "e",
+        "text": "The CPU worker pool is freed immediately, so the replacement can start resizing"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Shutdown stops admission, waits within a deadline, then exits — which is this runtime's answer to “how is a process stopped without abandoning work?” Stopping admission first is what makes the wait finite; the deadline is what makes the exit certain; and the point of both is that abrupt shutdown drops in-flight work. The deadline is also why nothing is guaranteed to finish: it bounds the wait rather than the work. And nothing here frees the pool early — the wait exists precisely so the pool can drain.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-mat1",
+    "type": "matching",
+    "prompt": "A team is deciding how the image service should run. Match each choice to what it trades.",
+    "pairs": [
+      {
+        "left": "Send blocking work to a thread pool",
+        "right": "blocking work isolated, until the pool is exhausted"
+      },
+      {
+        "left": "Run more processes",
+        "right": "better isolation and CPU use, at more memory and coordination"
+      },
+      {
+        "left": "Pick a garbage-collected runtime",
+        "right": "automatic reclamation, traded for pause and memory behavior"
+      },
+      {
+        "left": "Pick a manual-memory runtime",
+        "right": "control, traded for safety obligations"
+      }
+    ],
+    "distractors": [
+      "many I/O operations multiplexed through loops and callbacks",
+      "isolated units scheduled above threads"
+    ],
+    "explanation": "Thread pools isolate blocking work until the pool is exhausted. More processes improve isolation and CPU use while increasing memory and coordination. Garbage-collected runtimes trade automatic reclamation for pause and memory behavior; manual-memory runtimes trade control for safety obligations. The two distractors are not trades at all — they describe how event-driven runtimes and actor or lightweight-task models schedule work, which is a different question from what a choice costs.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-card1",
+    "type": "flashcard",
+    "front": "What a server runtime does",
+    "back": "It loads application code, accepts work, schedules execution, manages memory and I/O, and integrates with the operating system. Language syntax is only one part of its operational behavior.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-card2",
+    "type": "flashcard",
+    "front": "The five questions every runtime answers",
+    "back": "How does work enter? How many requests run concurrently? What blocks progress? Where is mutable state? How is a process stopped without abandoning work?",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-card3",
+    "type": "flashcard",
+    "front": "Where the runtime sits",
+    "back": "Between network-facing server software and application code. It may directly accept HTTP, run behind a dedicated proxy, or execute functions in a managed platform.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-card4",
+    "type": "flashcard",
+    "front": "Process supervisors",
+    "back": "They restart failed instances and coordinate signals.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "server-runtimes-card5",
+    "type": "flashcard",
+    "front": "Long-lived processes or function platforms",
+    "back": "Long-lived processes reuse pools and caches; function platforms simplify lifecycle but can add startup and connection churn.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-ord1",
+    "type": "ordering",
+    "prompt": "Put the first six steps of the backend request lifecycle in order.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Parse, applying size and syntax limits"
+      },
+      {
+        "id": "s2",
+        "text": "Establish the deadline and trace"
+      },
+      {
+        "id": "s3",
+        "text": "Authenticate the caller"
+      },
+      {
+        "id": "s4",
+        "text": "Route to a handler"
+      },
+      {
+        "id": "s5",
+        "text": "Authorize the requested effect"
+      },
+      {
+        "id": "s6",
+        "text": "Validate into typed input"
+      }
+    ],
+    "explanation": "The pipeline runs parse → establish deadline/trace → authenticate → route → authorize → validate → execute use case → serialize → observe. Some steps overlap, but their responsibilities remain distinct, and two adjacencies carry most of the argument. Routing sits between authentication and authorization because authentication establishes identity while authorization checks the requested effect, and the effect being checked is the one the selected handler names. Validation comes after both because it converts transport data to typed input — meaning rather than shape.",
+    "difficulty": "beginner",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-mc1",
+    "type": "multiple-choice",
+    "prompt": "`PATCH /profiles/42` is reachable only by an authenticated caller, and the router enforces that. A caller with a valid session updates profile `42`, which is not theirs. Which step was skipped?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Authorization — the check on the requested effect, as opposed to on the route",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Authentication — the session was never really established",
+        "feedback": "Authentication establishes identity, and it worked: the caller had a valid session. Knowing who someone is has never been the same as knowing what they may do."
+      },
+      {
+        "id": "c",
+        "text": "Validation — the profile id was never converted to typed input",
+        "feedback": "Validation converts transport data to typed input. A well-typed `42` is still `42`; the problem is not the shape of the id but whose profile it names."
+      },
+      {
+        "id": "d",
+        "text": "Parsing — size and syntax limits would have caught it",
+        "feedback": "Parsing applies size and syntax limits, and a small, well-formed request passes both. Those limits bound the message, not the effect."
+      }
+    ],
+    "explanation": "Authentication establishes identity; authorization checks the requested effect — and authorizing only at route level is one of the recurring errors of this pipeline. The worked example is explicit about the difference: `PATCH /profiles/42` authenticates the session and then checks permission for profile `42`, not permission for the route.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-ms1",
+    "type": "multi-select",
+    "prompt": "In the `PATCH /profiles/42` example, a uniqueness conflict becomes a stable `409` and an unexpected database error becomes an opaque `500` tied to a trace ID. Which of these does that mapping get right?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The conflict gets a stable status, so the caller can act on it",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The unexpected error is opaque, so internals do not leak",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The opaque response carries a trace ID, so it stays diagnosable",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Both become the same status, so callers have only one case to handle"
+      },
+      {
+        "id": "e",
+        "text": "The database error message is passed through, so the caller can see what failed"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Error mapping produces stable HTTP status semantics without leaking internals. The two halves are not in tension: a uniqueness conflict is something the application understands and refuses, so it gets a stable `409`; an unexpected database error is not, so it becomes an opaque `500` tied to a trace ID. Collapsing both into one status throws away the first half, and passing the database message through throws away the second. Request context carries correlation, which is what keeps an opaque response findable.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-card1",
+    "type": "flashcard",
+    "front": "What the lifecycle converts",
+    "back": "An untrusted protocol message into an authorized application operation, and then into a bounded response.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-card2",
+    "type": "flashcard",
+    "front": "What catch-all exception handling costs",
+    "back": "It can convert programming defects into misleading business responses.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-card3",
+    "type": "flashcard",
+    "front": "Opening a transaction early",
+    "back": "It simplifies atomicity but holds locks during remote calls.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-card4",
+    "type": "flashcard",
+    "front": "Middleware's hidden cost",
+    "back": "It centralizes repeated policy, but order becomes significant.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "backend-request-lifecycle-card5",
+    "type": "flashcard",
+    "front": "What streaming forecloses",
+    "back": "Streaming reduces buffering but prevents changing the status after headers are sent.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-mc1",
+    "type": "multiple-choice",
+    "prompt": "`approveExpense` is changed to read the current time and the current user from globals rather than receiving them. The rules it enforces are otherwise unchanged. What has that cost?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The logic becomes hard to test, because time and current user are now read globally rather than supplied",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing — the rule is still enforced in one place, which was the point",
+        "feedback": "It is still in one place. But this layer keeps dependencies directed toward application policy, with ports for data, time, messages, and external services; a global read is a dependency pointing the other way, and time, randomness, and current user read globally make logic hard to test."
+      },
+      {
+        "id": "c",
+        "text": "The use case now owns rules that belong to domain objects",
+        "feedback": "A use case owns the workflow; domain objects or functions own rules that remain true regardless of interface. Reading a clock changes neither ownership."
+      },
+      {
+        "id": "d",
+        "text": "The database schema will start leaking into the public API",
+        "feedback": "Database schemas leaking into public APIs is a separate named failure, and it is about what the API exposes. Nothing here changed what the API returns."
+      }
+    ],
+    "explanation": "Time, randomness, and current user are read globally, making logic hard to test — one of the named failure modes of this layer. The repair is in the mental model: ports for data, time, messages, and external services, so the use case is handed what it depends on instead of reaching for it. That is what keeping dependencies directed toward application policy means in practice.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-ms1",
+    "type": "multi-select",
+    "prompt": "`approveExpense` must now also register the approval in an external system that commits separately. Which of these follow?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The approver-and-limit invariant still belongs inside one transaction",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The part that crosses systems needs explicit intermediate states",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The part that crosses systems needs compensation",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "The external registration should happen before commit, so it is never missed"
+      },
+      {
+        "id": "e",
+        "text": "The invariant should move into the HTTP handler, so every caller enforces it"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Strong invariants often belong inside one transaction; cross-system processes require explicit intermediate states and compensation, because the crossing part has no single commit to hide inside. The example already shows the shape: `approveExpense` records approval and schedules notification after commit rather than before it. Moving the invariant into the handler is the opposite move — anemic models scatter rules through controllers, and HTTP maps input to the command precisely so a worker can invoke the same use case without duplicating rules.",
+    "difficulty": "advanced",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-mc2",
+    "type": "multiple-choice",
+    "prompt": "A repository interface has one implementation, and each of its methods corresponds one-to-one with a database call. A reviewer proposes deleting it and calling the database from the use case. What settles it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Whether the separation adds value — abstractions protect stable business language, but are wasteful when they merely rename a database call",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Keep it — repositories or ports always belong between a use case and storage",
+        "feedback": "The guidance is conditional: repositories or ports hide storage operations when that separation adds value. “Always” is not the claim."
+      },
+      {
+        "id": "c",
+        "text": "Delete it — an abstraction between application policy and storage inverts the dependency direction",
+        "feedback": "Ports are how dependencies stay directed toward application policy. They are the mechanism, not a violation of it; what is in question is whether this particular one is doing anything."
+      },
+      {
+        "id": "d",
+        "text": "Keep it — deleting it would make the model anemic",
+        "feedback": "Anemic models scatter rules through controllers. Where a storage call is made is a different question from where the rules live."
+      }
+    ],
+    "explanation": "Abstractions protect stable business language but are wasteful when they merely rename a database call, and repositories or ports hide storage operations when that separation adds value. Both sentences are conditional, and the condition is the answer: the test is not whether an abstraction exists but whether it is protecting the vocabulary of the problem from the vocabulary of the storage.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-card1",
+    "type": "flashcard",
+    "front": "Domain logic and application logic",
+    "back": "Domain logic expresses rules that make the application meaningful; application logic coordinates those rules with persistence, identity, time, and external systems.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-card2",
+    "type": "flashcard",
+    "front": "Commands and queries",
+    "back": "Commands express requested effects; queries retrieve views.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-card3",
+    "type": "flashcard",
+    "front": "Value objects and entities",
+    "back": "Value objects represent validated concepts such as money or email addresses; entities carry identity across change.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-card4",
+    "type": "flashcard",
+    "front": "Rich models or procedural services",
+    "back": "Rich models colocate state and rules; procedural services can be clearer for workflows spanning many entities.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "domain-and-application-logic-card5",
+    "type": "flashcard",
+    "front": "A rule enforced only in the UI",
+    "back": "It is bypassed by another client.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-ord1",
+    "type": "ordering",
+    "prompt": "A request starts work that will outlive it. Put the four steps in order.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "The request arrives"
+      },
+      {
+        "id": "s2",
+        "text": "A durable intent or record is written"
+      },
+      {
+        "id": "s3",
+        "text": "A reference to it is enqueued"
+      },
+      {
+        "id": "s4",
+        "text": "A worker performs the effect"
+      }
+    ],
+    "explanation": "The flow is request → durable intent/record → enqueue reference → worker effect, with an immediate status response going back to the caller and progress or a result available afterwards. The order carries the central claim: the database record is often the authority and the queue is a delivery mechanism, so the record exists before anything is enqueued, and what gets enqueued is a reference rather than the data itself.",
+    "difficulty": "beginner",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-mc1",
+    "type": "multiple-choice",
+    "prompt": "A handler writes a record and enqueues a job for it. A worker occasionally starts and finds no record. A developer proposes moving the enqueue after the commit. What does that buy, and what does it cost?",
+    "options": [
+      {
+        "id": "a",
+        "text": "It closes the window where a worker observes missing data, and opens one where the notification is lost — unless an outbox or repair process covers it",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "It closes the window entirely, since after a commit the record is durable",
+        "feedback": "Half right. The record is durable, so no worker can miss it. What is now unprotected is the enqueue itself: committing before enqueue can lose the notification without an outbox or repair process."
+      },
+      {
+        "id": "c",
+        "text": "It costs nothing, because at-least-once delivery will redeliver the job",
+        "feedback": "At-least-once delivery is a property of messages the queue has accepted. A message that was never enqueued is not one the queue can repeat."
+      },
+      {
+        "id": "d",
+        "text": "It buys nothing, because the queue is the authority for whether the work happened",
+        "feedback": "The database record is often the authority; the queue is a delivery mechanism. Keeping the authority ahead of the delivery is exactly what the proposal is trying to do."
+      }
+    ],
+    "explanation": "Enqueuing before a transaction commits can let a worker observe missing data; committing before enqueue can lose the notification without an outbox or repair process. Neither ordering is free, which is why the worked example refuses to choose between them: completion records the object and an outbox event in one transaction, so the fact and its delivery become durable together.",
+    "difficulty": "advanced",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-ms1",
+    "type": "multi-select",
+    "prompt": "A requirement says that signing a user out must take effect immediately, everywhere. Which of these follow for the session design?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Server-side sessions suit the requirement, because they are revocable",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Server-side sessions require shared storage",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Self-contained tokens complicate revocation",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Self-contained tokens suit it better, because they reduce lookups"
+      },
+      {
+        "id": "e",
+        "text": "Either design meets it, since both carry identity across stateless requests"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Server-side sessions are revocable and small on the client but require shared storage; self-contained tokens reduce lookups but complicate revocation and claim freshness. The requirement picks a side of that trade rather than dissolving it, and shared storage is the price. Reducing lookups is the same property as complicating revocation, seen from the other end: a session identifier maps a browser credential to server-side state, or a signed token carries selected claims — both carry identity, and only one of them can be told that the identity's access has ended.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-card1",
+    "type": "flashcard",
+    "front": "What sessions are for",
+    "back": "They preserve user-associated state across stateless HTTP requests. A session identifier maps a browser credential to server-side state, or a signed token carries selected claims.",
+    "examples": [
+      "OWASP, Session Management Cheat Sheet"
+    ],
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-card2",
+    "type": "flashcard",
+    "front": "How an upload should be handled",
+    "back": "Streamed, type-checked by content and policy, scanned where appropriate, and stored under a generated name.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-card3",
+    "type": "flashcard",
+    "front": "What job queues provide",
+    "back": "Leasing or acknowledgement, retries, delay, and dead-letter handling.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-card4",
+    "type": "flashcard",
+    "front": "Why workers must be idempotent",
+    "back": "Because at-least-once delivery can repeat work.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "sessions-files-and-background-jobs-card5",
+    "type": "flashcard",
+    "front": "Direct-to-object-storage uploads",
+    "back": "They save backend bandwidth but need scoped authorization.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-mc1",
+    "type": "multiple-choice",
+    "prompt": "Through an afternoon, requests take steadily longer while the number completing per second barely moves and no error rate has changed. What is the best reading of that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Utilization is approaching a limit: queueing grows as it does, so latency often fails before throughput stops",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing is wrong yet — throughput measures capacity, and it has not moved",
+        "feedback": "Throughput moving last is the problem rather than the reassurance. Queueing grows as utilization approaches a limit, so latency often fails before throughput stops; a flat throughput graph is compatible with a service already in trouble."
+      },
+      {
+        "id": "c",
+        "text": "A dependency has failed, and circuit breaking has not engaged",
+        "feedback": "Circuit breaking stops repeatedly calling a failing dependency, and a failing dependency would show up somewhere in the error rate. Nothing here has failed; everything is merely slower."
+      },
+      {
+        "id": "d",
+        "text": "State is stored on one instance, so load balancing has become inconsistent",
+        "feedback": "State stored on one instance makes load balancing and failover inconsistent, which shows as requests behaving differently depending on where they land — not as everything slowing together."
+      }
+    ],
+    "explanation": "Capacity is bounded at every resource — CPU, memory, worker slots, connections, storage I/O, and dependency quotas — and queueing grows as utilization approaches a limit, so latency often fails before throughput stops. Steady throughput with rising latency is that claim seen from the outside, which is why both scaling and resilience begin with measured constraints rather than with multiplying services.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-mat1",
+    "type": "matching",
+    "prompt": "A shop page is being hardened against a failing recommendation service. Match each measure to what it does.",
+    "pairs": [
+      {
+        "left": "Load shedding",
+        "right": "rejects excess work before all requests time out"
+      },
+      {
+        "left": "Deadlines",
+        "right": "bound resource use"
+      },
+      {
+        "left": "Circuit breaking",
+        "right": "stops repeatedly calling a failing dependency"
+      },
+      {
+        "left": "Bulkheads",
+        "right": "reserve capacity between workloads"
+      },
+      {
+        "left": "Graceful degradation",
+        "right": "preserves core tasks by omitting optional dependencies"
+      }
+    ],
+    "distractors": [
+      "adds instances when work can be distributed",
+      "lets any healthy instance serve a request"
+    ],
+    "explanation": "Load shedding rejects excess work before all requests time out. Deadlines bound resource use. Circuit breaking stops repeatedly calling a failing dependency. Bulkheads reserve capacity between workloads. Graceful degradation preserves core tasks by omitting optional dependencies. The two distractors describe horizontal scaling and stateless request handling — both about serving more work, neither about behaving well when there is less. The shop page uses three of the five: a short deadline, degradation to products without recommendations, and core inventory and checkout capacity kept isolated from optional personalization traffic.",
+    "difficulty": "intermediate",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-mc2",
+    "type": "multiple-choice",
+    "prompt": "A dependency starts failing with intermittent resets. A team adds an immediate retry on every failed call, with no limit. Load rises. What is the likely result?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A retry storm — one of the mechanisms by which a local problem becomes a cascading failure",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Improved transient success, since resets are exactly what retries are for",
+        "feedback": "Retries improve transient success only with backoff, jitter, budgets, and idempotency. An immediate, unlimited retry has none of the four."
+      },
+      {
+        "id": "c",
+        "text": "No change, because the dependency was already the bottleneck",
+        "feedback": "The dependency was already struggling, and now each failed call becomes several. Retry storms, unbounded queues, synchronized autoscaling, shared connection-pool exhaustion, and slow dependencies create cascading failure."
+      },
+      {
+        "id": "d",
+        "text": "Load shedding will engage and reject the excess",
+        "feedback": "Load shedding rejects excess work before all requests time out, and nothing here added it. A mechanism you have not built does not bound the traffic you have just created."
+      }
+    ],
+    "explanation": "Retries improve transient success only with backoff, jitter, budgets, and idempotency. The shop page's version is a bounded retry budget covering rare resets — the same instinct with a limit on it. Without those, retry storms, unbounded queues, synchronized autoscaling, shared connection-pool exhaustion, and slow dependencies create cascading failure.",
+    "difficulty": "advanced",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-card1",
+    "type": "flashcard",
+    "front": "Scaling and resilience",
+    "back": "Scaling preserves acceptable service as demand grows; resilience preserves useful behavior when components slow down or fail.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-card2",
+    "type": "flashcard",
+    "front": "Vertical or horizontal scaling",
+    "back": "Vertical scaling is operationally simple but finite; horizontal scaling adds coordination and data-distribution challenges.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-card3",
+    "type": "flashcard",
+    "front": "State stored on one instance",
+    "back": "It makes load balancing and failover inconsistent. Stateless request handling instead lets any healthy instance serve a request.",
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-card4",
+    "type": "flashcard",
+    "front": "What redundancy costs",
+    "back": "It increases availability but can multiply cost and correlated misconfiguration.",
+    "reverse": true,
+    "tags": [
+      "backend"
+    ]
+  },
+  {
+    "id": "scaling-and-resilience-card5",
+    "type": "flashcard",
+    "front": "A health check that tests only the process",
+    "back": "It admits instances that cannot serve.",
+    "tags": [
+      "backend"
+    ]
   }
 ]
