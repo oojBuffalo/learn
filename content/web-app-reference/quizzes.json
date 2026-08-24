@@ -1,5 +1,17 @@
 [
   {
+    "id": "quiz-start-here",
+    "title": "Start here check",
+    "items": [
+      "anatomy-of-a-web-app-mc1",
+      "anatomy-of-a-web-app-mat1",
+      "anatomy-of-a-web-app-ord1",
+      "anatomy-of-a-web-app-mc2",
+      "anatomy-of-a-web-app-ms1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
     "id": "quiz-web-foundations",
     "title": "Web foundations check",
     "items": [

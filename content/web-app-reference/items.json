@@ -1,5 +1,236 @@
 [
   {
+    "id": "anatomy-of-a-web-app-mc1",
+    "type": "multiple-choice",
+    "prompt": "A purchase fails somewhere between the button and the confirmation. Which question does the whole-system view tell you to ask first?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Which boundary did not preserve the intended request, identity, data, or response",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Which process raised the error, since that is where the failure happened",
+        "feedback": "A process is where a failure surfaced, which is not the same as where the intended thing stopped being preserved. A web app is the coordinated behaviour of the arrangement, not any single process."
+      },
+      {
+        "id": "c",
+        "text": "Whether the fault is on the browser side or the server side",
+        "feedback": "A typical interaction crosses presentation code, network infrastructure, server-side application logic and one or more data systems. Two sides are not enough categories to hold the answer."
+      },
+      {
+        "id": "d",
+        "text": "Which component is at fault, so that component can be fixed",
+        "feedback": "Naming a component only searches the boxes. Every arrow between them is a contract and a possible failure boundary too, and a question about boxes never reaches those."
+      }
+    ],
+    "explanation": "What the map buys is a first question with an owner attached: which boundary did not preserve the intended request, identity, data, or response. Naming a process, a side or a component answers something narrower than what was asked.",
+    "difficulty": "beginner",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-mat1",
+    "type": "matching",
+    "prompt": "Match each responsibility to the part of the arrangement that holds it.",
+    "pairs": [
+      {
+        "left": "Presents documents and controls, and sends protocol messages",
+        "right": "Browser"
+      },
+      {
+        "left": "Terminates secure connections and routes traffic",
+        "right": "Edge infrastructure"
+      },
+      {
+        "left": "Validates requests and coordinates business behaviour",
+        "right": "Backend code"
+      },
+      {
+        "left": "Preserves facts",
+        "right": "Data services"
+      },
+      {
+        "left": "Keeps the whole arrangement operable",
+        "right": "Delivery and observability"
+      }
+    ],
+    "distractors": [
+      "Queue and workers",
+      "Payment API"
+    ],
+    "explanation": "Each part answers for one kind of thing, which is what makes “which boundary did not preserve what” a question anybody can act on. The two distractors are genuine participants — a backend publishes follow-up work to a queue and is a client to a payment API — but neither of them owns any of the five responsibilities listed here.",
+    "difficulty": "beginner",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-ord1",
+    "type": "ordering",
+    "prompt": "Order the steps of one purchase, from the browser's first move to the updated screen.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Browser resolves the hostname"
+      },
+      {
+        "id": "s2",
+        "text": "Browser establishes a TLS-protected connection"
+      },
+      {
+        "id": "s3",
+        "text": "Browser sends an HTTP request with session credentials"
+      },
+      {
+        "id": "s4",
+        "text": "Backend authenticates the caller, then authorizes the action"
+      },
+      {
+        "id": "s5",
+        "text": "Backend validates input, then executes a transaction"
+      },
+      {
+        "id": "s6",
+        "text": "Backend publishes follow-up work and returns a representation"
+      },
+      {
+        "id": "s7",
+        "text": "Frontend reconciles the response with local state and updates the page"
+      }
+    ],
+    "explanation": "Two things in that order are easy to lose. Identity is established before the action is authorized and before the input is validated, so both of those run on a caller who has already been identified. And the exchange is not finished when the representation is returned: published follow-up work lands in a system the response need not mention, and the frontend still has to reconcile what came back.",
+    "difficulty": "beginner",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-mc2",
+    "type": "multiple-choice",
+    "prompt": "A dependency is overloaded and calls to it are timing out. Someone proposes retrying every failed call automatically. What does that proposal risk?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Amplifying the overload, and duplicating effects",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing — the calls failed, so there is nothing to duplicate",
+        "feedback": "A call that failed for the caller is not a call that did nothing. Duplicate submissions and partial writes are both on the list of common failures."
+      },
+      {
+        "id": "c",
+        "text": "Expired certificates, because each retry renegotiates the connection",
+        "feedback": "Expired certificates are a common failure, but nothing here connects them to retrying. Taking any entry off the list is not the same as reasoning about this one."
+      },
+      {
+        "id": "d",
+        "text": "Changing one side of a contract before the other",
+        "feedback": "That is a deployment failure mode. A retry repeats a message; it does not change a contract."
+      }
+    ],
+    "explanation": "A retry can repair transient failure, or amplify overload and duplicate effects — one mechanism with both outcomes available. With the dependency already overloaded, amplification is the outcome the proposal invites.",
+    "difficulty": "intermediate",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-ms1",
+    "type": "multi-select",
+    "prompt": "A team moves confirmation work out of the request and into a background job — one more boundary. What does that boundary charge for the independent change it enables?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Latency",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Failure modes",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Security policy",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Operational work",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "Independent change or scale"
+      },
+      {
+        "id": "f",
+        "text": "Fewer parts to operate"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "An added boundary enables independent change or scale, and it adds latency, failure modes, security policy, and operational work. The two wrong options are the other side of that trade: independent change or scale is what the boundary buys rather than what it costs, and it is bought with operational work rather than by reducing it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-card1",
+    "type": "flashcard",
+    "front": "A web app",
+    "back": "A distributed system with a human-facing browser interface. A typical interaction crosses presentation code, network infrastructure, server-side application logic, and one or more data systems, and the visible page is only the edge of it.",
+    "reverse": true,
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-card2",
+    "type": "flashcard",
+    "front": "Every arrow is a contract",
+    "back": "Each arrow between the parts is a contract and a possible failure boundary — the half of the map the boxes hide. A component may play several roles across those arrows: a backend is a server to the browser and a client to a database or a payment API.",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-card3",
+    "type": "flashcard",
+    "front": "HTTP's uniform semantics",
+    "back": "HTTP defines the uniform semantics shared across its versions, which is why one trace can describe the exchange without naming a version.",
+    "reverse": true,
+    "examples": [
+      "RFC 9110: HTTP Semantics"
+    ],
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-card4",
+    "type": "flashcard",
+    "front": "The boundary decisions",
+    "back": "Server-rendered or client-rendered UI, a synchronous request or a background job, a relational database or another model, one deployable unit or several services, a managed platform or self-operated infrastructure — the important choices are choices about where the boundaries go.",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
+    "id": "anatomy-of-a-web-app-card5",
+    "type": "flashcard",
+    "front": "A success response is not the outcome",
+    "back": "For `POST /orders`, correctness may require a durable order, exactly one charge effect, inventory policy, a traceable audit record, and a UI state that distinguishes “pending” from “failed”. The web app is the coordinated behaviour, not any single process.",
+    "tags": [
+      "start-here"
+    ]
+  },
+  {
     "id": "internet-and-the-web-mc1",
     "type": "multiple-choice",
     "prompt": "A host answers packets and accepts a connection, but the page still will not load. What have those two checks established?",

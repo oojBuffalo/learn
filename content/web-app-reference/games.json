@@ -1,5 +1,28 @@
 [
   {
+    "id": "game-start-here-match",
+    "template": "matching",
+    "title": "Start here — match them up",
+    "source": {
+      "tags": [
+        "start-here"
+      ]
+    }
+  },
+  {
+    "id": "game-start-here-speed",
+    "template": "timed-round",
+    "title": "Start here — quick fire",
+    "source": {
+      "tags": [
+        "start-here"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
     "id": "game-web-foundations-match",
     "template": "matching",
     "title": "Web foundations — match them up",
