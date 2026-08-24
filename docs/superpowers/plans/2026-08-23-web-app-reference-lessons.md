@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the Web App Reference Markdown library into a single importable study-app package — 57 lessons across 12 units, rewritten as teaching material, with 608 items, 12 quizzes and 24+ games.
+**Goal:** Turn the Web App Reference Markdown library into a single importable study-app package — 57 lessons across 12 units, rewritten as teaching material, with 498 items, 12 quizzes and 24+ games.
 
 **Architecture:** The package is authored in folder form under `content/web-app-reference/` so it stays diffable. A folder validator reuses the server's real import path (`readPackageZip`) by zipping the folder in memory, so offline validation is byte-identical to what `POST /api/packages/import` would accept. Content is then written unit by unit, validating after each.
 
@@ -25,7 +25,20 @@ Every task's requirements implicitly include this section.
 - Unit `id`: section directory name minus its number prefix (`web-foundations`); `00-start-here` becomes `start-here`.
 - All ids must match `/^[a-z0-9][a-z0-9_-]*$/i` and be at most 64 characters.
 
-**Per-lesson content:** 5 inline activities referenced by `::activity{id="…"}` in body order, plus 5 flashcards that are *not* referenced in the body (they feed the scheduler). Target 700–900 words.
+**Per-lesson content:** inline activities referenced by `::activity{id="…"}` in body order, scaled to the source doc's length, plus 5 flashcards that are *not* referenced in the body (they feed the scheduler). Target 700–900 words, body only, excluding frontmatter.
+
+Activity count is set by the **source** doc's word count, not the lesson's:
+
+| Source doc words | Inline activities |
+| --- | --- |
+| under 400 | 3 |
+| 400–424 | 4 |
+| 425 and over | 5 |
+
+Across the library this yields 3 activities for 54 of the 57 docs. Only
+`anatomy-of-a-web-app` (449), `urls-dns-http-and-tls` (406) and
+`request-response-lifecycle` (400) clear the threshold. Flashcards stay at 5
+regardless.
 
 **Lesson template** — headings are lesson-specific wording, not these literal labels:
 
@@ -501,7 +514,7 @@ The `matching` item is required here — it is the only lesson in this task and 
 - [ ] **Step 4: Validate**
 
 Run: `npm run validate:content -- content/web-app-reference`
-Expected: `OK   content/web-app-reference — 57 lessons, 10 items, 0 quizzes, 0 games`
+Expected: `OK   content/web-app-reference — 57 lessons, 8 items, 0 quizzes, 0 games`
 
 - [ ] **Step 5: Check the word count**
 
@@ -591,7 +604,7 @@ Create `content/web-app-reference/games.json`:
 - [ ] **Step 4: Validate**
 
 Run: `npm run validate:content -- content/web-app-reference`
-Expected: `OK   content/web-app-reference — 57 lessons, 40 items, 1 quizzes, 2 games`
+Expected: `OK   content/web-app-reference — 57 lessons, 34 items, 1 quizzes, 2 games`
 
 - [ ] **Step 5: Commit**
 
@@ -622,21 +635,21 @@ Second review gate. The user reviews the completed pilot unit in the running app
 
 Each task applies **The Unit Procedure** to one unit and ends with its own validation and commit. They are independent and may be executed in any order after Task 4, though ascending order keeps `prerequisites` easy to wire.
 
-Expected item count after each task is the running total: every lesson contributes exactly 10 items.
+Every lesson contributes 5 flashcards plus its source-scaled activity count — 8 items for a sub-400-word source, 9 or 10 for the three longer ones.
 
 | Task | Unit id | Section | Lessons | Items added | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 5 | `start-here` | `00-start-here` | 1 | 10 | Mermaid diagram to redraw as ASCII. Needs ≥1 matching and ≥2 multiple-choice among only 5 inline activities. |
-| 6 | `browser-platform` | `02-browser-platform` | 4 | 40 | `rendering-and-the-dom.md` carries a mermaid diagram to redraw. |
-| 7 | `frontend` | `03-frontend` | 6 | 60 | |
-| 8 | `backend` | `04-backend` | 5 | 50 | |
-| 9 | `data` | `05-data` | 6 | 60 | |
-| 10 | `apis-and-integration` | `06-apis-and-integration` | 5 | 50 | |
-| 11 | `security` | `07-security` | 5 | 50 | |
-| 12 | `quality-and-observability` | `08-quality-and-observability` | 5 | 50 | |
-| 13 | `delivery-and-operations` | `09-delivery-and-operations` | 6 | 60 | |
-| 14 | `architecture` | `10-architecture` | 5 | 50 | |
-| 15 | `technology-landscape` | `11-technology-landscape` | 5 | 50 | |
+| 5 | `start-here` | `00-start-here` | 1 | 10 | Source is 449 words, so 5 activities. Mermaid diagram to redraw as ASCII. Needs ≥1 matching and ≥2 multiple-choice among those 5. |
+| 6 | `browser-platform` | `02-browser-platform` | 4 | 32 | `rendering-and-the-dom.md` carries a mermaid diagram to redraw. |
+| 7 | `frontend` | `03-frontend` | 6 | 48 | |
+| 8 | `backend` | `04-backend` | 5 | 40 | |
+| 9 | `data` | `05-data` | 6 | 48 | |
+| 10 | `apis-and-integration` | `06-apis-and-integration` | 5 | 40 | |
+| 11 | `security` | `07-security` | 5 | 40 | |
+| 12 | `quality-and-observability` | `08-quality-and-observability` | 5 | 40 | |
+| 13 | `delivery-and-operations` | `09-delivery-and-operations` | 6 | 48 | |
+| 14 | `architecture` | `10-architecture` | 5 | 40 | |
+| 15 | `technology-landscape` | `11-technology-landscape` | 5 | 40 | |
 
 Per task:
 
@@ -646,7 +659,7 @@ Per task:
 - [ ] **Step 4:** Run `npm run validate:content -- content/web-app-reference` and fix every error.
 - [ ] **Step 5:** Commit with `git commit -m "content: write <unit-id> unit"`.
 
-After Task 15 the totals are 57 lessons, 570 items, 12 quizzes, 24 games.
+After Task 15 the totals are 57 lessons, 460 items, 12 quizzes, 24 games.
 
 ---
 
@@ -688,7 +701,7 @@ Expected: `38`
 - [ ] **Step 4: Validate**
 
 Run: `npm run validate:content -- content/web-app-reference`
-Expected: `OK   content/web-app-reference — 57 lessons, 608 items, 12 quizzes, 24 games`
+Expected: `OK   content/web-app-reference — 57 lessons, 498 items, 12 quizzes, 24 games`
 
 - [ ] **Step 5: Commit**
 
@@ -711,7 +724,7 @@ git commit -m "content: add glossary flashcards"
 - [ ] **Step 1: Validate the finished package**
 
 Run: `npm run validate:content -- content/web-app-reference content/matching-and-recommendation`
-Expected: both `OK`; the reference package reports 57 lessons, 608 items, 12 quizzes, 24 games.
+Expected: both `OK`; the reference package reports 57 lessons, 498 items, 12 quizzes, 24 games.
 
 - [ ] **Step 2: Confirm no renderer violations**
 
