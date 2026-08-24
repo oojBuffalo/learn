@@ -120,8 +120,8 @@ convergence rule, a time bound, or a user state, it is not a design — it is a
 description of what a system does when nobody chose any of the three.
 
 And the two agents? Both clicks were honest and both reads were current. What was
-missing was a correctness boundary around the decision, which is this lesson's
-first sentence arriving as a support ticket.
+missing was a correctness boundary around the decision — the definition of a
+transaction, arriving as a support ticket.
 
 ## Sources
 

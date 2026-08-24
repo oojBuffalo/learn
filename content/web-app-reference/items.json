@@ -3189,11 +3189,12 @@
   {
     "id": "data-modeling-card1",
     "type": "flashcard",
-    "front": "What data modeling identifies",
-    "back": "Facts, identities, relationships, constraints, and lifecycles — then represents them so required operations remain correct and understandable.",
+    "front": "Data modeling",
+    "back": "Identifies facts, identities, relationships, constraints, and lifecycles, then represents them so required operations remain correct and understandable.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "data-modeling-card2",
@@ -3221,16 +3222,18 @@
     "back": "Normalization avoids storing the same fact in multiple places; deliberate denormalization stores a derived copy to improve a known access path.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "data-modeling-card5",
     "type": "flashcard",
-    "front": "What temporal fields distinguish",
-    "back": "Occurrence, recording, and update time — the three moments a date on a record can mean.",
+    "front": "Temporal fields",
+    "back": "They distinguish occurrence, recording, and update time.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "relational-and-nosql-databases-mc1",
@@ -3308,20 +3311,25 @@
   {
     "id": "relational-and-nosql-databases-fb1",
     "type": "fill-blank",
-    "prompt": "Complete this lesson's claim about schema flexibility.",
-    "template": "Schema flexibility moves responsibility from the database to application readers and migrations. It does not remove {{1}}.",
+    "prompt": "A team is deciding where to perform a join. Complete what each choice adds.",
+    "template": "Join in the database and it centralizes optimization and {{1}}. Join in application code and it adds round trips and partial {{2}}.",
     "blanks": [
       {
         "slot": 1,
         "accept": [
-          "schema",
-          "the schema",
-          "schemas"
+          "consistency"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "failure",
+          "failures"
         ]
       }
     ],
-    "explanation": "Schema flexibility moves responsibility from the database to application readers and migrations; it does not remove schema. The data still has a shape. What moves is who has to know it — so “flexible” describes where the shape is enforced, not whether there is one.",
-    "difficulty": "beginner",
+    "explanation": "Joining in a database centralizes optimization and consistency; joining in application code adds round trips and partial failure. The two costs are not the same kind of thing — round trips are latency, partial failure is an outcome — which is why this lesson treats where to join as a design decision rather than a preference.",
+    "difficulty": "intermediate",
     "tags": [
       "data"
     ]
@@ -3356,11 +3364,12 @@
   {
     "id": "relational-and-nosql-databases-card4",
     "type": "flashcard",
-    "front": "Joining in the database, or in application code",
-    "back": "In the database it centralizes optimization and consistency; in application code it adds round trips and partial failure.",
+    "front": "Schema flexibility",
+    "back": "It moves responsibility from the database to application readers and migrations. It does not remove schema — the data still has a shape, and what moves is who has to know it.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "relational-and-nosql-databases-card5",
@@ -3369,7 +3378,8 @@
     "back": "They drift without a durable coordination pattern. The marketplace in this lesson avoids that by publishing committed changes through an outbox.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "transactions-and-consistency-mc1",
@@ -3484,7 +3494,8 @@
     "back": "Atomicity: do these changes commit together? Isolation: what may concurrent work observe? Durability: what survives acknowledged success? Application consistency adds the actual business rules.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "transactions-and-consistency-card3",
@@ -3498,11 +3509,12 @@
   {
     "id": "transactions-and-consistency-card4",
     "type": "flashcard",
-    "front": "What a saga's compensating actions are",
+    "front": "A saga's compensating actions",
     "back": "Business operations rather than database rollback. Sagas accept intermediate states and define those actions for them.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "transactions-and-consistency-card5",
@@ -3576,40 +3588,40 @@
   {
     "id": "indexes-and-query-planning-ms1",
     "type": "multi-select",
-    "prompt": "A team proposes adding four more indexes to a busy table so that four reports run faster. Which costs does this lesson say they should weigh against that?",
+    "prompt": "A developer reports back on a slow query: they indexed every column appearing in a WHERE clause, timed the query against a development copy, and gave each index a name describing its purpose. Which of these defeat that plan?",
     "options": [
       {
         "id": "a",
-        "text": "Inserts and updates slow down",
+        "text": "Indexing every column wastes resources",
         "correct": true
       },
       {
         "id": "b",
-        "text": "Migrations slow down",
+        "text": "More indexes slow inserts, updates, migrations, and vacuum or compaction",
         "correct": true
       },
       {
         "id": "c",
-        "text": "Vacuum or compaction slows down",
+        "text": "Fast development datasets hide plans that collapse at production cardinality",
         "correct": true
       },
       {
         "id": "d",
-        "text": "Storage is consumed, and each index has to be updated on writes",
+        "text": "An index's name asserts nothing; validation needs realistic distributions and an execution plan",
         "correct": true
       },
       {
         "id": "e",
-        "text": "The planner will have fewer alternative execution strategies to weigh"
+        "text": "More indexes speed inserts and updates along with reads"
       },
       {
         "id": "f",
-        "text": "With the indexes in place, the reports no longer need a measured plan"
+        "text": "A covering index would make measuring a plan unnecessary"
       }
     ],
     "partialCredit": true,
-    "explanation": "More indexes speed some reads while slowing inserts, updates, migrations, and vacuum or compaction, and an index consumes storage and must be updated on writes. Neither distractor survives the lesson. A planner estimates alternative execution strategies and chooses among them, so available indexes add alternatives rather than remove them; and the standing instruction is to validate with realistic distributions and an execution plan rather than relying on the index name. Indexing every column wastes resources, and four indexes for four reports is that argument in miniature.",
-    "difficulty": "intermediate",
+    "explanation": "The report contains three moves and this lesson refutes each of them. Indexing every column wastes resources, and more indexes speed some reads while slowing inserts, updates, migrations, and vacuum or compaction. Fast development datasets hide plans that collapse at production cardinality, so timing against a development copy establishes nothing about production. And the standing instruction is to validate with realistic tenant distributions and an execution plan rather than relying on the index name. Neither distractor holds: an index consumes storage and must be updated on writes rather than accelerating them, and covering indexes avoid extra lookups without telling you which plan the planner chose.",
+    "difficulty": "advanced",
     "tags": [
       "data"
     ]
@@ -3617,20 +3629,22 @@
   {
     "id": "indexes-and-query-planning-card1",
     "type": "flashcard",
-    "front": "What an index is",
+    "front": "An index",
     "back": "An auxiliary structure that accelerates selected access paths — similar to a sorted lookup map from key values to row locations, saving scanning when the predicate narrows data enough.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "indexes-and-query-planning-card2",
     "type": "flashcard",
-    "front": "What a query planner does",
+    "front": "A query planner",
     "back": "It estimates alternative execution strategies and chooses one, based on statistics, available indexes, joins, ordering, and expected cost.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "indexes-and-query-planning-card3",
@@ -3648,16 +3662,18 @@
     "back": "Covering indexes avoid extra lookups but grow larger; partial indexes target a frequently queried subset.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "indexes-and-query-planning-card5",
     "type": "flashcard",
-    "front": "What `EXPLAIN` gives you",
-    "back": "The chosen plan. Execution-aware variants go further and compare estimates with actual work.",
+    "front": "`EXPLAIN`, and its execution-aware variants",
+    "back": "`EXPLAIN` exposes the chosen plan; the execution-aware variants go further and compare estimates with actual work.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "caching-and-search-mat1",
@@ -3762,20 +3778,22 @@
   {
     "id": "caching-and-search-card1",
     "type": "flashcard",
-    "front": "Cache or search system?",
+    "front": "A cache, and a search system",
     "back": "A cache stores reusable results closer to demand; a search system builds specialized indexes for discovery and ranking. Both are derived-data systems.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "caching-and-search-card2",
     "type": "flashcard",
-    "front": "What derived data's value depends on",
-    "back": "Freshness, invalidation, and rebuild strategy — the same three for a cache and for a search index.",
+    "front": "Freshness, invalidation, and rebuild strategy",
+    "back": "What a derived-data system's value depends on — the same three for a cache and for a search index.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "caching-and-search-card3",
@@ -3789,11 +3807,12 @@
   {
     "id": "caching-and-search-card4",
     "type": "flashcard",
-    "front": "What a search system does with a query",
+    "front": "What a search system does",
     "back": "It tokenizes, normalizes, indexes fields, filters, scores, and returns identifiers or projections.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "caching-and-search-card5",
@@ -3802,7 +3821,8 @@
     "back": "A stampede sends many misses to the authority; a hot key overloads one shard.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "migrations-backups-and-recovery-mc1",
@@ -3879,34 +3899,34 @@
   {
     "id": "migrations-backups-and-recovery-ms1",
     "type": "multi-select",
-    "prompt": "A team picks a backward-compatible expand–migrate–contract change instead of an in-place destructive one. Which of these does this lesson say comes with that choice?",
+    "prompt": "A `full_name` column has to be split and the service cannot be taken offline. Proposal A is expand–migrate–contract across several releases. Proposal B is one in-place destructive change, accepting a short outage to do it. Which of these are reasons to adopt A here?",
     "options": [
       {
         "id": "a",
-        "text": "Temporary complexity increases",
+        "text": "Backward compatibility supports safe rolling deploys, which is what a service that cannot go offline needs",
         "correct": true
       },
       {
         "id": "b",
-        "text": "Rolling deploys stay safe",
+        "text": "In-place destructive changes are simple only when downtime is acceptable, and here it is not",
         "correct": true
       },
       {
         "id": "c",
-        "text": "The release stops assuming that all code and data update atomically",
+        "text": "Durable systems must change without assuming all code and data update atomically, and B assumes exactly that",
         "correct": true
       },
       {
         "id": "d",
-        "text": "Downtime becomes acceptable"
+        "text": "A avoids the temporary complexity that B would introduce"
       },
       {
         "id": "e",
-        "text": "The backfill no longer needs to be bounded"
+        "text": "A removes the need to practice restoring a pre-migration backup"
       }
     ],
     "partialCredit": true,
-    "explanation": "Backward compatibility increases temporary complexity but supports safe rolling deploys, which is how a durable system changes without assuming all code and data update atomically. Downtime belongs to the option not taken: in-place destructive changes are simple only when downtime is acceptable. Bounding stays necessary either way, because online migrations avoid long exclusive locks and bound backfills, and a backfill overwhelming replicas is one of this lesson's failure modes.",
+    "explanation": "Backward compatibility increases temporary complexity but supports safe rolling deploys, and in-place destructive changes are simple only when downtime is acceptable — which settles the choice here, because it is not. Underneath both sits the reason the practice exists: durable systems must change without assuming all code and data update atomically, and a single destructive change is that assumption made concrete. The rejected options invert the trade. A costs temporary complexity rather than avoiding it, and the instruction to practice restoring a pre-migration backup separately stands whichever proposal wins.",
     "difficulty": "intermediate",
     "tags": [
       "data"
@@ -3919,7 +3939,8 @@
     "back": "Migrations evolve live data and schemas. Backups preserve recoverable copies. Recovery turns those copies and logs into a working service within explicit time and data-loss objectives.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "migrations-backups-and-recovery-card2",
@@ -3928,16 +3949,18 @@
     "back": "First add a backward-compatible shape, then move readers and writers and backfill data, then remove the old shape after no active version depends on it.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "migrations-backups-and-recovery-card3",
     "type": "flashcard",
-    "front": "What an online migration does",
+    "front": "An online migration",
     "back": "It avoids long exclusive locks and bounds backfills.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   },
   {
     "id": "migrations-backups-and-recovery-card4",
@@ -3951,10 +3974,11 @@
   {
     "id": "migrations-backups-and-recovery-card5",
     "type": "flashcard",
-    "front": "What a dual-read or dual-write transition needs",
-    "back": "An authority and reconciliation.",
+    "front": "A dual-read or dual-write transition",
+    "back": "It needs an authority and reconciliation.",
     "tags": [
       "data"
-    ]
+    ],
+    "reverse": true
   }
 ]

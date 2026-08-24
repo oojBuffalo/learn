@@ -39,7 +39,7 @@ selectivity, data distribution, write cost, and measured plans.
 Placement follows from that. Indexes sit beside stored data. Application query
 design determines whether the database can use them, while production data
 distribution determines whether use is beneficial. Two separate conditions, and
-the opening scene met the first and failed the second.
+the opening scene is entirely about the second.
 
 ## A sorted map, and the reasons a planner ignores it
 
@@ -84,8 +84,8 @@ reach for it, and production data distribution determines whether that helps.
 ## More indexes, wider indexes, or no join at all
 
 Covering indexes avoid extra lookups but grow larger. Partial indexes target a
-frequently queried subset. Indexing every column wastes resources, which is this
-section attempted without reading it.
+frequently queried subset. Indexing every column wastes resources — the choice
+made by not choosing.
 
 The cost people forget is on the write side. More indexes speed some reads while
 slowing inserts, updates, migrations, and vacuum or compaction — four kinds of
@@ -98,27 +98,26 @@ have to operate.
 
 ::activity{id="indexes-and-query-planning-ms1"}
 
-## The cheapest thing to check before you add an index
+## Read the plan before you trust the index
 
-The cheapest thing to check is the plan. `EXPLAIN` exposes the chosen plan, and
-execution-aware variants compare estimates with actual work. Before that, an
-index is a hypothesis about a route the planner might take.
+One command settles most of this. `EXPLAIN` exposes the chosen plan, and
+execution-aware variants compare estimates with actual work. Until it has been
+run, an index is a hypothesis about a route the planner might take.
 
-Three things a plan tells you that a hunch does not. Whether the index is used at
-all — functions or implicit casts can prevent intended index use, and nothing in
-the query text says so. Whether the estimate resembles reality — stale statistics
-produce bad estimates, and an execution-aware plan is where estimate and actual sit
-side by side. And which strategy was passed over, since planners decide between
-index and sequential scans, and a deliberate sequential scan is not automatically
-the problem.
+A plan answers what a hunch cannot. Whether the index is used at all — functions
+or implicit casts can prevent intended index use, and nothing in the query text
+says so. Whether the estimate resembles reality — stale statistics produce bad
+estimates, and an execution-aware plan is where estimate and actual sit side by
+side. Which strategy was passed over, since planners decide between index and
+sequential scans, and a deliberate sequential scan is not automatically the
+problem.
 
-Then check the data: plans are chosen against statistics, not against
-intentions. Validate with realistic tenant distributions rather than
-relying on the index name.
+A plan is only as good as the data it ran against, though. Plans are chosen
+against statistics, not against intentions, so validate with realistic tenant
+distributions rather than relying on the index name.
 
-Only after both is adding an index the obvious next move. The query in the
-opening scene never needed one. What it needed was the plan a fast development
-dataset had given nobody a reason to look at.
+The query in the opening scene never needed a new index. What it needed was the
+plan a fast development dataset had given nobody a reason to look at.
 
 ## Sources
 

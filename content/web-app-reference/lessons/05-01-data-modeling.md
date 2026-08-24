@@ -41,9 +41,8 @@ which of them is the fact.
 
 ## Start with questions, not with columns
 
-The questions come first. What fact must survive? What identifies it? Which
-rules are always true? Who owns changes? Which queries and histories matter?
-What can be recomputed?
+What fact must survive? What identifies it? Which rules are always true? Who
+owns changes? Which queries and histories matter? What can be recomputed?
 
 The mechanisms are what you reach for once those have answers. Entities maintain
 identity through change; value objects are defined by their contents.
@@ -53,12 +52,12 @@ avoids storing the same fact in multiple places; deliberate denormalization
 stores a derived copy to improve a known access path. Temporal fields
 distinguish occurrence, recording, and update time.
 
-The failure modes are that same list with the answers left blank. Boolean fields
-hide multi-step lifecycles. Nullable columns mix several meanings. Money stored
-as floating point loses exact decimal intent. Deleting a parent without a
-lifecycle policy leaves orphans. Copying display names into many records creates
-silent disagreement — unless the copy is explicitly historical, which is the
-exception the next section is built on.
+This lesson reads the failure modes as what happens when those questions go
+unanswered. Boolean fields hide multi-step lifecycles. Nullable columns mix
+several meanings. Money stored as floating point loses exact decimal intent.
+Deleting a parent without a lifecycle policy leaves orphans. Copying display
+names into many records creates silent disagreement — unless the copy is
+explicitly historical, which is the exception the next section is built on.
 
 ::activity{id="data-modeling-ms1"}
 
@@ -68,11 +67,11 @@ Model the order the second way and it stores immutable line descriptions and
 prices as the commercial snapshot, even if the product catalog later changes.
 
 That is a copy of a fact that lives elsewhere, which the paragraph above listed
-as a failure. Here it is not, and the difference is the word “snapshot”.
-Copying into many records creates silent disagreement unless the copy is
-explicitly historical, and a commercial snapshot is explicitly historical. The
-order is not repeating the catalog badly. It is recording something the catalog
-never claimed to hold.
+as a failure. Here it is not, and the difference is the word “snapshot”. Copying
+display names into many records creates silent disagreement unless the copy is
+explicitly historical, and that qualifier is what a commercial snapshot
+satisfies. The order is not repeating the catalog; it is recording something the
+catalog never claimed to hold.
 
 The same order treats identity and address differently. It references the
 customer identity, because a customer is an entity that maintains identity

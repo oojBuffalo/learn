@@ -92,10 +92,11 @@ application code adds round trips and partial failure. Polyglot persistence fits
 tools to jobs but multiplies expertise, backup, security, and reconciliation
 work — four multipliers, and none of them is the database itself.
 
-The remaining failure modes are these same tradeoffs taken without noticing.
-Treating replicas as immediately current. Scanning unbounded partitions. Using a
-cache as the sole source of truth, which is the marketplace run backwards: the
-store that can be rebuilt promoted to authority.
+Three recurring mistakes remain, and this lesson takes each as one of the
+choices above made by default. Treating replicas as immediately current.
+Scanning unbounded partitions. Using a cache as the sole source of truth, which
+is the marketplace run backwards: the store that can be rebuilt promoted to
+authority.
 
 ::activity{id="relational-and-nosql-databases-fb1"}
 
@@ -105,7 +106,7 @@ The choice in front of you is rarely relational against NoSQL. It is how many
 stores you are willing to operate, and which of them is allowed to be wrong.
 
 Staying on one primary database is the cheap answer, and it has a ceiling: every
-model in the table has a pressure it eventually meets. Adding a specialized store
+model in the table comes with a pressure attached. Adding a specialized store
 raises that ceiling, because such stores can support caching, search, analytics,
 graphs, or high-volume event access without becoming the authority for every
 fact. The price is expertise, backup, security, and reconciliation work, paid for

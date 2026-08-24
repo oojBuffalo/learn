@@ -18,8 +18,8 @@ The cache layer restarts. Within seconds the database is saturated and the servi
 is not degraded but down. For as long as anyone remembers that database had been
 comfortable — and it had been comfortable because it had never been asked.
 
-A cache outage can overload the database it was protecting. Read that slowly. The
-protection was real, which is exactly why nobody knew how much of it there was.
+A cache outage can overload the database it was protecting. The protection was
+real, which is exactly why nobody knew how much of it there was.
 
 ## Two derived-data systems with one property in common
 
@@ -101,11 +101,12 @@ Caching expensive negative results can protect dependencies but hide newly creat
 data — a miss stored as a miss, which is fine until the thing exists. Returning
 full search documents is fast but increases duplicated data.
 
-The failure modes are these dials with nobody's hand on them. Cache stampedes send
-many misses to the authority. Hot keys overload one shard. Missing tenant or
-permission dimensions leak data, which is the key composition above getting one
-dimension wrong. Search results reference deleted records. TTL-only invalidation
-creates unpredictable staleness.
+Then the failures, which this lesson keeps separate from those dials rather than
+reading one off the other. Cache stampedes send many misses to the authority.
+Hot keys overload one shard. Missing tenant or permission dimensions leak data,
+which is the key composition above getting one dimension wrong. Search results
+reference deleted records. TTL-only invalidation creates unpredictable
+staleness.
 
 ::activity{id="caching-and-search-ms1"}
 
@@ -118,11 +119,12 @@ Was the database undersized? Tempting, and the wrong question. It was sized
 against the traffic it saw, and the traffic it saw had already been filtered by a
 layer whose contribution nobody had written down.
 
-What failed is what this lesson has been about throughout. An acceleration layer
-had become load-bearing without being documented as such. The distinction between
-these systems prevents turning an acceleration layer into an undocumented source
-of truth, and this is the operational half of that sentence: the cache was never
-the source of truth, but it had quietly become the reason the database coped.
+What failed is what this lesson is about. An acceleration layer had become
+load-bearing without being documented as such. The distinction between these
+systems prevents turning an acceleration layer into an undocumented source of
+truth, and this lesson reads the outage as that warning's operational
+counterpart: the cache was never the source of truth, but it had quietly become
+the reason the database coped.
 
 The repair is in the example rather than in a bigger cache. Read the product page
 against the failure list and its jittered TTLs and single-flight refill are
