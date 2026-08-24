@@ -3807,7 +3807,7 @@
   {
     "id": "caching-and-search-card4",
     "type": "flashcard",
-    "front": "What a search system does",
+    "front": "The steps a search system performs",
     "back": "It tokenizes, normalizes, indexes fields, filters, scores, and returns identifiers or projections.",
     "tags": [
       "data"
@@ -3913,7 +3913,7 @@
       },
       {
         "id": "c",
-        "text": "Durable systems must change without assuming all code and data update atomically, and B assumes exactly that",
+        "text": "Durable systems must change without assuming all code and data update atomically, which is what this lesson takes B to assume",
         "correct": true
       },
       {
@@ -3926,7 +3926,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "Backward compatibility increases temporary complexity but supports safe rolling deploys, and in-place destructive changes are simple only when downtime is acceptable — which settles the choice here, because it is not. Underneath both sits the reason the practice exists: durable systems must change without assuming all code and data update atomically, and a single destructive change is that assumption made concrete. The rejected options invert the trade. A costs temporary complexity rather than avoiding it, and the instruction to practice restoring a pre-migration backup separately stands whichever proposal wins.",
+    "explanation": "Backward compatibility increases temporary complexity but supports safe rolling deploys, and in-place destructive changes are simple only when downtime is acceptable — which settles the choice here, because it is not. Underneath both sits the reason the practice exists: durable systems must change without assuming all code and data update atomically. This lesson reads B as making that assumption, since an in-place change needs every reader and writer to move at once, and the outage is what would have enforced it. The rejected options invert the trade. A costs temporary complexity rather than avoiding it, and the instruction to practice restoring a pre-migration backup separately stands whichever proposal wins.",
     "difficulty": "intermediate",
     "tags": [
       "data"

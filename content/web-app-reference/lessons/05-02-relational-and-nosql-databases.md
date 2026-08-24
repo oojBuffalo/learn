@@ -92,11 +92,10 @@ application code adds round trips and partial failure. Polyglot persistence fits
 tools to jobs but multiplies expertise, backup, security, and reconciliation
 work — four multipliers, and none of them is the database itself.
 
-Three recurring mistakes remain, and this lesson takes each as one of the
-choices above made by default. Treating replicas as immediately current.
-Scanning unbounded partitions. Using a cache as the sole source of truth, which
-is the marketplace run backwards: the store that can be rebuilt promoted to
-authority.
+Three more recurring mistakes are worth naming. Treating replicas as immediately
+current. Scanning unbounded partitions. Using a cache as the sole source of
+truth, which is the marketplace run backwards: the store that can be rebuilt
+promoted to authority.
 
 ::activity{id="relational-and-nosql-databases-fb1"}
 
