@@ -50,9 +50,9 @@ completion.
 
 The call stack represents active execution contexts. Promises schedule reactions
 as jobs; browser tasks deliver events such as timers and network callbacks.
-Synchronous code blocks other JavaScript in the same agent — so single-threaded
-is not a performance footnote here, it is the scheduling rule the rest of the
-model rests on.
+Synchronous code blocks other JavaScript in the same agent — so the
+single-threaded UI is not a performance footnote here, it is the scheduling rule
+the rest of the model rests on.
 
 ::activity{id="javascript-runtime-ord1"}
 
@@ -116,9 +116,9 @@ arrived in an order nobody had promised, which is a different complaint. Not a
 threading race either — this is one agent, and every handler ran to completion
 without interruption.
 
-It was shared mutable state, in a single-threaded UI, mutated by callbacks that
-interleaved over time. That is an ordering bug available on a platform with no
-threads at all, and it is precisely what the loop's guarantees do not buy you.
+It was shared mutable state, mutated by callbacks that interleaved over time.
+Shared mutable state creates ordering bugs even in a single-threaded UI, and
+that is precisely what the loop's guarantees do not buy you.
 Run-to-completion protects one job from interruption. It says nothing about
 which job runs first, or last, or whether the one writing now still speaks for
 the state of the screen.
