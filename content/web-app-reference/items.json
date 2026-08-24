@@ -3085,5 +3085,876 @@
     "tags": [
       "backend"
     ]
+  },
+  {
+    "id": "data-modeling-ms1",
+    "type": "multi-select",
+    "prompt": "A reviewer reads an `orders` table. It has `is_paid` and `is_shipped` boolean flags, a `total` stored as floating point, and the customer's display name copied onto every row with nothing marking that copy as historical. No column in the table is nullable. Which problems named in this lesson are present?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The boolean flags hide a multi-step lifecycle",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Money stored as floating point loses exact decimal intent",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The copied display name will create silent disagreement",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Nullable columns are mixing several meanings"
+      },
+      {
+        "id": "e",
+        "text": "The copied display name is fine, because it is an explicitly historical copy"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Boolean fields hide multi-step lifecycles, money stored as floating point loses exact decimal intent, and copying display names into many records creates silent disagreement — unless the copy is explicitly historical, and this one is not. That qualifier is the whole difference between this row and the order's commercial snapshot. Nullable columns do mix several meanings, but the stem rules them out here.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-mc1",
+    "type": "multiple-choice",
+    "prompt": "An order records the delivery address used for that order, but references the customer identity rather than copying anything about the customer. Why do the two facts get opposite treatment?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The address that mattered is the one used then, while a customer is an entity that maintains identity through change",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Addresses change more often than customers do",
+        "feedback": "Nothing in this lesson ranks how often either changes. The distinction is what each field is for: one holds the state of an entity now, the other holds what was true at the time of the order."
+      },
+      {
+        "id": "c",
+        "text": "Normalization requires the address to be duplicated and the customer to be referenced",
+        "feedback": "Normalization avoids storing the same fact in multiple places, so it argues against the copy rather than for it. The copy is a deliberate denormalization, and what makes it safe is that it is explicitly historical."
+      },
+      {
+        "id": "d",
+        "text": "Copying the customer identity would violate the constraints that reject impossible states",
+        "feedback": "Database constraints reject impossible states, but nothing here makes a copied customer identity impossible. The reason is about which fact each field is meant to hold."
+      }
+    ],
+    "explanation": "Entities maintain identity through change, so referencing the customer gets whoever that customer is now. The delivery address used for that order is a fact about the order, and recording it is a copy that is explicitly historical rather than a copy that will silently disagree. One reference and one copy in the same record, for opposite reasons.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-mat1",
+    "type": "matching",
+    "prompt": "A team is choosing how to represent an order. Match each representation to what this lesson says it favors or costs.",
+    "pairs": [
+      {
+        "left": "Normalized relational model",
+        "right": "integrity and flexible joins"
+      },
+      {
+        "left": "Document aggregate",
+        "right": "frequently used data kept together, shared facts duplicated"
+      },
+      {
+        "left": "Event history",
+        "right": "how state changed, at the cost of projections and versioned interpretation"
+      },
+      {
+        "left": "Natural key",
+        "right": "real-world uniqueness, in a value that may change"
+      }
+    ],
+    "distractors": [
+      "stable internally",
+      "identity maintained through change"
+    ],
+    "explanation": "Normalized relational models favor integrity and flexible joins. Document aggregates keep frequently used data together but duplicate shared facts. Event histories preserve how state changed but require projections and versioned interpretation. Natural keys can enforce real-world uniqueness but may change. The two distractors come from elsewhere in the lesson: surrogate identifiers are stable internally, and identity maintained through change is what makes something an entity rather than a value object.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-card1",
+    "type": "flashcard",
+    "front": "What data modeling identifies",
+    "back": "Facts, identities, relationships, constraints, and lifecycles — then represents them so required operations remain correct and understandable.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-card2",
+    "type": "flashcard",
+    "front": "The questions a model starts from",
+    "back": "What fact must survive? What identifies it? Which rules are always true? Who owns changes? Which queries and histories matter? What can be recomputed?",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-card3",
+    "type": "flashcard",
+    "front": "Entity or value object?",
+    "back": "An entity maintains identity through change; a value object is defined by its contents.",
+    "reverse": true,
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-card4",
+    "type": "flashcard",
+    "front": "Normalization and deliberate denormalization",
+    "back": "Normalization avoids storing the same fact in multiple places; deliberate denormalization stores a derived copy to improve a known access path.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "data-modeling-card5",
+    "type": "flashcard",
+    "front": "What temporal fields distinguish",
+    "back": "Occurrence, recording, and update time — the three moments a date on a record can mean.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-mc1",
+    "type": "multiple-choice",
+    "prompt": "A marketplace stores each order as one self-contained document. A rule that has to hold across many orders at once keeps being violated, even though every individual document is valid. Which of this lesson's pressures is that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Cross-document invariants, the common pressure on the document model",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Horizontal partitioning",
+        "feedback": "That is the pressure on the relational model, which is strong at constraints, joins and transactions and is pressed when it has to distribute itself."
+      },
+      {
+        "id": "c",
+        "text": "Secondary query needs",
+        "feedback": "That is the key-value pressure. It appears when direct lookup is not the only access you need, not when a rule spans several records."
+      },
+      {
+        "id": "d",
+        "text": "General transactional workloads",
+        "feedback": "That is the graph pressure. Graph models are strong at relationship traversal and pressed by general transactional work."
+      }
+    ],
+    "explanation": "Document stores are strong at aggregate retrieval and flexible shape, and their common pressure is cross-document invariants. Every document being valid on its own is the shape of the problem rather than evidence against it. It is also the opening scene's real fault: the store was chosen for peak scale before ordinary correctness was modeled, and the pressure arrived before the scale did.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-ms1",
+    "type": "multi-select",
+    "prompt": "A team runs one relational database. They are about to add a search index for discovery and a cache for popular product summaries. Which of these does this lesson say they are taking on?",
+    "options": [
+      {
+        "id": "a",
+        "text": "More expertise to maintain",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "More backup work",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "More security work",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "More reconciliation work",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "The search index becomes an additional authority for product facts"
+      },
+      {
+        "id": "f",
+        "text": "Writing to both new stores directly is safe as long as both writes return success"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Polyglot persistence fits tools to jobs but multiplies expertise, backup, security, and reconciliation work — four multipliers, all of them ongoing. Neither distractor holds. Specialized stores may support caching, search, analytics, graphs, or high-volume event access without becoming the authority for every fact, and dual writes to independent stores drift without a durable coordination pattern, which is why the marketplace in this lesson publishes committed changes through an outbox instead.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-fb1",
+    "type": "fill-blank",
+    "prompt": "Complete this lesson's claim about schema flexibility.",
+    "template": "Schema flexibility moves responsibility from the database to application readers and migrations. It does not remove {{1}}.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "schema",
+          "the schema",
+          "schemas"
+        ]
+      }
+    ],
+    "explanation": "Schema flexibility moves responsibility from the database to application readers and migrations; it does not remove schema. The data still has a shape. What moves is who has to know it — so “flexible” describes where the shape is enforced, not whether there is one.",
+    "difficulty": "beginner",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-card1",
+    "type": "flashcard",
+    "front": "What “NoSQL” groups together",
+    "back": "Document, key-value, wide-column, and graph models, which optimize different access and distribution patterns. It is a grouping rather than a single alternative to relational.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-card2",
+    "type": "flashcard",
+    "front": "What a database choice should follow",
+    "back": "Invariants, query shapes, scale, latency, availability, and operational capability — rather than a generic category label.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-card3",
+    "type": "flashcard",
+    "front": "Primary database, specialized stores",
+    "back": "The primary database often holds authoritative application state, while specialized stores may support caching, search, analytics, graphs, or high-volume event access without becoming the authority for every fact.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-card4",
+    "type": "flashcard",
+    "front": "Joining in the database, or in application code",
+    "back": "In the database it centralizes optimization and consistency; in application code it adds round trips and partial failure.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "relational-and-nosql-databases-card5",
+    "type": "flashcard",
+    "front": "Dual writes to independent stores",
+    "back": "They drift without a durable coordination pattern. The marketplace in this lesson avoids that by publishing committed changes through an outbox.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-mc1",
+    "type": "multiple-choice",
+    "prompt": "A counter is updated by reading it, adding one, and writing it back. Under concurrent load the stored total ends up lower than the number of updates that succeeded. Every write returned success, and nothing was rolled back. What happened?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Read-modify-write without concurrency control lost updates",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A response was lost after commit, so the client outcome is unknown",
+        "feedback": "That failure leaves a client unsure what happened while the record is correct. Here the record itself is wrong, and every client was told the truth."
+      },
+      {
+        "id": "c",
+        "text": "Retrying a transaction that calls a remote service duplicated effects",
+        "feedback": "Duplicated effects would push the total above the number of requests, not below it. Nothing here retries, and nothing here calls a remote service."
+      },
+      {
+        "id": "d",
+        "text": "The transactions were held open too long, retaining resources and increasing contention",
+        "feedback": "Long transactions retain resources and increase contention, which surfaces as waiting and conflict rather than as a total that is quietly short."
+      }
+    ],
+    "explanation": "Read-modify-write without concurrency control loses updates: two requests read the same value, both add one, and the second write replaces the first. Every write succeeding is the point — nothing failed, which is why the symptom rules out the write path rather than implicating it. The mechanisms that address it put the check and the change in one operation, such as comparing a version before update.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-mat1",
+    "type": "matching",
+    "prompt": "Match each failure to the mechanism this lesson pairs with it.",
+    "pairs": [
+      {
+        "left": "Two concurrent edits, and one of them disappears",
+        "right": "compare a version before the update"
+      },
+      {
+        "left": "A retry repeats an effect on a remote service",
+        "right": "associate repeated commands with one logical effect"
+      },
+      {
+        "left": "A committed change still has to produce a message",
+        "right": "record it in the same transaction and deliver it afterward"
+      }
+    ],
+    "distractors": [
+      "define compensating business operations for intermediate states",
+      "coordinate participants across stores, at an availability cost",
+      "keep the transaction open until the whole workflow finishes"
+    ],
+    "explanation": "Optimistic concurrency compares a version before update, closing the gap read-modify-write leaves open. Idempotency associates repeated commands with one logical effect, so a repeated remote call has one outcome. Outbox records connect a committed database change to later message delivery. The distractors are aimed elsewhere: sagas accept intermediate states and define compensating actions, distributed transactions coordinate participants but add availability and operational costs, and long transactions retain resources and increase contention rather than fixing anything.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-ms1",
+    "type": "multi-select",
+    "prompt": "A design document says a read path is “eventually consistent” and stops there. According to this lesson, which of these would have to be added before that counts as a design?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A convergence rule",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A time bound",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "A user state that accounts for the lag",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "A stronger isolation level on the writing transaction"
+      },
+      {
+        "id": "e",
+        "text": "A distributed transaction spanning both sides"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "“Eventually consistent” without a convergence rule, time bound, or user state is not a design: the phrase names an outcome and commits to nothing. Stronger isolation simplifies reasoning about concurrent work but may abort or serialize more of it, and distributed transactions coordinate participants at an availability and operational cost. Neither supplies the missing statement about when the lag ends or what someone sees while it lasts.",
+    "difficulty": "advanced",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-card1",
+    "type": "flashcard",
+    "front": "What a transaction is",
+    "back": "A grouping of operations into a correctness boundary. Consistency is the separate question of which states and observations a system permits, especially under concurrency, replication, and failure.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-card2",
+    "type": "flashcard",
+    "front": "Atomicity, isolation, durability — as questions",
+    "back": "Atomicity: do these changes commit together? Isolation: what may concurrent work observe? Durability: what survives acknowledged success? Application consistency adds the actual business rules.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-card3",
+    "type": "flashcard",
+    "front": "Where a transaction's guarantee stops",
+    "back": "Transactions protect local invariants in a data store. Application workflows coordinate transactions with remote APIs, events, caches, and user-visible status.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-card4",
+    "type": "flashcard",
+    "front": "What a saga's compensating actions are",
+    "back": "Business operations rather than database rollback. Sagas accept intermediate states and define those actions for them.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "transactions-and-consistency-card5",
+    "type": "flashcard",
+    "front": "What isolation levels trade",
+    "back": "They permit different anomalies at different costs; PostgreSQL documents Read Committed, Repeatable Read, and Serializable behaviors. Stronger isolation simplifies reasoning but may abort or serialize more work.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-sa1",
+    "type": "short-answer",
+    "prompt": "The column in the predicate is indexed and the table's statistics were refreshed this morning, yet the planner will not use that index for the query as written. What kind of thing in the query can cause that?",
+    "accept": [
+      "a function on the column",
+      "functions or implicit casts",
+      "a function or an implicit cast",
+      "an implicit cast",
+      "implicit casts",
+      "implicit cast",
+      "a function",
+      "functions",
+      "a cast",
+      "casts",
+      "wrapping the column in a function"
+    ],
+    "match": "fold",
+    "hints": [
+      "The index exists and the statistics are current, so the obstacle is in how the query refers to the column.",
+      "One kind is written into the query; the other is supplied silently by a type mismatch."
+    ],
+    "explanation": "Functions or implicit casts can prevent intended index use. Read that against this lesson's mental model — an index is similar to a sorted lookup map from key values to row locations — and a predicate about the result of a function is not a predicate about the keys the index holds. Current statistics rule out the other failure here: stale statistics produce bad estimates rather than preventing use.",
+    "difficulty": "advanced",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-mc1",
+    "type": "multiple-choice",
+    "prompt": "A paged list returns fifty rows a page. It is quick on page one and steadily slower the deeper a reader goes, with the same index used throughout. Which change addresses the cause?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Page by a bound on the ordering column, so each page asks for rows past a position",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Add a covering index so the query stops paying for extra lookups",
+        "feedback": "Covering indexes avoid extra lookups but grow larger, and that cost is the same on page one as on page ninety. It does not explain a slowdown that grows with depth."
+      },
+      {
+        "id": "c",
+        "text": "Refresh the table's statistics so the planner stops misestimating",
+        "feedback": "Stale statistics produce bad estimates, which shows up as a poor plan rather than as a good plan doing steadily more work each page."
+      },
+      {
+        "id": "d",
+        "text": "Index every column the query touches",
+        "feedback": "Indexing every column wastes resources, and the stem already says an index is in use throughout. What needs changing is what the query asks for."
+      }
+    ],
+    "explanation": "Offset pagination scans and discards increasing work, so reaching a deep page costs everything before it even though fifty rows come back each time. The lesson's worked example pages with a `created_at < ?` bound instead — cursor pagination, served by an index beginning with tenant and then creation time, which supports filtering, order, and pagination from one structure.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-ms1",
+    "type": "multi-select",
+    "prompt": "A team proposes adding four more indexes to a busy table so that four reports run faster. Which costs does this lesson say they should weigh against that?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Inserts and updates slow down",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Migrations slow down",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Vacuum or compaction slows down",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Storage is consumed, and each index has to be updated on writes",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "The planner will have fewer alternative execution strategies to weigh"
+      },
+      {
+        "id": "f",
+        "text": "With the indexes in place, the reports no longer need a measured plan"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "More indexes speed some reads while slowing inserts, updates, migrations, and vacuum or compaction, and an index consumes storage and must be updated on writes. Neither distractor survives the lesson. A planner estimates alternative execution strategies and chooses among them, so available indexes add alternatives rather than remove them; and the standing instruction is to validate with realistic distributions and an execution plan rather than relying on the index name. Indexing every column wastes resources, and four indexes for four reports is that argument in miniature.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-card1",
+    "type": "flashcard",
+    "front": "What an index is",
+    "back": "An auxiliary structure that accelerates selected access paths — similar to a sorted lookup map from key values to row locations, saving scanning when the predicate narrows data enough.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-card2",
+    "type": "flashcard",
+    "front": "What a query planner does",
+    "back": "It estimates alternative execution strategies and chooses one, based on statistics, available indexes, joins, ordering, and expected cost.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-card3",
+    "type": "flashcard",
+    "front": "What B-tree indexes support",
+    "back": "Equality, range, and ordered access for compatible leading keys. Hash, inverted, spatial, and other indexes serve different operators, and composite index order matters.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-card4",
+    "type": "flashcard",
+    "front": "Covering and partial indexes",
+    "back": "Covering indexes avoid extra lookups but grow larger; partial indexes target a frequently queried subset.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "indexes-and-query-planning-card5",
+    "type": "flashcard",
+    "front": "What `EXPLAIN` gives you",
+    "back": "The chosen plan. Execution-aware variants go further and compare estimates with actual work.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-mat1",
+    "type": "matching",
+    "prompt": "A team is writing down what each part of their caching setup actually promises. Match each mechanism to what this lesson says it does.",
+    "pairs": [
+      {
+        "left": "Cache-aside",
+        "right": "loads on miss and writes to the authority separately"
+      },
+      {
+        "left": "Read-through and write-through",
+        "right": "move policy into a cache layer"
+      },
+      {
+        "left": "A TTL",
+        "right": "bounds staleness without guaranteeing freshness"
+      },
+      {
+        "left": "Invalidation",
+        "right": "removes known stale entries"
+      }
+    ],
+    "distractors": [
+      "improves freshness while extending write latency",
+      "protects dependencies while hiding newly created data"
+    ],
+    "explanation": "Cache-aside loads on miss and writes to the authority separately. Read-through and write-through move policy into a cache layer. TTLs bound staleness but do not guarantee freshness — bounding describes the worst case, not the current value. Invalidation removes known stale entries. The distractors are tradeoffs from elsewhere in the lesson: synchronous search updates improve freshness while extending write latency, and caching expensive negative results protects dependencies but hides newly created data.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-mc1",
+    "type": "multiple-choice",
+    "prompt": "Product detail responses are cached, and the same catalog feeds a search index. At checkout the system rereads price and inventory from the authority instead of using either. What reason does this lesson give?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Derived stores may lag, and checkout belongs on the correctness path rather than the acceleration path",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The cache key is missing a dimension, so the cached price cannot be trusted",
+        "feedback": "Missing tenant or permission dimensions do leak data, but the detail key here is composed of product, locale and price region. The reason checkout rereads is about which path an answer travels, not about a defective key."
+      },
+      {
+        "id": "c",
+        "text": "TTLs bound staleness, so the cached price is only ever slightly out of date",
+        "feedback": "TTLs bound staleness but do not guarantee freshness, and “slightly out of date” is still out of date for a price. That is a reason to reread rather than a reason to trust the projection."
+      },
+      {
+        "id": "d",
+        "text": "Search results can reference deleted records",
+        "feedback": "That is a real failure of derived search data, but it is about discovery returning things that are gone — not about why a price is reread at checkout."
+      }
+    ],
+    "explanation": "A cache and a search index are both derived data: authority, then change capture, then projection, then query. Derived stores may lag, and interfaces must tolerate or disclose that lag. Checkout is where the system cannot tolerate it, so it takes the direct correctness path and rereads authoritative price and inventory rather than trusting either projection.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-ms1",
+    "type": "multi-select",
+    "prompt": "A team moves from synchronous search updates to asynchronous indexing. According to this lesson, which of these follow?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Writes are isolated from the indexing work",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Search results can lag behind committed changes",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Something in the interface has to tolerate or disclose that lag",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Freshness improves"
+      },
+      {
+        "id": "e",
+        "text": "The search index stops being derived data and becomes an authority"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Synchronous search updates improve freshness while extending write latency; asynchronous indexing isolates writes but creates lag. The obligation travels with the choice, because derived stores may lag and interfaces must tolerate or disclose that lag. Freshness is what the synchronous option buys, and nothing about the indexing schedule moves the authority: search still consumes committed changes and stays rebuildable.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-card1",
+    "type": "flashcard",
+    "front": "Cache or search system?",
+    "back": "A cache stores reusable results closer to demand; a search system builds specialized indexes for discovery and ranking. Both are derived-data systems.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-card2",
+    "type": "flashcard",
+    "front": "What derived data's value depends on",
+    "back": "Freshness, invalidation, and rebuild strategy — the same three for a cache and for a search index.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-card3",
+    "type": "flashcard",
+    "front": "Where caches live, what search indexes consume",
+    "back": "Caches may exist in browsers, CDNs, applications, and data services. Search indexes typically consume committed changes and serve query-oriented representations.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-card4",
+    "type": "flashcard",
+    "front": "What a search system does with a query",
+    "back": "It tokenizes, normalizes, indexes fields, filters, scores, and returns identifiers or projections.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "caching-and-search-card5",
+    "type": "flashcard",
+    "front": "Cache stampedes and hot keys",
+    "back": "A stampede sends many misses to the authority; a hot key overloads one shard.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-mc1",
+    "type": "multiple-choice",
+    "prompt": "A backup job has reported success on every run since it was set up, and nobody has ever restored from it. What does that record establish?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Only that the jobs ran and reported success — a restore drill is what verifies credentials, tooling, integrity, and elapsed time",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "That the backups are complete",
+        "feedback": "Untested backups may be incomplete. A job reporting success is a statement about the job, not about what it produced."
+      },
+      {
+        "id": "c",
+        "text": "That the keys needed to read the backups are available",
+        "feedback": "Untested backups may be encrypted with unavailable keys. Nothing in a successful backup run exercises the keys on the way back."
+      },
+      {
+        "id": "d",
+        "text": "That a restore would finish inside the recovery objective",
+        "feedback": "Untested backups may be too slow to meet recovery objectives. Elapsed time is one of the things a restore drill measures, and a backup job never measures it."
+      }
+    ],
+    "explanation": "Restore drills verify credentials, tooling, integrity, and elapsed time — not merely that backup jobs report success. Untested backups may be incomplete, encrypted with unavailable keys, or too slow to meet recovery objectives, and a long run of successful jobs tells none of those cases apart from a working one. Recovery is defined by explicit time and data-loss objectives, and only a drill measures against them.",
+    "difficulty": "beginner",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-ord1",
+    "type": "ordering",
+    "prompt": "Put the steps of this lesson's `full_name` replacement in order.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Add nullable `given_name` and `family_name`"
+      },
+      {
+        "id": "s2",
+        "text": "Deploy code that writes both formats and reads new with old fallback"
+      },
+      {
+        "id": "s3",
+        "text": "Backfill in bounded batches"
+      },
+      {
+        "id": "s4",
+        "text": "Verify counts"
+      },
+      {
+        "id": "s5",
+        "text": "Switch reads"
+      },
+      {
+        "id": "s6",
+        "text": "Stop old writes"
+      },
+      {
+        "id": "s7",
+        "text": "Remove the old column"
+      }
+    ],
+    "explanation": "This is expand–migrate–contract at full length: add a backward-compatible shape, move readers and writers and backfill the data, then remove the old shape after no active version depends on it. Only the first and last steps touch the schema. The fallback in step two is what lets old and new code run side by side, and the ordering of the last three follows the rule the pattern states — the old shape goes only once nothing running still depends on it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-ms1",
+    "type": "multi-select",
+    "prompt": "A team picks a backward-compatible expand–migrate–contract change instead of an in-place destructive one. Which of these does this lesson say comes with that choice?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Temporary complexity increases",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Rolling deploys stay safe",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The release stops assuming that all code and data update atomically",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Downtime becomes acceptable"
+      },
+      {
+        "id": "e",
+        "text": "The backfill no longer needs to be bounded"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Backward compatibility increases temporary complexity but supports safe rolling deploys, which is how a durable system changes without assuming all code and data update atomically. Downtime belongs to the option not taken: in-place destructive changes are simple only when downtime is acceptable. Bounding stays necessary either way, because online migrations avoid long exclusive locks and bound backfills, and a backfill overwhelming replicas is one of this lesson's failure modes.",
+    "difficulty": "intermediate",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-card1",
+    "type": "flashcard",
+    "front": "Migrations, backups, recovery",
+    "back": "Migrations evolve live data and schemas. Backups preserve recoverable copies. Recovery turns those copies and logs into a working service within explicit time and data-loss objectives.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-card2",
+    "type": "flashcard",
+    "front": "Expand–migrate–contract",
+    "back": "First add a backward-compatible shape, then move readers and writers and backfill data, then remove the old shape after no active version depends on it.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-card3",
+    "type": "flashcard",
+    "front": "What an online migration does",
+    "back": "It avoids long exclusive locks and bounds backfills.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-card4",
+    "type": "flashcard",
+    "front": "Multi-region replicas, or independent backups?",
+    "back": "Replicas improve availability but can replicate corruption; independent backups preserve earlier states.",
+    "tags": [
+      "data"
+    ]
+  },
+  {
+    "id": "migrations-backups-and-recovery-card5",
+    "type": "flashcard",
+    "front": "What a dual-read or dual-write transition needs",
+    "back": "An authority and reconciliation.",
+    "tags": [
+      "data"
+    ]
   }
 ]

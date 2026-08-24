@@ -97,5 +97,30 @@
       "scaling-and-resilience-mc2"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-data",
+    "title": "Data check",
+    "items": [
+      "data-modeling-ms1",
+      "data-modeling-mc1",
+      "data-modeling-mat1",
+      "relational-and-nosql-databases-mc1",
+      "relational-and-nosql-databases-ms1",
+      "relational-and-nosql-databases-fb1",
+      "transactions-and-consistency-mc1",
+      "transactions-and-consistency-mat1",
+      "transactions-and-consistency-ms1",
+      "indexes-and-query-planning-sa1",
+      "indexes-and-query-planning-mc1",
+      "indexes-and-query-planning-ms1",
+      "caching-and-search-mat1",
+      "caching-and-search-mc1",
+      "caching-and-search-ms1",
+      "migrations-backups-and-recovery-mc1",
+      "migrations-backups-and-recovery-ord1",
+      "migrations-backups-and-recovery-ms1"
+    ],
+    "passThreshold": 0.75
   }
 ]

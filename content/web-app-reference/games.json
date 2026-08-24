@@ -113,5 +113,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-data-match",
+    "template": "matching",
+    "title": "Data — match them up",
+    "source": {
+      "tags": [
+        "data"
+      ]
+    }
+  },
+  {
+    "id": "game-data-speed",
+    "template": "timed-round",
+    "title": "Data — quick fire",
+    "source": {
+      "tags": [
+        "data"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]
