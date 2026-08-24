@@ -38,9 +38,7 @@ How is a process stopped without abandoning work?
 
 Those answers are what runtime models explain — concurrency, capacity, startup,
 failure isolation, and why blocking or CPU-heavy work behaves differently across
-stacks. Two services written in the same language on different runtimes can
-answer the second question differently and then fail in completely different
-ways.
+stacks.
 
 ## Where it sits, and how it schedules
 
