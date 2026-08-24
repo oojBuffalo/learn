@@ -1472,5 +1472,875 @@
     "tags": [
       "browser-platform"
     ]
+  },
+  {
+    "id": "components-state-and-reactivity-mc1",
+    "type": "multiple-choice",
+    "prompt": "The order table needs to show how many orders match the current filter. The orders arrive as input and the filter lives in query state. Where should that count live?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Nowhere — derive it from the orders and the query whenever it is wanted",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "In local state, refreshed by an effect whenever the orders or the query change",
+        "feedback": "That stores a fact two other facts already imply. Duplicated derived state drifts from its source, and the refresh becomes one more thing that can fail to run — which is the caption above the nine rows."
+      },
+      {
+        "id": "c",
+        "text": "In a central store, so any screen that needs the count can read it",
+        "feedback": "Central stores simplify cross-cutting coordination, and this count coordinates nothing outside the table. Global state can outlive the user or route it belonged to, which is a poor trade for a number you can compute."
+      },
+      {
+        "id": "d",
+        "text": "As an input, computed by the layer that supplies the orders",
+        "feedback": "Inputs pass data into a component, so this would be recomputed upstream every time the filter changed — for a value already computable from what the table holds."
+      }
+    ],
+    "explanation": "Derived state is computed from authoritative inputs, which is what makes “what can be derived instead of stored” the third question the model hands you. Storing the answer instead creates a second copy of a fact, and duplicated derived state drifts from its source.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-sa1",
+    "type": "short-answer",
+    "prompt": "A reader is halfway through typing a note into a row of a long table when a background refresh reorders the rows. Their text is gone. What is the cause?",
+    "accept": [
+      "unstable identity",
+      "identity",
+      "unstable component identity",
+      "unstable row identity",
+      "the identity is unstable",
+      "identity is unstable",
+      "the rows have unstable identity"
+    ],
+    "match": "fold",
+    "hints": [
+      "Nothing about the note changed. What changed is which component the system thinks it is looking at.",
+      "The same failure loses focus as well as input."
+    ],
+    "explanation": "Unstable identity loses input or focus. A component the system treats as a new one arrives holding none of the transient interaction state the old one held — and local state is exactly what supports transient interaction. The note was never in the authoritative order data, so nothing upstream could put it back.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-mat1",
+    "type": "matching",
+    "prompt": "Match each part of the order table to its role in the data flow.",
+    "pairs": [
+      {
+        "left": "The orders the table renders",
+        "right": "an input passed in from above"
+      },
+      {
+        "left": "Which row the reader has expanded",
+        "right": "local state for transient interaction"
+      },
+      {
+        "left": "The rows left after the filter",
+        "right": "derived from authoritative inputs"
+      },
+      {
+        "left": "`cancelRequested(orderId)`",
+        "right": "an event communicating outward"
+      }
+    ],
+    "distractors": [
+      "shared state coordinating siblings or routes",
+      "scattered DOM mutation the table performs itself"
+    ],
+    "explanation": "Inputs pass data into a component; events or callbacks communicate outward. Local state supports transient interaction and derived state is computed from authoritative inputs, which between them account for everything the table holds. Nothing here is shared state, because the table coordinates no sibling and no route, and none of it is scattered DOM mutation — the thing predictable data flow replaces.",
+    "difficulty": "beginner",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-card1",
+    "type": "flashcard",
+    "front": "Component, state, reactivity",
+    "back": "Components group presentation and interaction around a responsibility. State records information that can change. Reactivity keeps rendered output and derived behavior synchronized with those state changes.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-card2",
+    "type": "flashcard",
+    "front": "Who actually renders",
+    "back": "The browser remains the actual rendering platform; a component system schedules and applies DOM changes rather than becoming the thing that draws.",
+    "examples": [
+      "WHATWG, DOM Standard"
+    ],
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-card3",
+    "type": "flashcard",
+    "front": "Colocation and central stores",
+    "back": "Colocating state with its smallest owner improves comprehension. Central stores simplify cross-cutting coordination but can turn unrelated changes into global coupling.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-card4",
+    "type": "flashcard",
+    "front": "How dependencies get detected",
+    "back": "Reactive systems detect dependencies through explicit subscriptions, compiler analysis, signals, or rerender-and-diff strategies.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "components-state-and-reactivity-card5",
+    "type": "flashcard",
+    "front": "Immutable updates or signals",
+    "back": "Immutable updates simplify change detection and history; fine-grained mutable signals can reduce work but require disciplined ownership.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-mc1",
+    "type": "multiple-choice",
+    "prompt": "A project board has a status filter that readers paste into chat messages, and a half-written comment that must not turn up in anyone's history. Where does each belong?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The filter in the query; the comment somewhere other than the URL",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Both in the query, so that a refresh restores the reader's exact position",
+        "feedback": "The URL is the serialized, public portion of navigation state. Whatever goes there is durable and shareable whether or not you wanted it to be, and a half-written comment is neither."
+      },
+      {
+        "id": "c",
+        "text": "The filter in the path; the comment in the fragment",
+        "feedback": "The path selects a resource or screen and the fragment identifies a position within the resulting document. A filter selects a view, which is the query's job — and the fragment is still part of the URL."
+      },
+      {
+        "id": "d",
+        "text": "Both outside the URL, with the filter restored from the router's own state",
+        "feedback": "That hides navigation inside transient component state, which is what routing exists to avoid. A filter kept there is not linkable, refreshable or shareable."
+      }
+    ],
+    "explanation": "Put durable, shareable filters in the query and sensitive or ephemeral data elsewhere. Good routing makes application state linkable, refreshable, shareable, and compatible with browser history rather than hiding navigation inside transient component state — and the same publicity that buys all four is why the comment cannot go there.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-ord1",
+    "type": "ordering",
+    "prompt": "Put the client navigation from `/orders` to `/orders/123` in order.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Push a history entry"
+      },
+      {
+        "id": "s2",
+        "text": "Render a pending region"
+      },
+      {
+        "id": "s3",
+        "text": "Load order 123"
+      },
+      {
+        "id": "s4",
+        "text": "Move focus to the detail heading"
+      }
+    ],
+    "explanation": "Navigating from `/orders` to `/orders/123` pushes a history entry, renders a pending region, loads order `123`, then moves focus to the detail heading. The order is the argument: the history entry comes first because the browser owns session history and the back button has to work from the moment the address changes, and focus moves last because until the detail heading exists there is nowhere to move it to.",
+    "difficulty": "beginner",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-mc2",
+    "type": "multiple-choice",
+    "prompt": "A documentation site has to serve readers whose devices never run the application's JavaScript. Which routing choice does that force, and what is given up?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Server routing — it works without application JavaScript and gives each response an independent lifecycle, at the cost of the shell state and fluid transitions client routing preserves",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Client routing — it preserves shell state and enables fluid transitions, and the router can fall back to the server when JavaScript is unavailable",
+        "feedback": "A frontend router is application JavaScript. If none runs, there is no router to fall back from."
+      },
+      {
+        "id": "c",
+        "text": "Either — the two differ in how a navigation feels rather than in what it requires",
+        "feedback": "Server routing works without application JavaScript. Client navigation updates history and fetches or reveals the next screen through client-side code, which is a requirement rather than a preference."
+      },
+      {
+        "id": "d",
+        "text": "Server routing — and nothing is given up, since client routing has to reproduce document-level concerns anyway",
+        "feedback": "Reproducing document-level concerns is a cost on client routing's side of the ledger, not a cancellation of what it buys. Preserved shell state and fluid transitions are what you are giving up."
+      }
+    ],
+    "explanation": "Server routing works without application JavaScript and gives each response an independent lifecycle. Client routing preserves shell state and enables fluid transitions but must reproduce document-level concerns — restoring titles, focus, and scroll among them. The constraint settles which one you take; the ledger is what you should be able to state afterwards.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-card1",
+    "type": "flashcard",
+    "front": "The URL as navigation state",
+    "back": "Treat the URL as a serialized, public portion of navigation state: the path selects a resource or screen, the query selects a view, and the fragment identifies a position within the resulting document.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-card2",
+    "type": "flashcard",
+    "front": "Who owns session history",
+    "back": "The browser owns session history even when a frontend router coordinates it.",
+    "examples": [
+      "WHATWG, HTML Living Standard: Session history and navigation"
+    ],
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-card3",
+    "type": "flashcard",
+    "front": "What a router does",
+    "back": "Routers match paths, decode parameters, load data, enforce route-level policy, manage errors, and restore titles, focus, and scroll.",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-card4",
+    "type": "flashcard",
+    "front": "Authorization in the router",
+    "back": "Authorization performed only in the router is bypassable, because the server remains the security authority.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "routing-and-navigation-card5",
+    "type": "flashcard",
+    "front": "Document and client navigation",
+    "back": "Document navigation asks the server for a new top-level resource. Client navigation updates history and fetches or reveals the next screen without replacing the whole document.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-mc1",
+    "type": "multiple-choice",
+    "prompt": "A transfer form disables its submit control while the request is in flight. The network delivers that request twice anyway, and two transfers appear. What does that tell you about the two mechanisms involved?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Pending state prevents accidental repeated interaction; repeated network delivery is what an idempotency key handles",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The pending state was implemented badly — a properly disabled control would have stopped the second delivery",
+        "feedback": "A disabled control governs what the person can do. It sits on the wrong side of the wire to govern what happens to a request that has already left."
+      },
+      {
+        "id": "c",
+        "text": "The server should have recognised the second request as a duplicate without being told",
+        "feedback": "An idempotency key is how the second delivery is recognised as the same operation. Without one the two requests are indistinguishable."
+      },
+      {
+        "id": "d",
+        "text": "They are two names for one guard, so one of them was redundant",
+        "feedback": "They address different problems. Pending state prevents accidental repeated interaction, while an idempotency key handles repeated network delivery."
+      }
+    ],
+    "explanation": "Pending state prevents accidental repeated interaction, while an idempotency key handles repeated network delivery — two mechanisms for two problems that look identical from outside. The transfer form in this lesson does both: it exposes pending status and submits a unique operation ID.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-ms1",
+    "type": "multi-select",
+    "prompt": "A submitted form comes back with every field empty, one field outlined in red and nothing else, and the words “invalid request” at the top. Which of the named form failures are on this screen?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A color-only error cue",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A generic “invalid request” response, which prevents correction",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Safe user input was not preserved after the rejected submission",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Placeholder-only labels, which disappear"
+      },
+      {
+        "id": "e",
+        "text": "Client and server rules that have drifted apart"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Three of the failures are visible here. Color-only error cues exclude users; generic “invalid request” responses prevent correction; and preserving safe user input after a rejected submission is exactly what emptying every field failed to do. The other two are real failures that nothing on this screen is evidence of — the fields may be labelled correctly, and one rejection is not a sign that the client and server rules disagree.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-mat1",
+    "type": "matching",
+    "prompt": "A transfer is submitted. Match each outcome to the response the form should give.",
+    "pairs": [
+      {
+        "left": "An amount in a format the form cannot parse",
+        "right": "an inline format error, announced"
+      },
+      {
+        "left": "The transfer is declined",
+        "right": "a form-level business message"
+      },
+      {
+        "left": "The destination account is not valid",
+        "right": "an error mapped to that field"
+      },
+      {
+        "left": "The request times out with an unknown outcome",
+        "right": "an offer to look up the status"
+      }
+    ],
+    "distractors": [
+      "a blind retry",
+      "a generic “invalid request”"
+    ],
+    "explanation": "A transfer form parses an amount, announces inline format errors, and submits a unique operation ID. A declined transfer returns a form-level business message; an invalid destination maps to that field; an unknown timeout offers status lookup rather than a blind retry. The two distractors are the failures the design is avoiding — a blind retry on an outcome nobody knows, and a response the person cannot act on.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-card1",
+    "type": "flashcard",
+    "front": "What each boundary validates for",
+    "back": "Client checks improve interaction; server checks protect authority; domain invariants preserve correctness. Each boundary validates for its own purpose.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-card2",
+    "type": "flashcard",
+    "front": "The limit of frontend validation",
+    "back": "Validation helps users correct input and protects application boundaries, but frontend validation never replaces backend validation or authorization.",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-card3",
+    "type": "flashcard",
+    "front": "Labels, types, and submission",
+    "back": "Labels give controls names, input types and attributes express basic constraints, and submission serializes successful controls.",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-card4",
+    "type": "flashcard",
+    "front": "When optimistic completion is wrong",
+    "back": "Optimistic completion feels fast but is unsuitable when the result is uncertain or costly to reverse.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "forms-and-validation-card5",
+    "type": "flashcard",
+    "front": "Native form behaviour",
+    "back": "Native HTML supplies submission and constraint-validation behavior that applications may progressively enhance; controlled component state offers coordination while native form state reduces code.",
+    "examples": [
+      "WHATWG, HTML Living Standard: Forms"
+    ],
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-ms1",
+    "type": "multi-select",
+    "prompt": "A settings screen writes a new display name into its own state the moment the reader clicks Save, before the server has answered. Which of these does that write still owe?",
+    "options": [
+      {
+        "id": "a",
+        "text": "An idempotency key, so a repeated delivery is not a second effect",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A rollback if the server rejects it",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Invalidation of anything that summarised the old name",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Deduplication against any other in-flight read of the same name"
+      },
+      {
+        "id": "e",
+        "text": "A cache key that leaves the account identity out, so every screen reads one entry"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Mutations request effects and need explicit success semantics, idempotency, invalidation, and optimistic rollback. Optimistic updates improve responsiveness when rejection is rare and reversal is clear — the reversal is the rollback, and the invalidation is what stops a summary elsewhere from still showing the old name after confirmation. Deduplication is something queries can often have, because a read leaves nothing behind; and cache keys that omit identity or filters leak incorrect data.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-mc1",
+    "type": "multiple-choice",
+    "prompt": "A project page already holds the project's data in cache, marked stale, and a revalidation is under way. Two designs are proposed: cover the content with a loading overlay, or leave it visible under a small refresh indicator. What settles it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Leave it visible — a loading overlay can erase usable stale content, and stale content is still content the reader can use",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Cover it — showing data known to be stale is showing data known to be wrong",
+        "feedback": "Stale is not wrong; it is aged. Remote state has two clocks, and the frontend's copy ageing is the normal condition rather than a fault."
+      },
+      {
+        "id": "c",
+        "text": "Cover it — the overlay is how the reader learns a request is in flight",
+        "feedback": "In-flight state does have to be visible, which is what an unobtrusive refresh indicator is for. It does not have to be made visible by hiding everything else."
+      },
+      {
+        "id": "d",
+        "text": "Either — the choice is cosmetic, since the same data arrives at the same moment",
+        "feedback": "The data does arrive at the same moment. What differs is how much of the wait the reader can do anything during, and a loading overlay can erase usable stale content for all of it."
+      }
+    ],
+    "explanation": "A loading overlay can erase usable stale content. The project page here begins with cached project data marked stale, starts one revalidation, and renders an unobtrusive refresh indicator, which keeps both facts on the screen at once: this is what we have, and this is that it is being checked. A cache entry needs identity, value, freshness, and in-flight/error state, and freshness and in-flight state are the two the indicator is reporting.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-mc2",
+    "type": "multiple-choice",
+    "prompt": "A save times out with no answer. The client resends it automatically, three times, a second apart. What has that risked?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Duplicated mutations, and prolonging an overload that may have caused the timeout in the first place",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing, as long as the request carried an idempotency key",
+        "feedback": "An idempotency key addresses the duplication. It does nothing about the second risk: automatic retries can prolong overload, and three more requests into a struggling server are three more requests."
+      },
+      {
+        "id": "c",
+        "text": "Only the bandwidth of three extra requests",
+        "feedback": "Automatic retries can duplicate mutations or prolong overload. Both of those are larger than the bandwidth."
+      },
+      {
+        "id": "d",
+        "text": "An abort, since local interest in the first attempt has now lapsed",
+        "feedback": "Abort signals end local interest, and nothing here aborted anything. The first attempt's outcome is still unknown, which is the whole difficulty."
+      }
+    ],
+    "explanation": "Automatic retries can duplicate mutations or prolong overload. A timeout with no answer is not a failure but an unknown outcome, and resending is a decision to treat it as one — which is why mutations need explicit success semantics and idempotency before anything gets to retry them.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-card1",
+    "type": "flashcard",
+    "front": "The two clocks",
+    "back": "Remote state has two clocks: the server changes independently, and the frontend's copy ages. A cache entry therefore needs identity, value, freshness, and in-flight/error state.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-card2",
+    "type": "flashcard",
+    "front": "What a query can be",
+    "back": "Queries read representations and can often be deduplicated, cached, revalidated, or retried.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-card3",
+    "type": "flashcard",
+    "front": "What a bad cache key costs",
+    "back": "Cache keys that omit identity or filters leak incorrect data.",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-card4",
+    "type": "flashcard",
+    "front": "Where to fetch",
+    "back": "Fetch at route boundaries to avoid nested waterfalls, or near components to preserve ownership; many systems combine both with a shared query cache.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "data-fetching-card5",
+    "type": "flashcard",
+    "front": "Polling or server push",
+    "back": "Polling is simple; server push is timely but operationally stateful.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-ms1",
+    "type": "multi-select",
+    "prompt": "A team ships a custom toggle: an element that is not a control, that responds to a click, and that turns green when it is on. Which of the four questions does it fail?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Can the user perceive the information? Its state is carried by color alone.",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Can they operate it with available input? It is a clickable non-control.",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Can assistive technologies determine names, roles, values, and updates? It has no control role for them to report.",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Can they understand the state and consequences? The reader cannot tell what turning it on will do."
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Ask four questions for every task: can the user perceive the information, can they operate it with available input, can they understand the state and consequences, and can assistive technologies determine names, roles, values, and updates. State conveyed only by color and clickable non-controls are both named failures, and semantic HTML is what communicates structure and control roles — so three of the four fail on one widget. Nothing in the description bears on the fourth, which is the point of asking four questions rather than reaching one verdict.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-mc1",
+    "type": "multiple-choice",
+    "prompt": "A long report finishes saving in the background while the reader is typing in a different field. How should the interface report it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "In a live region, which can announce asynchronous status without stealing focus",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "By moving focus to the confirmation message, so it is announced immediately",
+        "feedback": "Focus identifies the active control, and the reader is using one. Moving focus mid-sentence takes the interface away from the task they are doing."
+      },
+      {
+        "id": "c",
+        "text": "By turning the save indicator green",
+        "feedback": "State conveyed only by color is a named failure, and it says nothing at all to a reader who is not looking at the indicator."
+      },
+      {
+        "id": "d",
+        "text": "With a text alternative on the save icon",
+        "feedback": "Text alternatives convey the purpose of non-text content — what the icon is for, not that something has just happened."
+      }
+    ],
+    "explanation": "Live regions can announce asynchronous status without stealing focus, which is the property this situation needs: the status is asynchronous and the reader is in the middle of something. Focus does move elsewhere in the worked example, but only when the task itself moves — to an error summary after a failed submission, or to the new page heading after a successful one.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-mc2",
+    "type": "multiple-choice",
+    "prompt": "A redesign moves a summary panel to the top of the screen with CSS, leaving it last in the document. Readers who tab through the page still reach it last. Why?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Keyboard order follows DOM order unless it is deliberately managed",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Because the panel is not a control, and only controls take keyboard order",
+        "feedback": "The panel holds controls; the question is when they are reached, not whether. Keyboard order follows DOM order, and the CSS did not change the document."
+      },
+      {
+        "id": "c",
+        "text": "Because focus indicators are hidden, so the panel is being reached earlier than it appears",
+        "feedback": "Hidden focus indicators are a real failure, and they would make focus hard to see rather than change where it goes."
+      },
+      {
+        "id": "d",
+        "text": "Because assistive technologies read visual position, and the panel has not been re-announced",
+        "feedback": "The complaint is about tab order, which follows the document. Moving something visually does not move it in the DOM."
+      }
+    ],
+    "explanation": "Keyboard order follows DOM order unless deliberately managed. A visual reordering done in CSS changes neither the document nor the order a keyboard traverses it in — one of the ways accessibility turns out to be a property of the complete interaction rather than a final audit step.",
+    "difficulty": "beginner",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-card1",
+    "type": "flashcard",
+    "front": "Accessibility",
+    "back": "People with varied vision, hearing, mobility, cognition, devices, and input methods can perceive and operate the application. It is a property of the complete interaction, not a final audit step.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-card2",
+    "type": "flashcard",
+    "front": "WCAG 2.2's four principles",
+    "back": "WCAG 2.2 organizes testable criteria under perceivable, operable, understandable, and robust principles.",
+    "reverse": true,
+    "examples": [
+      "W3C, Web Content Accessibility Guidelines 2.2"
+    ],
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-card3",
+    "type": "flashcard",
+    "front": "Where accessible names come from",
+    "back": "Visible labels or defined naming relationships.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-card4",
+    "type": "flashcard",
+    "front": "What automated checks catch",
+    "back": "Only a subset of the failures, which is why task-based manual testing remains necessary.",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "accessibility-card5",
+    "type": "flashcard",
+    "front": "Native controls and custom widgets",
+    "back": "Native controls provide behavior and semantics at low cost; custom widgets may meet specialized needs but inherit keyboard, focus, state, and announcement obligations.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-fb1",
+    "type": "fill-blank",
+    "prompt": "Complete the critical path this lesson uses.",
+    "template": "discover → connect → {{1}} → parse → {{2}} → render → respond",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "transfer"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "execute"
+        ]
+      }
+    ],
+    "explanation": "The path is discover → connect → transfer → parse → execute → render → respond. Naming all seven keeps the word “performance” attached to a journey rather than to one stage: compression reduces transferred bytes, resource hints and document order affect discovery, code splitting defers code by route or capability, and long JavaScript tasks block input processing. Work not on the current critical path may still consume bandwidth, CPU, memory, and battery that delay important work.",
+    "difficulty": "beginner",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team halves the JavaScript an issue page ships. The measured time from navigation start to first responsive interaction does not move. What is the most likely reading?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The journey was not waiting on the stages a bundle governs — the critical path often crosses server, network, and browser boundaries",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The measurement must be wrong, since shipping less JavaScript improves many devices",
+        "feedback": "Shipping less JavaScript does improve many devices. That is a claim about a population of devices, not a promise about which stage this particular journey spends its time in."
+      },
+      {
+        "id": "c",
+        "text": "The saving was cancelled out by the extra requests that splitting introduced",
+        "feedback": "Excessive splitting does add requests and coordination, and it is worth checking. It is one specific hypothesis rather than the general reading, and it would tend to make the number worse rather than leave it unchanged."
+      },
+      {
+        "id": "d",
+        "text": "Nothing can be concluded until the bundle is halved again",
+        "feedback": "The point of measuring a user journey is that it answers questions, and this one answered: whatever the journey is waiting on, it is not the bytes that were removed."
+      }
+    ],
+    "explanation": "Performance work should improve a measured user journey, not merely reduce a bundle or optimize an isolated function, and the critical path often crosses server, network, and browser boundaries. A bundle acts on transfer, parse and execute; if the journey is waiting on discovery, connection, or the server behind them, removing half of it changes nothing the reader experiences.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-mc2",
+    "type": "multiple-choice",
+    "prompt": "A dashboard reports that the average load time for the issue page improved again this quarter. The complaints did not. What is the average hiding?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Slow cohorts and the long tail — the average moved without them moving",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing — an average over enough journeys is the journey",
+        "feedback": "Averages hide slow cohorts and long tails. More journeys make the average steadier, not more representative of the slowest ones."
+      },
+      {
+        "id": "c",
+        "text": "The lab measurements, which were taken on fast machines",
+        "feedback": "Lab tests on fast machines do hide real-device problems, and that is a separate failure. This number came from real journeys; what went wrong is how they were summarised."
+      },
+      {
+        "id": "d",
+        "text": "Third-party scripts, whose time is not attributed to the page",
+        "feedback": "Third-party scripts block critical work, so their cost is inside these journeys rather than outside them. The summarising is what lost the slow readers."
+      }
+    ],
+    "explanation": "Averages hide slow cohorts and long tails. That is one half of the puzzle this lesson opened with, and it has a companion in the other: lab tests on fast machines hide real-device problems. Both produce a number that is true and unrepresentative, which is why performance work should improve a measured user journey rather than a summary that has already averaged the journey away.",
+    "difficulty": "intermediate",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-card1",
+    "type": "flashcard",
+    "front": "Frontend performance",
+    "back": "The user's experience of loading, seeing, and operating an interface: network latency, resource priority, parsing, JavaScript execution, rendering stability, and interaction responsiveness.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-card2",
+    "type": "flashcard",
+    "front": "Off the critical path is not free",
+    "back": "Work not on the current critical path may still consume bandwidth, CPU, memory, and battery that delay important work.",
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-card3",
+    "type": "flashcard",
+    "front": "Hydration's two failures",
+    "back": "Hydration can duplicate server work or make controls appear before they function.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-card4",
+    "type": "flashcard",
+    "front": "Long tasks",
+    "back": "Long JavaScript tasks block input processing. Browser rendering and scheduling determine when content is usable, which is a different question from when it arrived.",
+    "examples": [
+      "WHATWG, HTML event loops"
+    ],
+    "tags": [
+      "frontend"
+    ]
+  },
+  {
+    "id": "frontend-performance-card5",
+    "type": "flashcard",
+    "front": "Code splitting's ceiling",
+    "back": "Shipping less JavaScript improves many devices, but excessive splitting adds requests and coordination.",
+    "reverse": true,
+    "tags": [
+      "frontend"
+    ]
   }
 ]

@@ -50,5 +50,30 @@
       "browser-networking-mc2"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-frontend",
+    "title": "Frontend check",
+    "items": [
+      "components-state-and-reactivity-mc1",
+      "components-state-and-reactivity-sa1",
+      "components-state-and-reactivity-mat1",
+      "routing-and-navigation-mc1",
+      "routing-and-navigation-ord1",
+      "routing-and-navigation-mc2",
+      "forms-and-validation-mc1",
+      "forms-and-validation-ms1",
+      "forms-and-validation-mat1",
+      "data-fetching-ms1",
+      "data-fetching-mc1",
+      "data-fetching-mc2",
+      "accessibility-ms1",
+      "accessibility-mc1",
+      "accessibility-mc2",
+      "frontend-performance-fb1",
+      "frontend-performance-mc1",
+      "frontend-performance-mc2"
+    ],
+    "passThreshold": 0.75
   }
 ]

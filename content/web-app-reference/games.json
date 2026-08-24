@@ -67,5 +67,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-frontend-match",
+    "template": "matching",
+    "title": "Frontend — match them up",
+    "source": {
+      "tags": [
+        "frontend"
+      ]
+    }
+  },
+  {
+    "id": "game-frontend-speed",
+    "template": "timed-round",
+    "title": "Frontend — quick fire",
+    "source": {
+      "tags": [
+        "frontend"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]
