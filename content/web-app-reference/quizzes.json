@@ -213,5 +213,27 @@
       "monitoring-and-incident-response-mc1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-architecture",
+    "title": "Architecture check",
+    "items": [
+      "monoliths-modules-and-microservices-mc1",
+      "monoliths-modules-and-microservices-ms1",
+      "monoliths-modules-and-microservices-mat1",
+      "layers-boundaries-and-coupling-fb1",
+      "layers-boundaries-and-coupling-mc1",
+      "layers-boundaries-and-coupling-ms1",
+      "synchronous-and-asynchronous-design-ms1",
+      "synchronous-and-asynchronous-design-ord1",
+      "synchronous-and-asynchronous-design-mc1",
+      "scalability-tradeoffs-sa1",
+      "scalability-tradeoffs-mc1",
+      "scalability-tradeoffs-ms1",
+      "evolving-an-architecture-sa1",
+      "evolving-an-architecture-ms1",
+      "evolving-an-architecture-mc1"
+    ],
+    "passThreshold": 0.75
   }
 ]

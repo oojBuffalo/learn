@@ -228,5 +228,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-architecture-match",
+    "template": "matching",
+    "title": "Architecture — match them up",
+    "source": {
+      "tags": [
+        "architecture"
+      ]
+    }
+  },
+  {
+    "id": "game-architecture-speed",
+    "template": "timed-round",
+    "title": "Architecture — quick fire",
+    "source": {
+      "tags": [
+        "architecture"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]

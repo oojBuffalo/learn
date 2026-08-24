@@ -7115,5 +7115,711 @@
     "tags": [
       "delivery-and-operations"
     ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-mc1",
+    "type": "multiple-choice",
+    "prompt": "A catalog codebase has reached the point where any part of it reads any table and calls any function, and nobody can say who owns which behavior. The team's plan is to cut it into independently deployed services. Read against this lesson's model, what is that plan?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The second of two decisions, taken before the first one has been made",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The only remedy available, since a boundary cannot be enforced without a process on each side of it",
+        "feedback": "Modules create internal boundaries within a unit, and boundaries without distribution is exactly the modular monolith. The boundary this codebase is missing needs no network in it at all."
+      },
+      {
+        "id": "c",
+        "text": "A boundary the rule already justifies, since ownership is one of the five conditions it names",
+        "feedback": "Ownership is on the list of five. This lesson exists precisely to stop services being used to compensate for unclear code ownership inside one unit, which is what is being described."
+      },
+      {
+        "id": "d",
+        "text": "The first of the two decisions, since cutting the unit up is how cohesive capabilities get created",
+        "feedback": "Cohesive capabilities with explicit dependencies are where the rule says to start, and they can be created inside one unit. Cutting into independently deployed services is the second decision, not a way of taking the first."
+      }
+    ],
+    "explanation": "Modularity and distribution are separate decisions. What the team complained about — any part reaching any table and any function — is a missing boundary inside the unit, and the rule's starting point answers it: cohesive capabilities with explicit dependencies. Choosing a process boundary is the second decision, taken only when independent deployment, scaling, isolation, technology, or ownership justifies network and operational cost. Unclear code ownership inside one unit is not on that list, and keeping it off is what this distinction is for: it prevents teams from using services to compensate for it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-ms1",
+    "type": "multi-select",
+    "prompt": "A team decides to move one capability out of the unit and put it behind a process boundary. Which of these does this lesson say they now have, whether they wanted it or not?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Communication through APIs or events in place of function calls",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Gateways, discovery, telemetry, automation and resilience as essentials rather than extras",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "A capability that owns its own deployment, and usually its own data behavior",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "A local transaction still spanning the capability and the unit it left"
+      },
+      {
+        "id": "e",
+        "text": "One release that carries both sides of the boundary at once"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Services communicate through APIs or events and own deployment and usually data behavior, and as distribution grows gateways, discovery, telemetry, automation, and resilience become essential — essential rather than merely useful. The two rejected options are what the boundary takes away. A modular monolith can use local transactions because the capabilities share a process, and microservices create independently deployable network boundaries, so a single release carrying both sides is the thing the split is meant to end rather than something it hands you.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-mat1",
+    "type": "matching",
+    "prompt": "Each of these three failure modes takes away something a deployment boundary was there to provide. Read against this lesson and match each one to what it removes.",
+    "pairs": [
+      {
+        "left": "Many services that must deploy together",
+        "right": "independent deployment"
+      },
+      {
+        "left": "Several services writing one shared database",
+        "right": "data ownership"
+      },
+      {
+        "left": "Modules that can reach every table and function",
+        "right": "the ability to change the system"
+      }
+    ],
+    "distractors": [
+      "local transactions",
+      "team autonomy"
+    ],
+    "explanation": "Microservices create independently deployable network boundaries, so services that must deploy together are missing exactly that property. Shared databases undermine ownership, and services otherwise own deployment and usually data behavior. A monolith becomes unchangeable when modules can reach every table and function. Neither distractor is removed by any of the three: local transactions are what a modular monolith can still use, and team autonomy is one of the eight things a deployment boundary shapes rather than something these failures take away.",
+    "difficulty": "advanced",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-card1",
+    "type": "flashcard",
+    "front": "A monolith",
+    "back": "It deploys much of an application as one unit.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-card2",
+    "type": "flashcard",
+    "front": "Modules",
+    "back": "They create internal boundaries within a unit.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-card3",
+    "type": "flashcard",
+    "front": "Microservices",
+    "back": "They create independently deployable network boundaries around capabilities.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-card4",
+    "type": "flashcard",
+    "front": "Modularity and distribution",
+    "back": "Separate decisions: a boundary inside a unit and a boundary across a network are not the same choice.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "monoliths-modules-and-microservices-card5",
+    "type": "flashcard",
+    "front": "When a process boundary is justified",
+    "back": "Only when independent deployment, scaling, isolation, technology, or ownership justifies network and operational cost.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-fb1",
+    "type": "fill-blank",
+    "prompt": "This lesson gives dependencies a direction by naming what sits at each end of them. Fill in the two ends.",
+    "template": "Prefer dependencies that point from volatile {{1}} and infrastructure details toward stable application {{2}}.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "delivery"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "policy"
+        ]
+      }
+    ],
+    "hints": [
+      "One end is the part most likely to be replaced — how a request arrives, or where the data is kept. The other is what the application decides whatever those turn out to be.",
+      "The second is what the application decides, as against how a request happens to arrive or where anything is stored. This lesson pairs it with the word stable every time."
+    ],
+    "explanation": "Prefer dependencies that point from volatile delivery and infrastructure details toward stable application policy, and data crossing outward is translated into a contract suitable for the receiving boundary. Volatile and stable are what fix the direction: what is most likely to be replaced may depend on what is least likely to be, and not the other way round. Since coupling is the knowledge one part must have about another, the rule is really a statement about which side is allowed to hold that knowledge.",
+    "difficulty": "beginner",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team adds an interface for every concrete class in its data-access code. Each new one has exactly one implementation and repeats its method names and parameters unchanged, and imports across the codebase now name the new types. Judged against this lesson's direction rule, what has the arrangement gained?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Permitted interaction is now defined and nothing more, because what may vary still dictates what policy depends on",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Dependency inversion, because policy now depends on an abstraction rather than on a concrete class",
+        "feedback": "Dependency inversion lets policy specify the capabilities it needs. Here the implementations specified the shape and the abstraction copied it, so who sets the terms has not changed."
+      },
+      {
+        "id": "c",
+        "text": "Encapsulation, because the representations behind each new type are hidden from callers",
+        "feedback": "Encapsulation hides representations likely to change. The same method names and parameters are still on show, so nothing was hidden — it was renamed."
+      },
+      {
+        "id": "d",
+        "text": "Cohesion, because behavior that changes for the same reason is now grouped behind one name",
+        "feedback": "Cohesion keeps behavior that changes for the same reason together. Nothing was moved or regrouped here; each class kept exactly the behavior it already had."
+      }
+    ],
+    "explanation": "An interface defines permitted interaction, but dependency inversion decides whose interaction it is: policy specifies the capabilities it needs. Here the implementations wrote the shape and the new types copied it, so the volatile side is still setting the terms and the dependency still runs the way the direction rule asks it not to. Neither of the other two mechanisms was used either. Encapsulation hides representations likely to change, and identical method names and parameters hide nothing; cohesion keeps behavior that changes for the same reason together, and nothing was regrouped.",
+    "difficulty": "advanced",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-ms1",
+    "type": "multi-select",
+    "prompt": "In this lesson's invoice example, the payment provider is replaced. Which of these does the change leave untouched?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Invoice policy",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The callers of the invoice use case",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The `PaymentPort` capability the use case names",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "The adapter that speaks the provider's protocol"
+      },
+      {
+        "id": "e",
+        "text": "The mapping between the provider's schema and the domain terms"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Replacing the payment provider changes one adapter and mapping, not invoice policy or every caller. Since the adapter and the mapping are the whole of what changes, `PaymentPort` is untouched as well: it is a capability expressed in domain terms, and the use case depends on it rather than on whoever implements it. The two rejected options are precisely the adapter and the mapping.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-card1",
+    "type": "flashcard",
+    "front": "Coupling",
+    "back": "The knowledge one part must have about another to change or operate correctly.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-card2",
+    "type": "flashcard",
+    "front": "A boundary",
+    "back": "It defines what may cross, and in which direction.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-card3",
+    "type": "flashcard",
+    "front": "An adapter",
+    "back": "It translates protocols and schemas.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-card4",
+    "type": "flashcard",
+    "front": "Dependency inversion",
+    "back": "It lets policy specify the capabilities it needs.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "layers-boundaries-and-coupling-card5",
+    "type": "flashcard",
+    "front": "Cohesion",
+    "back": "It keeps behavior that changes for the same reason together.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-ms1",
+    "type": "multi-select",
+    "prompt": "A service accepts an uploaded document, tells the browser the document is ready, and puts a job on a queue for the conversion. The queue has no retention plan, and the worker assumes each job arrives once. Which of this lesson's named failure modes does that description already show?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Users receive success when work is only queued",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Queues become hidden databases without retention planning",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Consumers assume one delivery",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Long synchronous chains multiply latency and failure"
+      },
+      {
+        "id": "e",
+        "text": "Compensations are treated as exact reversal when external effects cannot be undone"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Telling the browser the document is ready before the conversion has run is users receiving “success” when work is only queued. A queue with no retention plan is a queue becoming a hidden database. A worker that assumes each job arrives once is a consumer assuming one delivery, which is what idempotency and deduplication exist to handle. Neither rejected option is described here: nothing chains synchronous calls, and nothing attempts to reverse an external effect.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-ord1",
+    "type": "ordering",
+    "prompt": "Put the four moves of this lesson's password reset into the order the flow takes them.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Request validation runs while the caller waits"
+      },
+      {
+        "id": "s2",
+        "text": "The reset record and an outbox event are committed"
+      },
+      {
+        "id": "s3",
+        "text": "A neutral accepted response goes back"
+      },
+      {
+        "id": "s4",
+        "text": "A worker sends the email idempotently"
+      }
+    ],
+    "explanation": "Password reset request validation is synchronous, but email delivery is asynchronous. The server commits a reset record and outbox event, returns a neutral accepted response, and a worker sends idempotently. Committing before responding is what keeps the system from acknowledging before persisting intent, and sending last and idempotently is what makes a repeated delivery harmless. The reset link's existence, not email delivery, is the authoritative state.",
+    "difficulty": "beginner",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-mc1",
+    "type": "multiple-choice",
+    "prompt": "A support agent is asked whether a password reset was issued for an account. No email has arrived. On this lesson's reading of the flow, which fact settles the question?",
+    "options": [
+      {
+        "id": "a",
+        "text": "That the reset record exists, since the link's existence rather than the email's delivery is the authoritative state",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "That the worker reported the message as sent, since delivery is what the request was for",
+        "feedback": "Delivery is the asynchronous half, and it can be slow, retried, or lost. This lesson puts the authoritative state in the reset link's existence rather than in email delivery."
+      },
+      {
+        "id": "c",
+        "text": "That the accepted response went back, since acceptance is the outcome the caller was handed",
+        "feedback": "The accepted response is real and durable, but it is acceptance rather than the fact being asked about. The question is whether a reset exists, and that was committed as a record."
+      },
+      {
+        "id": "d",
+        "text": "That the outbox event is still unprocessed, so no reset has been issued yet",
+        "feedback": "An unprocessed outbox event says the message has not gone out. The reset record was committed alongside it, so the reset exists whether or not the event has been handled."
+      }
+    ],
+    "explanation": "The reset link's existence, not email delivery, is the authoritative state. The record and the outbox event commit together, so a reset can exist with its notification still pending — which is exactly what it means for asynchronous interaction to separate acceptance from completion. Asking whether the message was delivered asks a different question from whether the reset exists.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-card1",
+    "type": "flashcard",
+    "front": "Synchronous interaction",
+    "back": "It keeps the caller waiting for a result.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-card2",
+    "type": "flashcard",
+    "front": "Asynchronous interaction",
+    "back": "It separates acceptance from completion and communicates later through state, messages, or callbacks.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-card3",
+    "type": "flashcard",
+    "front": "A correlation ID",
+    "back": "It connects a later result to the request that asked for it.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-card4",
+    "type": "flashcard",
+    "front": "Idempotency and deduplication",
+    "back": "They handle repeated delivery.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "synchronous-and-asynchronous-design-card5",
+    "type": "flashcard",
+    "front": "Request-reply over a queue",
+    "back": "It retains much synchronous coupling with more infrastructure.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-sa1",
+    "type": "short-answer",
+    "prompt": "A company triples the number of people writing its code, and coordinating releases becomes what limits how fast anything ships. This lesson names four dimensions along which a system may have to grow. Which one is growing here?",
+    "accept": [
+      "teams",
+      "team",
+      "growth in teams",
+      "teams growth"
+    ],
+    "match": "fold",
+    "hints": [
+      "Not all four are about traffic. One of them counts people rather than requests or rows.",
+      "Three of the four show up as more work arriving. The fourth is why this lesson says scaling crosses organizations as well as compute and databases."
+    ],
+    "explanation": "Scalability is a system's ability to handle growth in traffic, data, users, or teams while meeting objectives. Teams is the fourth, and it is why scaling is said to cross frontend delivery, compute, databases, caches, queues, third parties, organizations, and cost. This kind of growth never appears as requests per second, which is what makes it easy to miss when only traffic is being watched.",
+    "difficulty": "beginner",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-ms1",
+    "type": "multi-select",
+    "prompt": "This lesson keeps two ways of adding capacity apart: enlarging a resource, and spreading work across instances. Which of these does it attribute to the second of those?",
+    "options": [
+      {
+        "id": "a",
+        "text": "It requires state that is routable or partitioned",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "It offers a larger ceiling",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "It adds coordination",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "It amortizes overhead across a group of operations"
+      },
+      {
+        "id": "e",
+        "text": "It trades freshness and storage for query latency"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Horizontal scaling distributes work across instances and requires routable or partitioned state; it offers a larger ceiling but adds coordination, and Google Cloud recommends stateless design and modularity to support it. Vertical scaling enlarges a resource and asks nothing of the application's state. The two rejected options belong to other mechanisms on the same list: batching amortizes overhead, and precomputation trades freshness and storage for query latency.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-mc1",
+    "type": "multiple-choice",
+    "prompt": "An API is at its limit and the team is about to double the number of application instances. This lesson's summary says a scaling move often relocates the constraint rather than removing it. Which of these named failures does it attach to this particular move?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Instances scaled past the number of connections the store behind them will accept",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A cache added without the capacity to serve the requests it misses",
+        "feedback": "That failure is named, but it belongs to adding a cache. Nothing in this move introduces a cache or changes how a miss is served."
+      },
+      {
+        "id": "c",
+        "text": "A key chosen so that one subset of the data is far busier than the rest",
+        "feedback": "A hot partition key is a named failure of assigning subsets by key. This move adds instances; it does not divide any data."
+      },
+      {
+        "id": "d",
+        "text": "Load that was optimized for its average and not for its bursts",
+        "feedback": "That is a named failure, but it is about which statistic was taken before the move rather than about where this move sends the constraint next."
+      }
+    ],
+    "explanation": "Teams scale application instances beyond database connections is named directly among this lesson's failure modes, and it is what doubling instances in front of one store produces: the constraint moves off the instances and onto the thing they all have to talk to. The three rejected options are the failures attached to caching, to choosing a partition key, and to sharding — different moves with different bills.",
+    "difficulty": "advanced",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-card1",
+    "type": "flashcard",
+    "front": "Scalability",
+    "back": "A system's ability to handle growth in traffic, data, users, or teams while meeting objectives.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-card2",
+    "type": "flashcard",
+    "front": "Sharding",
+    "back": "It assigns subsets by key.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-card3",
+    "type": "flashcard",
+    "front": "Backpressure",
+    "back": "It keeps demand from exceeding bounded capacity.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-card4",
+    "type": "flashcard",
+    "front": "Vertical scaling",
+    "back": "It enlarges a resource.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "scalability-tradeoffs-card5",
+    "type": "flashcard",
+    "front": "What scaling one resource usually does",
+    "back": "It often moves the bottleneck rather than removing it.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-sa1",
+    "type": "short-answer",
+    "prompt": "A migration plan passes through a stage in which the system can neither be rolled back nor observed. This lesson sets one requirement on every state between the start of an evolution and its end, and this stage fails it. Name the requirement in one word.",
+    "accept": [
+      "operable",
+      "operability"
+    ],
+    "match": "fold",
+    "hints": [
+      "The requirement is not about correctness and not about speed. It is about whether the people who run the system can still run it while it is in that state.",
+      "The word arrives in the sentence immediately after the seven steps of the path."
+    ],
+    "explanation": "Every intermediate state must be operable. That requirement is what turns the sequence — establish a seam, add the new path, run both or route a small cohort, compare outcomes, move authority, remove old use, delete the old path — into states you could stop in rather than a schedule you have to finish. It is also why evolutionary change keeps rollback possible: a state nobody can operate is a state nobody can back out of either.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-ms1",
+    "type": "multi-select",
+    "prompt": "A team has built the new search index and wants to make it authoritative for discovery next. Which of these does this lesson require to be true already?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The new path's results have been compared against the old path's",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Success has a criterion that can be measured",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The change can still be stopped safely from where it stands",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "The old query path has been removed"
+      },
+      {
+        "id": "e",
+        "text": "Every consumer of the old path has been shut down"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Comparing outcomes comes before moving authority in this lesson's sequence, and shadow traffic is the mechanism that compares results without serving them. Two named failure modes supply the other two requirements: success lacks measurable criteria, and migrations cannot stop safely. Both rejected options belong after this step rather than before it. Removing old use and deleting the old path are the last two steps, and the named failure is decommissioning a dependency before all consumers are known — which asks you to know them, not to have shut them down.",
+    "difficulty": "advanced",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-mc1",
+    "type": "multiple-choice",
+    "prompt": "During a cutover, a team has its service record every order in the old store and in the new one, so that either could answer reads. On this lesson's list of choices, what have they bought and what will they pay for it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A faster cutover, paid for in reconciliation and in having to say which side is authoritative",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Lower migration risk, paid for in temporary complexity and in running two of everything",
+        "feedback": "That is the bill for parallel paths, which reduce migration risk while increasing temporary complexity and cost. Nothing here runs two paths side by side; one service is keeping two copies of the same record."
+      },
+      {
+        "id": "c",
+        "text": "A cleaner set of concepts, paid for in delayed feedback and behavior that has to be rediscovered",
+        "feedback": "That is what a rewrite offers and charges. Nothing here is being rebuilt from scratch; the existing service is doing its work twice."
+      },
+      {
+        "id": "d",
+        "text": "An old concept kept out of the new code, paid for in an adapter somebody has to retire",
+        "feedback": "A compatibility adapter isolates an old concept. What is described is not a translation of concepts but a duplication of writes."
+      }
+    ],
+    "explanation": "Dual writes accelerate cutover but need reconciliation and clear authority. Recording every order in both stores is that trade exactly: the new store fills as fast as the old one changes, and in exchange somebody has to compare the two, and somebody has to say which is authoritative — a decision rather than a job, since without it a disagreement between the stores has no correct answer. Old code keeps receiving writes is the named failure waiting at the end of this path.",
+    "difficulty": "intermediate",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-card1",
+    "type": "flashcard",
+    "front": "A compatibility adapter",
+    "back": "It isolates an old concept.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-card2",
+    "type": "flashcard",
+    "front": "Expand–contract migration",
+    "back": "It supports overlapping versions.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-card3",
+    "type": "flashcard",
+    "front": "Branch by abstraction",
+    "back": "It switches implementations behind a stable interface.",
+    "reverse": true,
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-card4",
+    "type": "flashcard",
+    "front": "Shadow traffic",
+    "back": "It compares results without serving them.",
+    "tags": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "evolving-an-architecture-card5",
+    "type": "flashcard",
+    "front": "An architecture decision record",
+    "back": "It preserves context and reversal conditions.",
+    "tags": [
+      "architecture"
+    ]
   }
 ]
