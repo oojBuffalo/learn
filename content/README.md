@@ -49,7 +49,6 @@ Constraints the renderer imposes, learned the hard way:
   lines either side. The body is split at those lines, so a directive inside a
   list or code fence breaks the surrounding block.
 - No raw HTML and no HTML comments — both render as literal visible text.
-- No `$math$`; there is no KaTeX. Use inline code or words.
 - No syntax highlighting. Fenced blocks are plain mono, and they scroll.
 - Only `##` and `###` are styled. `#` collides with the page title.
 - Table cells never wrap, so keep them to a few words.
@@ -61,3 +60,62 @@ Constraints the renderer imposes, learned the hard way:
   feedback for `multiple-choice` — put anything the reader must see in
   `explanation`.
 - Every schema is strict: one unknown key anywhere is a hard import failure.
+
+## Math
+
+Math is KaTeX, which covers a large subset of LaTeX's math mode. Write `$…$` for
+inline math and a `$$` block for display math:
+
+```
+Hopcroft–Karp runs in about $O(E\sqrt{V})$.
+
+$$
+\min_{\sigma} \sum_{i=1}^{n} C_{i,\sigma(i)}
+$$
+```
+
+A fenced block tagged ` ```math ` is display math too, and is the easier choice
+for a long derivation because no dollar signs are involved.
+
+**A literal dollar sign is `\$`, always.** Single-dollar math is on, so
+`costs $5 and $10` silently parses as math — an unpaired `$` is refused at
+import, but a balanced accident cannot be caught for you.
+
+Display math must be a multi-line `$$` block. On one line, `$$x$$` is inline
+math, not a centred block.
+
+Where math works, and where it doesn't:
+
+| Field | Math |
+|---|---|
+| lesson body, `prompt`, `explanation` | inline and display |
+| option `text` and `feedback`, `hints`, ordering `steps`, matching `left`, fill-blank literals, flashcard `front`/`back`/`examples` | inline only |
+| matching `right`, `distractors`, `accept` values | none |
+| frontmatter `title`/`summary`, manifest `title`/`description` | none |
+
+Matching's right-hand values sit inside a `<select>`, which can only hold text —
+so put the notation on the left. Flashcard faces are laid out inline, which is
+why display math is refused there. Anything in the "none" rows renders verbatim,
+so a lone `$` there is fine and needs no escaping.
+
+Broken math fails the import with the usual `422`, naming the file and path:
+
+```
+{ "file": "items.json", "path": "mc1.prompt",
+  "message": "KaTeX parse error: Undefined control sequence: \\fracc …" }
+```
+
+Two more constraints worth knowing:
+
+- Math cannot span a `{{n}}` fill-blank placeholder — the template is split at the
+  blanks before it is parsed, so each literal chunk must close its own math.
+- `\href`, `\url` and `\includegraphics` are disabled, and macros do not carry
+  between expressions: every formula stands alone.
+
+The fields in the "inline only" row also honour ordinary inline Markdown now, so
+`**bold**` and `` `code` `` work in an option — and a stray `*` or `_` will be
+read as formatting.
+
+Ordering steps double as screen-reader labels on their move buttons, where math
+is read as its source. Keep those short: `$O(n^3)$` reads fine, `$\frac{a}{b}$`
+does not.

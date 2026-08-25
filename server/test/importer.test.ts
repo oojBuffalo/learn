@@ -21,6 +21,36 @@ describe("importPackage", () => {
     expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
   });
 
+  it("imports math and keeps the source intact for the renderer", () => {
+    const db = freshDb();
+    const withMath = {
+      ...GOOD_FILES,
+      "lessons/01-intro.md": GOOD_FILES["lessons/01-intro.md"]!.toString().replace(
+        "Hello!",
+        "Hello! Cost is $O(n^3)$.",
+      ),
+    };
+    expect(importPackage(db, makeZip(withMath))).toEqual({ ok: true, packageId: "demo" });
+    const row = db.prepare("SELECT body FROM lessons WHERE package_id='demo'").get() as { body: string };
+    expect(row.body).toContain("$O(n^3)$");
+  });
+
+  it("rejects broken math with the file and path, atomically", () => {
+    const db = freshDb();
+    const bad = {
+      ...GOOD_FILES,
+      "items.json": JSON.stringify([
+        { id: "mc1", type: "multiple-choice", prompt: "What is $\\fracc{1}{2}$?", options: [
+          { id: "a", text: "A", correct: true }, { id: "b", text: "B" } ] },
+        { id: "card1", type: "flashcard", front: "hola", back: "hello", reverse: true },
+      ]),
+    };
+    const res = importPackage(db, makeZip(bad));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.errors[0]).toMatchObject({ file: "items.json", path: "mc1.prompt" });
+    expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
+  });
+
   it("reports Zod errors with file and path", () => {
     const db = freshDb();
     const bad = { ...GOOD_FILES, "manifest.json": JSON.stringify({ formatVersion: "1.0.0", id: "demo" }) };

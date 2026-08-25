@@ -192,7 +192,7 @@
       {
         "id": "b",
         "text": "NDCG is not a meaningful metric",
-        "feedback": "NDCG is a perfectly good list metric. The problem is the data it was computed over, not the formula."
+        "feedback": "NDCG is a perfectly good list metric — the $1/\\log_2(i+1)$ discount is exactly the right shape. The problem is the data it was computed over, not the formula."
       },
       {
         "id": "c",
@@ -304,7 +304,7 @@
     "id": "card-assignment-problem",
     "type": "flashcard",
     "front": "The assignment problem",
-    "back": "Given a cost on every possible pair, find the pairing that uses each participant once and minimises the total cost — solved exactly by the Hungarian algorithm in cubic time, or posed as min-cost flow at scale.",
+    "back": "Given a cost on every possible pair, find the pairing that uses each participant once and minimises $\\sum_i C_{i,\\sigma(i)}$ — solved exactly by the Hungarian algorithm in $O(n^3)$, or posed as min-cost flow at scale.",
     "reverse": true,
     "tags": [
       "matching"
@@ -324,7 +324,7 @@
     "id": "card-matrix-factorization",
     "type": "flashcard",
     "front": "Matrix factorization",
-    "back": "Learning a short vector for every user and every item so that their dot product predicts the missing cell. Nobody designs the dimensions; they fall out of the data.",
+    "back": "Learning a short vector for every user and every item so that $\\hat{r}_{ui} = \\mathbf{p}_u^\\top \\mathbf{q}_i$ predicts the missing cell. Nobody designs the dimensions; they fall out of the data.",
     "reverse": true,
     "examples": [
       "The family the Netflix Prize settled on"
@@ -337,7 +337,7 @@
     "id": "card-ndcg",
     "type": "flashcard",
     "front": "NDCG",
-    "back": "A ranking metric that discounts each position logarithmically, so being right at rank 1 counts for far more than being right at rank 20. It is the list-shaped answer to RMSE.",
+    "back": "A ranking metric built on $\\sum_i \\mathrm{rel}_i / \\log_2(i+1)$, so being right at rank 1 counts for far more than being right at rank 20. It is the list-shaped answer to RMSE.",
     "reverse": true,
     "tags": [
       "recsys"

@@ -6,6 +6,7 @@ import {
 } from "@study/shared";
 import type { LoadedLesson, LoadedPackage, PackageError } from "@study/shared";
 import { z } from "zod";
+import { validateMath } from "./mathCheck.js";
 
 function zodErrors(file: string, e: z.ZodError): PackageError[] {
   return e.issues.map((i) => ({ file, path: i.path.join("."), message: i.message }));
@@ -93,6 +94,7 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
   }
   const pkg: LoadedPackage = { manifest, lessons, items, quizzes, games, assets };
   errors.push(...validatePackage(pkg));
+  errors.push(...validateMath(pkg));
   return errors.length ? { pkg: null, errors } : { pkg, errors: [] };
 }
 

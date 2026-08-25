@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { schedule } from "@study/shared";
 import type { Rating } from "@study/shared";
 import { getDueCards, getFreeStudy, gradeCard, listPackages, type Card } from "../api.js";
 import { useDue } from "../App.js";
-import Markdown from "../components/Markdown.js";
+import Markdown, { InlineMarkdown } from "../components/Markdown.js";
 
 const RATINGS: Rating[] = ["again", "hard", "good", "easy"];
 const RATING_LABEL: Record<Rating, string> = {
@@ -243,7 +243,14 @@ export default function Study() {
                   {card.back}
                 </Markdown>
                 {card.examples && card.examples.length > 0 && (
-                  <p className="examples">{card.examples.join(" · ")}</p>
+                  <p className="examples">
+                    {card.examples.map((example, i) => (
+                      <Fragment key={i}>
+                        {i > 0 && " · "}
+                        <InlineMarkdown>{example}</InlineMarkdown>
+                      </Fragment>
+                    ))}
+                  </p>
                 )}
               </>
             )}

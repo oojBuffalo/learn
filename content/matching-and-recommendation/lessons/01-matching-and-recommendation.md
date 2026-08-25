@@ -67,26 +67,32 @@ Three genuinely different questions get asked of that graph.
 
 **How many pairs can we form?** Maximum-cardinality matching fills as many slots
 as possible, treating every edge as equally good. Hopcroft–Karp does it in about
-`O(E * sqrt(V))`, fast enough that raw cardinality is rarely what makes a system
+$O(E\sqrt{V})$, fast enough that raw cardinality is rarely what makes a system
 hard.
 
 **Which pairs are cheapest?** Now each edge carries a number — minutes to
 pickup, a predicted rating, a dollar value. The *assignment problem* asks for
 the set of edges that uses every node once and minimises the total. Picture a
-matrix in which you must choose exactly one cell per row and per column:
+matrix of costs — here, minutes to pickup — in which you must choose exactly one
+cell per row and per column:
 
-```
-          d1     d2     d3
-   r1    2.1    6.4    3.0    cost = minutes to pickup
-   r2    5.8    1.9    4.2
-   r3    3.3    4.0    1.7    one cell per row and column,
-                              minimising the sum
-```
+$$
+C = \begin{pmatrix}
+2.1 & 6.4 & 3.0 \\
+5.8 & 1.9 & 4.2 \\
+3.3 & 4.0 & 1.7
+\end{pmatrix}
+\qquad
+\min_{\sigma}\; \sum_{i=1}^{n} C_{i,\sigma(i)}
+$$
+
+where $\sigma$ ranges over the permutations — one cell per row and column,
+minimising the sum.
 
 Greedy fails here in a way worth internalising. Repeatedly taking the smallest
 remaining number can strand the last row with an enormous edge, because a cheap
 edge taken early consumes a column somebody else needed far more. The Hungarian
-algorithm solves it exactly in `O(n^3)`; at production scale the same problem is
+algorithm solves it exactly in $O(n^3)$; at production scale the same problem is
 usually posed as min-cost flow and handed to a solver.
 
 **Would anyone defect?** This is the question that makes matching its own field.
@@ -162,8 +168,14 @@ Prize made famous, and it is the wrong one, because nobody consumes a predicted
 rating. People consume a list, read from the top, and stop. So the working
 metrics are ranked ones: **Precision@k** and **Recall@k** for how much of the top
 k is good, **MRR** for how far down the first good item sits, and **NDCG**, which
-discounts each position logarithmically so that being right at rank 1 counts for
-much more than being right at rank 20.
+discounts each position logarithmically:
+
+$$
+\mathrm{DCG}@k = \sum_{i=1}^{k} \frac{\mathrm{rel}_i}{\log_2(i + 1)}
+$$
+
+Because the denominator grows with rank, being right at position 1 counts for
+much more than being right at position 20.
 
 Even those score one list for one user. Three system-level properties appear in
 none of them and all three decay quietly: **coverage** — what share of the
@@ -211,9 +223,9 @@ rules.
 
 The **two-tower** model earns its detail, because its architecture is dictated by
 serving rather than by accuracy. One tower embeds the user, another embeds the
-item, and the score is nothing but their dot product — deliberately, so that no
-user feature can interact with an item feature except through that final
-multiply. The restriction is the whole point: it lets you push every item
+item, and the score is nothing but their dot product, $s(u, i) = \mathbf{u}^\top
+\mathbf{v}_i$ — deliberately, so that no user feature can interact with an item
+feature except through that final multiply. The restriction is the whole point: it lets you push every item
 through the item tower *offline*, load the resulting vectors into an approximate
 nearest-neighbour index (HNSW, IVF-PQ, ScaNN), and at request time embed only
 the user before asking the index for the closest few hundred. A model that let

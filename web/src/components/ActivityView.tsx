@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { Answer, CheckResult, Item } from "@study/shared";
+import { stripMath } from "@study/shared";
 import { submitAnswer } from "../api.js";
 import Icon from "./Icon.js";
-import Markdown from "./Markdown.js";
+import Markdown, { InlineMarkdown } from "./Markdown.js";
 
 type Task = Exclude<Item, { type: "flashcard" }>;
 
@@ -43,7 +44,9 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
         {item.hints?.slice(0, hintsShown).map((h, i) => (
           <p className="hint" key={i}>
             <Icon name="bulb" size={18} />
-            {h}
+            <span>
+              <InlineMarkdown>{h}</InlineMarkdown>
+            </span>
           </p>
         ))}
 
@@ -66,10 +69,17 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
               `✗ Not quite${result.score > 0 ? ` (score ${Math.round(result.score * 100)}%)` : ""}`
             )}
           </p>
-          {!result.correct && result.feedback && <p className="note">{result.feedback}</p>}
+          {!result.correct && result.feedback && (
+            <p className="note">
+              <InlineMarkdown>{result.feedback}</InlineMarkdown>
+            </p>
+          )}
           {!result.correct && (
             <p className="expected">
-              Answer: <b>{formatExpected(item, result.expected)}</b>
+              Answer:{" "}
+              <b>
+                <ExpectedAnswer item={item} expected={result.expected} />
+              </b>
             </p>
           )}
           {item.explanation && (
@@ -95,32 +105,59 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
   );
 }
 
-/** Renders the graded answer in the item's own words, not raw JSON. */
-function formatExpected(item: Task, expected: unknown): string {
+/**
+ * The graded answer in the item's own words, not raw JSON.
+ *
+ * `rich` marks the pieces that are author-written display text and so may carry
+ * Markdown and math. The others are values the learner typed or picked, which are
+ * shown verbatim — running them through Markdown could mangle a literal `*` or `_`
+ * that is part of a correct answer.
+ */
+function expectedParts(item: Task, expected: unknown): { parts: string[]; sep: string; rich: boolean } {
   switch (item.type) {
     case "multiple-choice":
-      return item.options.find((o) => o.id === expected)?.text ?? String(expected);
+      return {
+        parts: [item.options.find((o) => o.id === expected)?.text ?? String(expected)],
+        sep: "",
+        rich: true,
+      };
     case "multi-select": {
       const ids = new Set((Array.isArray(expected) ? expected : []).map(String));
-      return item.options
-        .filter((o) => ids.has(o.id))
-        .map((o) => o.text)
-        .join(", ");
+      return { parts: item.options.filter((o) => ids.has(o.id)).map((o) => o.text), sep: ", ", rich: true };
     }
     case "fill-blank": {
       const given = (expected ?? {}) as Record<string, string>;
-      return item.blanks.map((b) => given[String(b.slot)] ?? b.accept[0] ?? "").join(" · ");
+      return {
+        parts: item.blanks.map((b) => given[String(b.slot)] ?? b.accept[0] ?? ""),
+        sep: " · ",
+        rich: false,
+      };
     }
     case "short-answer":
-      return String(expected ?? item.accept[0] ?? "");
+      return { parts: [String(expected ?? item.accept[0] ?? "")], sep: "", rich: false };
     case "ordering": {
       const text = new Map(item.steps.map((s) => [s.id, s.text]));
       const ids = Array.isArray(expected) ? expected.map(String) : item.steps.map((s) => s.id);
-      return ids.map((id) => text.get(id) ?? id).join(" → ");
+      return { parts: ids.map((id) => text.get(id) ?? id), sep: " → ", rich: true };
     }
     case "matching":
-      return item.pairs.map((p) => `${p.left} → ${p.right}`).join(" · ");
+      // Mixes a rich left with a plain right, so the whole summary row stays plain.
+      return { parts: item.pairs.map((p) => `${p.left} → ${p.right}`), sep: " · ", rich: false };
   }
+}
+
+function ExpectedAnswer({ item, expected }: { item: Task; expected: unknown }) {
+  const { parts, sep, rich } = expectedParts(item, expected);
+  return (
+    <>
+      {parts.map((part, i) => (
+        <Fragment key={i}>
+          {i > 0 && sep}
+          {rich ? <InlineMarkdown>{part}</InlineMarkdown> : part}
+        </Fragment>
+      ))}
+    </>
+  );
 }
 
 function FlashcardReveal({ item, packageId }: { item: Extract<Item, { type: "flashcard" }>; packageId: string }) {
@@ -225,7 +262,9 @@ function Options({
               checked={picked.includes(o.id)}
               onChange={() => toggle(o.id)}
             />
-            <span>{o.text}</span>
+            <span>
+              <InlineMarkdown>{o.text}</InlineMarkdown>
+            </span>
           </label>
         ))}
       </div>
@@ -277,7 +316,9 @@ function FillBlank({
               onChange={(e) => setAnswers({ ...answers, [m[1]!]: e.target.value })}
             />
           ) : (
-            <span key={i}>{part}</span>
+            <span key={i}>
+              <InlineMarkdown>{part}</InlineMarkdown>
+            </span>
           );
         })}
       </p>
@@ -350,20 +391,22 @@ function Ordering({
         {steps.map((s, i) => (
           <div className="order-row" key={s.id}>
             <span className="order-num">{i + 1}</span>
-            <span className="order-text">{s.text}</span>
+            <span className="order-text">
+              <InlineMarkdown>{s.text}</InlineMarkdown>
+            </span>
             <button
               className="btn btn-quiet btn-icon"
               disabled={disabled || i === 0}
               onClick={() => move(i, -1)}
             >
-              <Icon name="up" size={18} label={`Move “${s.text}” up`} />
+              <Icon name="up" size={18} label={`Move “${stripMath(s.text)}” up`} />
             </button>
             <button
               className="btn btn-quiet btn-icon"
               disabled={disabled || i === steps.length - 1}
               onClick={() => move(i, 1)}
             >
-              <Icon name="down" size={18} label={`Move “${s.text}” down`} />
+              <Icon name="down" size={18} label={`Move “${stripMath(s.text)}” down`} />
             </button>
           </div>
         ))}
@@ -399,7 +442,9 @@ function Matching({
       <div className="opts">
         {item.pairs.map((p) => (
           <label className="match-row" key={p.left}>
-            <span className="match-left">{p.left}</span>
+            <span className="match-left">
+              <InlineMarkdown>{p.left}</InlineMarkdown>
+            </span>
             <select
               className="field field-grow"
               disabled={disabled}
