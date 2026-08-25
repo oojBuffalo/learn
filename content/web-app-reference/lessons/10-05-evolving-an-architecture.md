@@ -77,8 +77,8 @@ adds the new path. Shadowing compares outcomes without serving them. Routing a
 cohort is exposure. Making the index authoritative moves authority. Removing
 the old query is the deletion.
 
-The order refuses two of those failures: comparing gives success a measurable
-criterion, and removing the old query last stops old code receiving writes.
+The order refuses one of those failures outright: shadowing and comparing is
+what gives success a criterion that can be measured.
 
 Notice what is already true when authority moves: the comparison has happened
 on real queries, and a cohort has been served. Nobody has to trust the index
