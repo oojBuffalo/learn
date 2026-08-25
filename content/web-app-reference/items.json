@@ -1099,7 +1099,7 @@
       },
       {
         "id": "b",
-        "text": "Explicit dependency order, at the cost of cancelling the other two if one fails",
+        "text": "Explicit dependency order, at the cost of canceling the other two if one fails",
         "feedback": "Promises do make dependency order explicit, but they do not cancel underlying work by themselves, and nothing here cancels anything."
       },
       {
@@ -2243,7 +2243,7 @@
       },
       {
         "id": "c",
-        "text": "The saving was cancelled out by the extra requests that splitting introduced",
+        "text": "The saving was canceled out by the extra requests that splitting introduced",
         "feedback": "Excessive splitting does add requests and coordination, and it is worth checking. It is one specific hypothesis rather than the general reading, and it would tend to make the number worse rather than leave it unchanged."
       },
       {

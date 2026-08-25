@@ -5,7 +5,7 @@ summary: Why articles a reader saved for a flight can be gone by the time the pl
 objectives:
   - Tell the browser's storage mechanisms apart by ownership rather than by convenience
   - Choose a store from a fact's lifetime, sensitivity, size, consistency and server visibility
-  - Recognise the mistakes that follow from storing a fact somewhere its rules do not fit
+  - Recognize the mistakes that follow from storing a fact somewhere its rules do not fit
 estimatedMinutes: 12
 difficulty: intermediate
 prerequisites: [request-response-lifecycle, clients-servers-and-resources]
