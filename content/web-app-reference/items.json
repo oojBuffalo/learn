@@ -8539,5 +8539,385 @@
     "tags": [
       "technology-landscape"
     ]
+  },
+  {
+    "id": "glossary-api",
+    "type": "flashcard",
+    "front": "API",
+    "back": "A contract through which one component requests information or behavior from another.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-artifact",
+    "type": "flashcard",
+    "front": "Artifact",
+    "back": "An identified, deployable output of a build, such as an image or archive.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-authentication",
+    "type": "flashcard",
+    "front": "Authentication",
+    "back": "Establishing confidence in the identity of a principal.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-authorization",
+    "type": "flashcard",
+    "front": "Authorization",
+    "back": "Deciding whether a principal may perform an action on a resource in context.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-availability",
+    "type": "flashcard",
+    "front": "Availability",
+    "back": "The proportion of intended interactions for which a service is usable.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-backend",
+    "type": "flashcard",
+    "front": "Backend",
+    "back": "Application behavior primarily executed on server-side infrastructure.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-backpressure",
+    "type": "flashcard",
+    "front": "Backpressure",
+    "back": "A mechanism that slows or rejects producers when consumers lack capacity.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-cache",
+    "type": "flashcard",
+    "front": "Cache",
+    "back": "A reusable copy of data or computation kept to avoid slower work.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-client",
+    "type": "flashcard",
+    "front": "Client",
+    "back": "The role that initiates a request in an interaction.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-consistency",
+    "type": "flashcard",
+    "front": "Consistency",
+    "back": "The constraints on states or observations a system permits.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-contract",
+    "type": "flashcard",
+    "front": "Contract",
+    "back": "The observable inputs, outputs, semantics, and compatibility expectations across a boundary.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-deadline",
+    "type": "flashcard",
+    "front": "Deadline",
+    "back": "The time after which an operation is no longer expected to complete for its caller.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-dependency",
+    "type": "flashcard",
+    "front": "Dependency",
+    "back": "A component, service, or assumption required for behavior.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-durability",
+    "type": "flashcard",
+    "front": "Durability",
+    "back": "The property that acknowledged data survives defined failures.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-edge",
+    "type": "flashcard",
+    "front": "Edge",
+    "back": "Infrastructure near the public traffic boundary that routes, protects, or caches requests.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-event",
+    "type": "flashcard",
+    "front": "Event",
+    "back": "A record that a fact occurred; in telemetry, a discrete observation.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-frontend",
+    "type": "flashcard",
+    "front": "Frontend",
+    "back": "Application code and resources primarily executed or rendered in a user agent.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-idempotency",
+    "type": "flashcard",
+    "front": "Idempotency",
+    "back": "The property that repeating one logical operation does not repeat its intended effect.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-invariant",
+    "type": "flashcard",
+    "front": "Invariant",
+    "back": "A rule that must remain true across valid state changes.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-latency",
+    "type": "flashcard",
+    "front": "Latency",
+    "back": "Elapsed time for an operation or stage, preferably described as a distribution.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-log",
+    "type": "flashcard",
+    "front": "Log",
+    "back": "A timestamped record of a discrete event.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-metric",
+    "type": "flashcard",
+    "front": "Metric",
+    "back": "A measurement aggregated over observations and dimensions.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-origin",
+    "type": "flashcard",
+    "front": "Origin",
+    "back": "For web security, the tuple of scheme, host, and port.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-principal",
+    "type": "flashcard",
+    "front": "Principal",
+    "back": "An authenticated human, workload, or other acting identity.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-projection",
+    "type": "flashcard",
+    "front": "Projection",
+    "back": "A derived representation built for a particular read or query need.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-queue",
+    "type": "flashcard",
+    "front": "Queue",
+    "back": "A mechanism that buffers work for later consumers.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-representation",
+    "type": "flashcard",
+    "front": "Representation",
+    "back": "Transferable information reflecting a resource's state.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-resource",
+    "type": "flashcard",
+    "front": "Resource",
+    "back": "The conceptual target of an HTTP request, usually identified by a URI.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-runtime",
+    "type": "flashcard",
+    "front": "Runtime",
+    "back": "The execution environment that schedules code and integrates with host capabilities.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-server",
+    "type": "flashcard",
+    "front": "Server",
+    "back": "The role that accepts requests and produces responses in an interaction.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-session",
+    "type": "flashcard",
+    "front": "Session",
+    "back": "Application state associated with a sequence of otherwise stateless requests.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-sli",
+    "type": "flashcard",
+    "front": "SLI",
+    "back": "Service-level indicator; a measurement of behavior users or dependents care about.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-slo",
+    "type": "flashcard",
+    "front": "SLO",
+    "back": "Service-level objective; a target or range for an SLI over a window.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-trace",
+    "type": "flashcard",
+    "front": "Trace",
+    "back": "A connected record of work across one request or workflow.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-transaction",
+    "type": "flashcard",
+    "front": "Transaction",
+    "back": "A bounded group of data operations with defined atomicity and isolation behavior.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-trust-boundary",
+    "type": "flashcard",
+    "front": "Trust boundary",
+    "back": "A point where data or authority crosses between different trust assumptions.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-url",
+    "type": "flashcard",
+    "front": "URL",
+    "back": "A Uniform Resource Locator that identifies a resource and access scheme.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
+  },
+  {
+    "id": "glossary-web-app",
+    "type": "flashcard",
+    "front": "Web app",
+    "back": "An interactive system delivered through web standards, usually spanning browser, network, backend, and data components.",
+    "reverse": true,
+    "tags": [
+      "glossary"
+    ]
   }
 ]
