@@ -7155,7 +7155,7 @@
     "options": [
       {
         "id": "a",
-        "text": "Communication through APIs or events in place of function calls",
+        "text": "Communication through APIs or events",
         "correct": true
       },
       {
@@ -7187,7 +7187,7 @@
   {
     "id": "monoliths-modules-and-microservices-mat1",
     "type": "matching",
-    "prompt": "Each of these three failure modes takes away something a deployment boundary was there to provide. Read against this lesson and match each one to what it removes.",
+    "prompt": "A boundary is supposed to provide something, and each of these three failure modes is the loss of one such thing. Read against this lesson and match each failure to what it takes away.",
     "pairs": [
       {
         "left": "Many services that must deploy together",
@@ -7281,7 +7281,7 @@
     ],
     "hints": [
       "One end is the part most likely to be replaced — how a request arrives, or where the data is kept. The other is what the application decides whatever those turn out to be.",
-      "The second is what the application decides, as against how a request happens to arrive or where anything is stored. This lesson pairs it with the word stable every time."
+      "The second is what the application decides, as against how a request happens to arrive or where anything is stored. It is not the word for the code that does the deciding, but for the decision itself."
     ],
     "explanation": "Prefer dependencies that point from volatile delivery and infrastructure details toward stable application policy, and data crossing outward is translated into a contract suitable for the receiving boundary. Volatile and stable are what fix the direction: what is most likely to be replaced may depend on what is least likely to be, and not the other way round. Since coupling is the knowledge one part must have about another, the rule is really a statement about which side is allowed to hold that knowledge.",
     "difficulty": "beginner",
@@ -7562,10 +7562,10 @@
     ],
     "match": "fold",
     "hints": [
-      "Not all four are about traffic. One of them counts people rather than requests or rows.",
+      "Not all four are about the system being used more. Three of them are; the fourth counts the people building and releasing it.",
       "Three of the four show up as more work arriving. The fourth is why this lesson says scaling crosses organizations as well as compute and databases."
     ],
-    "explanation": "Scalability is a system's ability to handle growth in traffic, data, users, or teams while meeting objectives. Teams is the fourth, and it is why scaling is said to cross frontend delivery, compute, databases, caches, queues, third parties, organizations, and cost. This kind of growth never appears as requests per second, which is what makes it easy to miss when only traffic is being watched.",
+    "explanation": "Scalability is a system's ability to handle growth in traffic, data, users, or teams while meeting objectives. Teams is the fourth, and it is why organizations appears in this lesson's list of what scaling crosses, beside frontend delivery, compute, databases, caches, queues, third parties, and cost. This kind of growth never appears as requests per second, which is what makes it easy to miss when only traffic is being watched.",
     "difficulty": "beginner",
     "tags": [
       "architecture"
@@ -7601,7 +7601,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "Horizontal scaling distributes work across instances and requires routable or partitioned state; it offers a larger ceiling but adds coordination, and Google Cloud recommends stateless design and modularity to support it. Vertical scaling enlarges a resource and asks nothing of the application's state. The two rejected options belong to other mechanisms on the same list: batching amortizes overhead, and precomputation trades freshness and storage for query latency.",
+    "explanation": "Horizontal scaling distributes work across instances and requires routable or partitioned state; it offers a larger ceiling but adds coordination, and Google Cloud recommends stateless design and modularity to support it. Vertical scaling enlarges a resource and asks nothing of the application's state. Neither rejected option belongs to either of them. Batching amortizes overhead, and it is one of the seven mechanisms; precomputation is not one of the seven at all, though this lesson does put a price on it — it trades freshness and storage for query latency.",
     "difficulty": "intermediate",
     "tags": [
       "architecture"
@@ -7610,7 +7610,7 @@
   {
     "id": "scalability-tradeoffs-mc1",
     "type": "multiple-choice",
-    "prompt": "An API is at its limit and the team is about to double the number of application instances. This lesson's summary says a scaling move often relocates the constraint rather than removing it. Which of these named failures does it attach to this particular move?",
+    "prompt": "An API is at its limit and the team is about to double the number of application instances. This lesson opens by saying that scaling one resource often moves the bottleneck rather than removing it. Which of these named failures does it attach to this particular move?",
     "options": [
       {
         "id": "a",
@@ -7633,7 +7633,7 @@
         "feedback": "That is a named failure, but it is about which statistic was taken before the move rather than about where this move sends the constraint next."
       }
     ],
-    "explanation": "Teams scale application instances beyond database connections is named directly among this lesson's failure modes, and it is what doubling instances in front of one store produces: the constraint moves off the instances and onto the thing they all have to talk to. The three rejected options are the failures attached to caching, to choosing a partition key, and to sharding — different moves with different bills.",
+    "explanation": "Teams scale application instances beyond database connections is named directly among this lesson's failure modes, and it is what doubling instances in front of one store produces: the constraint moves off the instances and onto the thing they all have to talk to. The three rejected options are named failures too, and none of them follows from adding instances. One belongs to adding a cache. One belongs to choosing a key when data is assigned to subsets. And one is not about a move at all, but about which statistic was taken before any move was made.",
     "difficulty": "advanced",
     "tags": [
       "architecture"
@@ -7682,7 +7682,7 @@
   {
     "id": "scalability-tradeoffs-card5",
     "type": "flashcard",
-    "front": "What scaling one resource usually does",
+    "front": "What scaling one resource does to the bottleneck",
     "back": "It often moves the bottleneck rather than removing it.",
     "tags": [
       "architecture"
@@ -7737,7 +7737,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "Comparing outcomes comes before moving authority in this lesson's sequence, and shadow traffic is the mechanism that compares results without serving them. Two named failure modes supply the other two requirements: success lacks measurable criteria, and migrations cannot stop safely. Both rejected options belong after this step rather than before it. Removing old use and deleting the old path are the last two steps, and the named failure is decommissioning a dependency before all consumers are known — which asks you to know them, not to have shut them down.",
+    "explanation": "Comparing outcomes comes before moving authority in this lesson's sequence, and shadow traffic is the mechanism that compares results without serving them. Two named failure modes supply the other two requirements: success lacks measurable criteria, and migrations cannot stop safely. Neither rejected option is a requirement of this step. Removing old use and deleting the old path are the last two steps, so they come after it; and the named failure about consumers asks you to know them, not to have shut them down.",
     "difficulty": "advanced",
     "tags": [
       "architecture"

@@ -35,7 +35,7 @@ small cohort, compare outcomes, move authority, remove old use, and finally
 delete the old path. Every intermediate state must be operable.
 
 Seven steps, and that last sentence makes them steps rather than a schedule:
-any of them can be where you stop. Evolutionary change limits blast radius,
+any can be where you stop. Evolutionary change limits blast radius,
 keeps rollback possible, and lets evidence revise the destination — the third
 only while you can still look.
 
@@ -49,14 +49,14 @@ stable interface. Shadow traffic compares results without serving them. Feature
 flags and canaries limit exposure. Architecture decision records preserve
 context and reversal conditions.
 
-Sort them by what each makes safe. Two keep an old shape survivable while the
-new one exists: an adapter for concepts, an expand–contract migration for
-versions. Two control the switch: branch by abstraction chooses which
-implementation runs, flags and canaries who sees it. Shadow traffic produces
+Sort them by what each makes safe. Two keep an old shape survivable: an adapter
+for concepts, an expand–contract migration for versions. Two control the
+switch: branch by abstraction chooses which implementation runs, flags and
+canaries who sees it. Shadow traffic produces
 evidence rather than control, running the new path and discarding the answer.
 
 The sixth makes nothing safe at the time: a decision record preserves context
-and reversal conditions for whoever inherits a half-walked path.
+and reversal conditions for whoever inherits the path.
 
 ## Extracting search without turning search off
 
@@ -75,7 +75,10 @@ Lay it against the shape. The search port is the seam, and putting the old
 query behind it is branch by abstraction with one branch. Building the index
 adds the new path. Shadowing compares outcomes without serving them. Routing a
 cohort is exposure. Making the index authoritative moves authority. Removing
-the old query and its backfill tooling is the deletion.
+the old query is the deletion.
+
+The order refuses two of those failures: comparing gives success a measurable
+criterion, and removing the old query last stops old code receiving writes.
 
 Notice what is already true when authority moves: the comparison has happened
 on real queries, and a cohort has been served. Nobody has to trust the index

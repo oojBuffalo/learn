@@ -17,7 +17,7 @@ Traffic is climbing, so a team doubles the number of application instances
 behind its API. Throughput barely moves. The instances are not busy; they are
 waiting.
 
-The summary says what to expect. Scaling one resource often moves the
+What happens next is already named. Scaling one resource often moves the
 bottleneck rather than removing it. Nothing about the change was wrong. It
 answered a question nobody had asked yet.
 
@@ -113,9 +113,9 @@ database connections read one resource and not the one behind it, and caches
 without miss capacity measure only what the cache absorbs. A fourth, the hot
 partition key, is a design choice rather than a measurement failure.
 
-Now the opening scene reads in one line. The team increased one resource — the
-third of the five moves — without establishing which resource was limiting.
-Doubling instances is right when the instances are the constraint. Theirs were
+Now the opening scene reads in one line. The team distributed work — the fourth
+of the five moves — without establishing which resource was limiting.
+Distributing work is right when the instances are the constraint. Theirs were
 waiting.
 
 The last two describe what happens if this continues. Distributed coordination

@@ -5,7 +5,7 @@ summary: Why cutting a tangled codebase into separately deployed services can do
 objectives:
   - Hold modularity and distribution apart as two decisions that can be taken one at a time
   - Apply the five conditions that justify paying the network and operational cost of a process boundary
-  - Read each named failure mode as a guarantee that a deployment boundary was supposed to deliver
+  - Place each named failure mode on the side of the choice it belongs to — after a split, or inside one unit
 estimatedMinutes: 12
 difficulty: intermediate
 tags: [architecture]
@@ -88,8 +88,8 @@ boundaries.
 
 Four go wrong after a split: services that must deploy together, services
 sharing a database, services too small to have clear responsibilities, and
-runtime boundaries copied from team boundaries. The fifth is the opening scene
-almost word for word.
+runtime boundaries copied from team boundaries. The fifth goes wrong inside one
+unit — the opening scene almost word for word.
 
 ::activity{id="monoliths-modules-and-microservices-mat1"}
 
