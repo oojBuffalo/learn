@@ -66,7 +66,8 @@ and the last sentence says which two may be believed.
 
 Monitored and rebuildable is a pair of obligations rather than a demotion:
 somebody watches those two, and somebody can rebuild them from what the
-authorities hold. The outbox is what makes the second half true.
+authorities hold. Both obligations attach to the two stores that are not
+authorities.
 
 ::activity{id="data-technologies-mat1"}
 
@@ -82,18 +83,19 @@ backup, and expertise.
 The middle claim decides how many stores a system ends up with. A specialized
 system is justified by measured access or isolation needs — measured, which
 makes the justification evidence rather than a category name. The last claim
-prices the alternative: security, schema evolution, backup, and expertise are
-bills that arrive once per product rather than once per system.
+prices the alternative: polyglot persistence multiplies security, schema
+evolution, backup, and expertise — four bills paid again for every store
+added.
 
 Replication sits between the two: not another product, and still a source of
-lag the reader of a replica has to be told about.
+lag a replica's reader has to be told about.
 
 ::activity{id="data-technologies-mc1"}
 
 ## The cheapest question to ask of a store you already have
 
-The cheapest thing to check is not a benchmark. It is whether every store has a
-role and a rebuild strategy written down, which costs a conversation.
+The cheapest check is not a property of any product. It is whether every store
+has a role and a rebuild strategy written down, which costs a conversation.
 
 Four of this lesson's failures are what that missing sentence looks like later.
 A cache becomes authoritative: an acceleration layer believed as a system of

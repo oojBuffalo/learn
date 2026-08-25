@@ -26,8 +26,9 @@ categories, and the product had asked one about interaction.
 
 Frontend technologies range from browser-native HTML, CSS, and JavaScript
 through component libraries, full-stack rendering frameworks, build tools,
-design systems, and data clients. What separates them is not syntax. They
-package different assumptions about rendering, state, routing, and delivery.
+design systems, and data clients. They package different assumptions about
+rendering, state, routing, and delivery — which is what a survey of them has to
+compare.
 
 The model is eight capabilities held apart from each other: view composition,
 reactivity, routing, server rendering, data synchronization, styling,

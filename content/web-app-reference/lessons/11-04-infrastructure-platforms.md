@@ -38,6 +38,7 @@ Between them the five do one job: they clarify which operational
 responsibilities a platform assumes and which remain with the application team.
 Read that against the failure list and the shortest entry lines up: teams
 assume managed means unowned.
+
 A platform hosts every deployed component and becomes part of its availability,
 security, cost, portability, and incident model — becoming part of something,
 not taking it away.
@@ -89,9 +90,9 @@ Narrow is the word to keep. A higher abstraction does not only take away
 operations nobody wanted; it takes away configuration somebody might have
 wanted, and what is left is the shape the platform allows.
 
-The rest of the failure list is about things nobody went looking for. Platform
-quotas appear only under peak load. Teams omit data export and restore plans,
-or grant broad platform roles for convenience.
+Three more sit on the same failure list. Platform quotas appear only under peak
+load. Teams omit data export and restore plans, or grant broad platform roles
+for convenience.
 
 ::activity{id="infrastructure-platforms-sa1"}
 
@@ -104,12 +105,12 @@ proprietary integration you did not write.
 Going higher buys fewer undifferentiated operations. It costs configuration you
 can no longer reach and quotas you will meet under peak load rather than at
 review time. Running an orchestrator yourself buys standardized workload
-concepts and costs significant platform ownership, unless someone manages it
-for you — at which point a platform is managing your platform, and the five
-questions apply there too.
+concepts and costs significant platform ownership unless it is managed well. If
+that management is bought rather than built, a platform is managing your
+platform, and the five questions apply there too.
 
 Multi-cloud looks like an exit from both bills and is priced accordingly: it
-reduces one provider dependency, commonly increases complexity, and prevents
+can reduce one provider dependency, commonly increases complexity, and prevents
 using the distinctive managed capabilities that were a reason to be on a
 provider at all.
 

@@ -7909,7 +7909,7 @@
       },
       {
         "id": "e",
-        "text": "A compilation step that strips the styles nothing uses"
+        "text": "A compilation step for the components"
       },
       {
         "id": "f",
@@ -7917,7 +7917,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "A design system creates consistency only when semantics, accessibility, tokens, and ownership accompany its components. A published library is not yet a design system, which is why this lesson attaches a condition to it rather than a benefit. Accessibility is on the list for a reason the failure modes make plain: a component library can hide inaccessible markup, and nothing about adopting it will tell the team so. Compilation and server rendering are two of the eight capabilities this lesson holds apart, and neither has any bearing on whether components produce consistency.",
+    "explanation": "A design system creates consistency only when semantics, accessibility, tokens, and ownership accompany its components. A published library is not yet a design system, which is why this lesson attaches a condition to it rather than a benefit. Accessibility is on that list, and this lesson reads it beside a separate failure: a component library can hide inaccessible markup, and nothing about adopting it will tell the team so. Compilation and server rendering are two of the eight capabilities this lesson holds apart, and neither has any bearing on whether components produce consistency.",
     "difficulty": "intermediate",
     "tags": [
       "technology-landscape"
@@ -8134,7 +8134,7 @@
       "The first is what a reader of the store is allowed to assume about how current what it holds is. The second is how long it holds it.",
       "The second is the one a queue gets wrong in this lesson's failure list, by being shorter than something else."
     ],
-    "explanation": "Classify a store by role — system of record, acceleration layer, search projection, analytical copy, byte-object authority, or delivery log — then specify consistency, latency, retention, and recovery. Retention is the one this lesson's failure list names outright: a queue whose retention is shorter than recovery time is a store whose retention was never set against the recovery it has to survive. The four specifications are what turn a role into something a reader can rely on, and a store with neither is the store nobody can name an owner for.",
+    "explanation": "Classify a store by role — system of record, acceleration layer, search projection, analytical copy, byte-object authority, or delivery log — then specify consistency, latency, retention, and recovery. Retention and recovery are both named outright in one of this lesson's failures: a queue whose retention is shorter than recovery time is a store whose retention was never set against the recovery it has to survive. The four specifications are what turn a role into something a reader can rely on, and a store with neither is the store nobody can name an owner for.",
     "difficulty": "beginner",
     "tags": [
       "technology-landscape"
@@ -8150,7 +8150,7 @@
         "right": "system of record"
       },
       {
-        "left": "Bytes",
+        "left": "The media files themselves",
         "right": "byte-object authority"
       },
       {
@@ -8166,7 +8166,7 @@
       "analytical copy",
       "delivery log"
     ],
-    "explanation": "The media product keeps accounts and metadata in PostgreSQL, bytes in object storage, search documents in OpenSearch, and short-lived hot summaries in Redis, and only the relational and object stores are authorities. That last clause fixes the first two: a system of record and a byte-object authority are the roles on the list that may be believed. The other two stores are monitored and rebuildable, which is what a search projection and an acceleration layer are for, and an outbox drives the projections. Neither distractor is in play — nothing in this product is an analytical copy, and nothing is a delivery log.",
+    "explanation": "The media product keeps accounts and metadata in PostgreSQL, bytes in object storage, search documents in OpenSearch, and short-lived hot summaries in Redis, and only the relational and object stores are authorities. That last clause fixes the first two: in this product only the relational and object stores are authorities, so a system of record and a byte-object authority are the roles that may be believed here. The other two stores are monitored and rebuildable, which is what a search projection and an acceleration layer are for, and an outbox drives the projections. Neither distractor is in play — nothing in this product is an analytical copy, and nothing is a delivery log.",
     "difficulty": "advanced",
     "tags": [
       "technology-landscape"
@@ -8464,11 +8464,11 @@
   {
     "id": "choosing-technologies-mc1",
     "type": "multiple-choice",
-    "prompt": "A team spends most of its selection effort comparing two libraries, and settles the format its records will be stored in almost in passing. Read against this lesson, what is wrong with how the effort was spent?",
+    "prompt": "A team's selection effort goes mostly to comparing two libraries, either of which it could swap in a later release without anything else changing. The format its records will be written in — which every later version has to keep reading — is settled almost in passing. Read against this lesson, what is wrong with how the effort was spent?",
     "options": [
       {
         "id": "a",
-        "text": "The analysis went to the choice that can be undone; a durable data format deserves more of it than a library does",
+        "text": "The effort went to the choice the team can reverse, and almost none of it to the one it cannot",
         "correct": true
       },
       {
@@ -8484,10 +8484,10 @@
       {
         "id": "d",
         "text": "The libraries should have been prototyped rather than compared, since a prototype is what turns options into evidence",
-        "feedback": "A prototype is aimed at the riskiest assumption, with representative data and failure. A library that can be swapped out later is not the riskiest assumption on this team's list."
+        "feedback": "A prototype is aimed at the riskiest assumption, with representative data and failure. A library the team could swap in a later release is not where the risk sits here."
       }
     ],
-    "explanation": "Reversible choices deserve less analysis than durable data formats and public contracts. Analysis is not free, and spread evenly it gives a choice that can be undone the same scrutiny as one that cannot. The record format is the durable one here: it outlives the code that writes it, and committing to it is exactly the kind of irreversible data commitment that selection is supposed to precede rather than stumble into.",
+    "explanation": "Reversible choices deserve less analysis than durable data formats and public contracts. Analysis is not free, and spread evenly it gives a choice that can be undone the same scrutiny as one that cannot. The scenario says which is which: a library that can be swapped in a later release without anything else changing is the reversible one, and a format every later version has to keep reading is the durable one. Committing to the second is exactly the kind of irreversible data commitment that selection is supposed to precede rather than stumble into.",
     "difficulty": "advanced",
     "tags": [
       "technology-landscape"

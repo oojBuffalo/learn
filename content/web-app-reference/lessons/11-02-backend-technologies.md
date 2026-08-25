@@ -57,9 +57,9 @@ mostly inside it. CPU work blocks an event loop. Blocking libraries exhaust
 async worker pools. Framework globals leak request state. Dependency ecosystems
 introduce unreviewed supply-chain risk.
 
-The first two get confused and they are not one failure. One is work that will
-not yield because it is computing; the other because it is waiting. Under load,
-what separates them is whether anything is busy.
+The first two are not one failure. One is work that will not yield because it
+is computing; the other because it is waiting. Under load, what separates them
+is whether anything is busy.
 
 ::activity{id="backend-technologies-mc1"}
 

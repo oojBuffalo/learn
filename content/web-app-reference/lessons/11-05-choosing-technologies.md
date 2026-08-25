@@ -99,7 +99,7 @@ choices deserve less analysis than durable data formats and public contracts.
 
 The last one prices all the others. Analysis is not free, and spread evenly it
 gives a choice that can be undone the same scrutiny as one that cannot. Durable
-data formats and public contracts are the ones that cannot.
+data formats and public contracts are two that cannot.
 
 ::activity{id="choosing-technologies-mc1"}
 
@@ -120,9 +120,9 @@ not recovery, quotas, or data export — the table's own absence arriving later
 and costing more.
 
 So the repair is upstream of the table rather than inside it. Say what the
-system must do, set constraints that can be checked, and most of the rows stop
-mattering. The best choice is the one whose tradeoffs the team can explain and
-operate, and a tick cannot be explained or operated.
+system must do, set constraints that can be checked, and any row no requirement
+names stops mattering. The best choice is the one whose tradeoffs the team can
+explain and operate, and a tick cannot be explained or operated.
 
 ## Sources
 
