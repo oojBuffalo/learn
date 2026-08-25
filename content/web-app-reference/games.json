@@ -251,5 +251,28 @@
     "settings": {
       "timeLimitSeconds": 60
     }
+  },
+  {
+    "id": "game-technology-landscape-match",
+    "template": "matching",
+    "title": "Technology landscape — match them up",
+    "source": {
+      "tags": [
+        "technology-landscape"
+      ]
+    }
+  },
+  {
+    "id": "game-technology-landscape-speed",
+    "template": "timed-round",
+    "title": "Technology landscape — quick fire",
+    "source": {
+      "tags": [
+        "technology-landscape"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
   }
 ]

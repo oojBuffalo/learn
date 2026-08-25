@@ -7821,5 +7821,723 @@
     "tags": [
       "architecture"
     ]
+  },
+  {
+    "id": "frontend-technologies-mc1",
+    "type": "multiple-choice",
+    "prompt": "A product needs view composition, routing, and styling. Nothing in it is rendered on a server, and nothing synchronizes data from a server after the page has loaded. The team adopts a meta-framework because it came first on the shortlist. Read against this lesson's model, what has the team taken on?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Server rendering, asset handling, and deployment conventions that nothing in the product required, with application structure coupled to the last of those",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Static checking over JavaScript syntax and tooling, which arrives whether or not the team asked for it",
+        "feedback": "Static checking over JavaScript syntax and tooling is what TypeScript adds, and this lesson lists it as its own choice rather than as something a meta-framework carries in."
+      },
+      {
+        "id": "c",
+        "text": "Nothing beyond what it uses, because a bundle of capabilities only activates the ones an application reaches for",
+        "feedback": "This lesson's failure list names what happens instead: teams ship framework defaults they do not need. The bundle is adopted whole."
+      },
+      {
+        "id": "d",
+        "text": "A design system, since meta-frameworks supply the components, tokens, and accessibility semantics that make an interface consistent",
+        "feedback": "A design system creates consistency only when semantics, accessibility, tokens, and ownership accompany its components, and this lesson keeps it separate from the meta-frameworks. Adopting one does not deliver the other."
+      }
+    ],
+    "explanation": "Next.js, Nuxt, SvelteKit, and similar meta-frameworks combine routing, server and client rendering, asset handling, and deployment conventions. Routing was wanted; the other three came with it. Server-oriented frameworks improve initial delivery and integrated routing while coupling application structure to deployment conventions, which is the part of the bargain that outlives the adoption. The eight capabilities are held apart precisely so a team can say which of them a product needs before a tool decides for it.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-mat1",
+    "type": "matching",
+    "prompt": "Three frontend approaches, and this lesson says what adopting each one improves. Match each approach to what it buys.",
+    "pairs": [
+      {
+        "left": "Browser-native approaches",
+        "right": "minimized dependencies and longevity risk"
+      },
+      {
+        "left": "Component ecosystems",
+        "right": "complex interfaces built faster"
+      },
+      {
+        "left": "Server-oriented frameworks",
+        "right": "initial delivery and integrated routing"
+      }
+    ],
+    "distractors": [
+      "consistency across an interface",
+      "a broad application framework"
+    ],
+    "explanation": "Browser-native approaches minimize dependencies and longevity risk. Component ecosystems accelerate complex interfaces, and add runtime, build, and upgrade cost for it. Server-oriented frameworks improve initial delivery and integrated routing, and pay by coupling application structure to deployment conventions. Neither distractor belongs to these three: consistency across an interface is what a design system creates, and only when semantics, accessibility, tokens, and ownership accompany its components, while a broad application framework is what Angular supplies.",
+    "difficulty": "advanced",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-ms1",
+    "type": "multi-select",
+    "prompt": "A team publishes a component library and expects the product to become consistent. Read against this lesson, which of these have to accompany the components before that consistency follows?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Shared semantics for what each component means",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Accessibility in the markup the components render",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Tokens for the values the components draw on",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Ownership of the components themselves",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "A compilation step that strips the styles nothing uses"
+      },
+      {
+        "id": "f",
+        "text": "Server rendering of the pages the components appear on"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "A design system creates consistency only when semantics, accessibility, tokens, and ownership accompany its components. A published library is not yet a design system, which is why this lesson attaches a condition to it rather than a benefit. Accessibility is on the list for a reason the failure modes make plain: a component library can hide inaccessible markup, and nothing about adopting it will tell the team so. Compilation and server rendering are two of the eight capabilities this lesson holds apart, and neither has any bearing on whether components produce consistency.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-card1",
+    "type": "flashcard",
+    "front": "React",
+    "back": "It uses component rendering around state updates.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-card2",
+    "type": "flashcard",
+    "front": "Vue and Svelte",
+    "back": "They offer different reactivity and compilation models.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-card3",
+    "type": "flashcard",
+    "front": "What frontend tools package differently",
+    "back": "Assumptions about rendering, state, routing, and delivery.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-card4",
+    "type": "flashcard",
+    "front": "TypeScript",
+    "back": "It adds static checking over JavaScript syntax and tooling.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "frontend-technologies-card5",
+    "type": "flashcard",
+    "front": "Browser standards",
+    "back": "They remain the runtime contract beneath every frontend tool.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-mc1",
+    "type": "multiple-choice",
+    "prompt": "Under load, a service's throughput collapses and requests pile up, while the machine's processors stay close to idle. Read against this lesson's failure list, which failure fits that evidence?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Blocking libraries exhaust async worker pools",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "CPU work blocks an event loop",
+        "feedback": "Work that blocks a loop is work the loop is busy doing, and busy would show. Idle processors are exactly what separates this failure from the one described."
+      },
+      {
+        "id": "c",
+        "text": "Framework globals leak request state",
+        "feedback": "That failure shows up as one request seeing another's data, not as throughput falling. Nothing here says an answer was wrong."
+      },
+      {
+        "id": "d",
+        "text": "Dependency ecosystems introduce unreviewed supply-chain risk",
+        "feedback": "That is a risk carried in what the service depends on rather than a behavior under load, and nothing here turns on what the dependencies contain."
+      }
+    ],
+    "explanation": "Two of this lesson's failures share a symptom and separate on evidence. One is work that will not yield because it is computing, which keeps a processor busy. The other is work that will not yield because it is waiting, which holds a slot in a pool and no processor at all. Idle processors alongside collapsed throughput rule out the first and leave the second. How blocking behaves is one of the five questions this lesson puts to a runtime before it looks at a framework, and this is what the answer decides.",
+    "difficulty": "advanced",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-sa1",
+    "type": "short-answer",
+    "prompt": "A team argues for a backend stack because its members prefer the language's syntax. This lesson frames the choice around two things instead, and workload is the first. Name the second in one word.",
+    "accept": [
+      "ownership"
+    ],
+    "match": "fold",
+    "hints": [
+      "It is not a property of the code. It is about who will run the thing afterward, and what running it costs them.",
+      "The word appears in the sentence that puts syntax preference in its place."
+    ],
+    "explanation": "This survey frames technology choice around workload and ownership rather than syntax preference alone. Workload is what the system has to carry; ownership is who carries it afterward. Read the six consequential differences against that framing and both halves are visible in the list itself: concurrency and type model describe the work, while deployment, observability, and team fluency describe running it. Ecosystem sits in both, since a dependency ecosystem is where library quality comes from and where unreviewed supply-chain risk arrives.",
+    "difficulty": "beginner",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-ms1",
+    "type": "multi-select",
+    "prompt": "A team ranks backend candidates by runtime performance and picks the fastest. This lesson puts runtime performance behind other things. Which of these does it say must meet requirements before performance is what decides?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Development throughput",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Library quality",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "Hiring",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Operational familiarity",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "The time a small handler takes to return a fixed response"
+      },
+      {
+        "id": "f",
+        "text": "A guarantee that the type system makes the domain model correct"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Runtime performance matters after development throughput, library quality, hiring, and operational familiarity meet requirements. After, not instead of: performance still decides between candidates that have cleared the other four. The two rejected options are things this lesson refuses rather than defers. Benchmarking toy handlers is on its failure list, because the measurement ignores database, network, and tail latency. And static types improve tooling and compatibility evidence but do not guarantee domain correctness, so no candidate can meet that requirement at all.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-card1",
+    "type": "flashcard",
+    "front": "Node.js",
+    "back": "It centers event-driven JavaScript and its package ecosystem.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-card2",
+    "type": "flashcard",
+    "front": "Go",
+    "back": "It supplies compiled binaries and language-level concurrency primitives.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-card3",
+    "type": "flashcard",
+    "front": "Rust",
+    "back": "It emphasizes memory safety without garbage collection.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-card4",
+    "type": "flashcard",
+    "front": "What to evaluate before the framework",
+    "back": "The runtime: how work is scheduled, how blocking behaves, how dependencies are managed, how processes start and stop, and how production failures are diagnosed.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "backend-technologies-card5",
+    "type": "flashcard",
+    "front": "What an integrated framework can obscure",
+    "back": "Cost and lifecycle, even while it accelerates CRUD, validation, and security conventions.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-fb1",
+    "type": "fill-blank",
+    "prompt": "This lesson gives a store a role and then asks for four specifications. Two of the four are printed here. Fill in the other two.",
+    "template": "Classify a store by role, then specify {{1}}, latency, {{2}}, and recovery.",
+    "blanks": [
+      {
+        "slot": 1,
+        "accept": [
+          "consistency"
+        ]
+      },
+      {
+        "slot": 2,
+        "accept": [
+          "retention"
+        ]
+      }
+    ],
+    "hints": [
+      "The first is what a reader of the store is allowed to assume about how current what it holds is. The second is how long it holds it.",
+      "The second is the one a queue gets wrong in this lesson's failure list, by being shorter than something else."
+    ],
+    "explanation": "Classify a store by role — system of record, acceleration layer, search projection, analytical copy, byte-object authority, or delivery log — then specify consistency, latency, retention, and recovery. Retention is the one this lesson's failure list names outright: a queue whose retention is shorter than recovery time is a store whose retention was never set against the recovery it has to survive. The four specifications are what turn a role into something a reader can rely on, and a store with neither is the store nobody can name an owner for.",
+    "difficulty": "beginner",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-mat1",
+    "type": "matching",
+    "prompt": "In this lesson's media product, four stores hold four different kinds of thing. Read them against the six roles and match each one to the role it plays.",
+    "pairs": [
+      {
+        "left": "Accounts and metadata",
+        "right": "system of record"
+      },
+      {
+        "left": "Bytes",
+        "right": "byte-object authority"
+      },
+      {
+        "left": "Search documents",
+        "right": "search projection"
+      },
+      {
+        "left": "Short-lived hot summaries",
+        "right": "acceleration layer"
+      }
+    ],
+    "distractors": [
+      "analytical copy",
+      "delivery log"
+    ],
+    "explanation": "The media product keeps accounts and metadata in PostgreSQL, bytes in object storage, search documents in OpenSearch, and short-lived hot summaries in Redis, and only the relational and object stores are authorities. That last clause fixes the first two: a system of record and a byte-object authority are the roles on the list that may be believed. The other two stores are monitored and rebuildable, which is what a search projection and an acceleration layer are for, and an outbox drives the projections. Neither distractor is in play — nothing in this product is an analytical copy, and nothing is a delivery log.",
+    "difficulty": "advanced",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-mc1",
+    "type": "multiple-choice",
+    "prompt": "A relational database holds a table that has grown large, and the team proposes standing up a document store and a search engine beside it. Nobody has looked at how the table is actually read. Read against this lesson, what is missing before either store is justified?",
+    "options": [
+      {
+        "id": "a",
+        "text": "A measurement of access or isolation needs, since one relational database handles more workloads than category marketing suggests",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "A managed provider for both new stores, so that running three products does not land on this team",
+        "feedback": "Managed services reduce operational work while increasing provider dependency and cost structure. That settles who runs a store, not whether the store is justified."
+      },
+      {
+        "id": "c",
+        "text": "A replica of the relational database, since replication improves read scale and would answer the question without a second product",
+        "feedback": "Replication does improve read scale or recovery, and it introduces lag. Either way it is an answer, and what this lesson asks for first is the evidence that says which answer is needed."
+      },
+      {
+        "id": "d",
+        "text": "Nothing further, since a table growing large is itself the measured access need that justifies a specialized store",
+        "feedback": "Size is not an access pattern. Specialized systems are justified by measured access or isolation needs, and nobody here has looked at how the table is read."
+      }
+    ],
+    "explanation": "One relational database handles more workloads than category marketing suggests, and specialized systems are justified by measured access or isolation needs. Measured is the word that decides this one: without it the justification is a category name rather than evidence. A store added on a category name is the store in this lesson's opening scene — present, believed by somebody, and given no role by anybody.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-card1",
+    "type": "flashcard",
+    "front": "Redis",
+    "back": "It exposes in-memory data structures used for caching and coordination.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-card2",
+    "type": "flashcard",
+    "front": "Kafka",
+    "back": "It provides partitioned retained logs for event streams.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-card3",
+    "type": "flashcard",
+    "front": "MongoDB",
+    "back": "It centers document aggregates.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-card4",
+    "type": "flashcard",
+    "front": "What polyglot persistence multiplies",
+    "back": "Security, schema evolution, backup, and expertise.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "data-technologies-card5",
+    "type": "flashcard",
+    "front": "Object stores",
+    "back": "They manage durable byte objects by key.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-ms1",
+    "type": "multi-select",
+    "prompt": "A team says its workload is portable because it ships as a container. Read against this lesson, which of these does that container still depend on that will not move with it?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The provider's identity service",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The provider's network",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "The provider's data services",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "The application artifact the team builds and hands over"
+      },
+      {
+        "id": "e",
+        "text": "The declarative desired state the workload is described by"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "A nominally portable container depends on provider identity, network, and data services that are not portable. The artifact moves; what it talks to does not, which is why how do we leave is a question about identity, networks, and data rather than about a packaging format. The two rejected options are the parts that travel. The artifact is what the team supplies to a platform in the first place, and declarative desired state is how Kubernetes orchestrates containerized workloads rather than something a provider holds on the team's behalf.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team moves onto a managed container platform with managed PostgreSQL, object storage, and hosted telemetry, then closes its operations checklist on the grounds that the platform runs everything now. Read against this lesson, which item should not have been closed?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The plan for exporting and restoring the team's own data",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "The lifecycle of the running containers",
+        "feedback": "That one did move. What lifecycle a platform manages is the second of this lesson's five questions, and a managed container platform is an answer to it."
+      },
+      {
+        "id": "c",
+        "text": "The collection of telemetry",
+        "feedback": "Hosted telemetry does take collection over. How telemetry is handled is part of the fourth question, and “hosted” answers it."
+      },
+      {
+        "id": "d",
+        "text": "The provisioning of the machines underneath the platform",
+        "feedback": "Higher abstractions reduce undifferentiated operations, and machines are the clearest case of that. This is the part a managed platform exists to absorb."
+      }
+    ],
+    "explanation": "Teams assume managed means unowned, and this lesson's five questions exist to separate the operational responsibilities a platform assumes from the ones that stay with the application team. Omitting data export and restore plans is on the failure list by name, and it belongs to the question no provider answers on your behalf: how do we leave. The worked example is a team doing the opposite, writing down an artifact and data export path while leaving is still hypothetical.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-sa1",
+    "type": "short-answer",
+    "prompt": "During a launch peak a platform begins refusing work, and the limit it enforced turns out to be a number nobody on the team had seen. This lesson names what appeared. Give it in one word.",
+    "accept": [
+      "quotas",
+      "quota"
+    ],
+    "match": "fold",
+    "hints": [
+      "It belongs to the third of the five questions, the one about which limits are fixed.",
+      "The small team in the worked example writes these down first, ahead of regional dependencies and backup restore."
+    ],
+    "explanation": "Platform quotas appear only under peak load, which is what makes them a failure mode rather than a fact about a platform: the number is there the whole time and gets observed at the worst possible moment. Which limits are fixed is the third of this lesson's five questions, and the small team in the worked example answers it in advance, documenting quotas beside regional dependencies, backup restore, identity permissions, cost alerts, and an export path.",
+    "difficulty": "beginner",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-card1",
+    "type": "flashcard",
+    "front": "Kubernetes",
+    "back": "It orchestrates containerized workloads through declarative desired state.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-card2",
+    "type": "flashcard",
+    "front": "Backend-as-a-service products",
+    "back": "They bundle identity, data, storage, and functions behind an application-facing SDK.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-card3",
+    "type": "flashcard",
+    "front": "Edge platforms",
+    "back": "They run code and caches near users.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-card4",
+    "type": "flashcard",
+    "front": "What a higher abstraction imposes",
+    "back": "Limits and proprietary integration, in exchange for less undifferentiated operations and narrower configuration.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "infrastructure-platforms-card5",
+    "type": "flashcard",
+    "front": "What a platform becomes part of",
+    "back": "The availability, security, cost, portability, and incident model of everything it hosts.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-ms1",
+    "type": "multi-select",
+    "prompt": "A selection document compares two candidates capability by capability and stops there. Read against this lesson, which of these does the assessment still have to cover?",
+    "options": [
+      {
+        "id": "a",
+        "text": "How long the candidate will be supported",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "How the candidate is operated",
+        "correct": true
+      },
+      {
+        "id": "c",
+        "text": "How a team would migrate off it",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "How much it locks the team in",
+        "correct": true
+      },
+      {
+        "id": "e",
+        "text": "How many capabilities each candidate's matrix lists"
+      },
+      {
+        "id": "f",
+        "text": "The headcount the team expects to have once the product succeeds"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Assess team familiarity, ecosystem health, support horizon, operability, migration path, and lock-in against an explicit quality framework. Not one of those is a capability, which is why a comparison that runs capability by capability can be complete and still have assessed nothing. The two rejected options are on this lesson's failure list rather than in its method: feature matrices count irrelevant capabilities, and selection assumes future headcount or scale that never arrives.",
+    "difficulty": "intermediate",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-ord1",
+    "type": "ordering",
+    "prompt": "Put the five moves this lesson's job-system team makes into the order it makes them.",
+    "steps": [
+      {
+        "id": "s1",
+        "text": "Required throughput, delay, retry semantics, retention, ordering, and operator capacity are listed"
+      },
+      {
+        "id": "s2",
+        "text": "Overload and recovery are tested with production-shaped payloads"
+      },
+      {
+        "id": "s3",
+        "text": "Cost is estimated"
+      },
+      {
+        "id": "s4",
+        "text": "Why the chosen service wins is documented"
+      },
+      {
+        "id": "s5",
+        "text": "The volume or compliance changes that trigger review are named"
+      }
+    ],
+    "explanation": "A team choosing a job system lists required throughput, maximum delay, retry semantics, retention, ordering, and operator capacity. It tests overload and recovery with production-shaped payloads, estimates cost, documents why the chosen service wins, and names volume or compliance changes that trigger review. Read as a method rather than a habit, the order does work. Nothing can be ruled out until the requirements exist. A candidate that fails under overload has no cost worth estimating. And a review trigger is a property of a decision that has already been made, which is why it is captured last, in an architecture record, alongside the reason.",
+    "difficulty": "beginner",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-mc1",
+    "type": "multiple-choice",
+    "prompt": "A team spends most of its selection effort comparing two libraries, and settles the format its records will be stored in almost in passing. Read against this lesson, what is wrong with how the effort was spent?",
+    "options": [
+      {
+        "id": "a",
+        "text": "The analysis went to the choice that can be undone; a durable data format deserves more of it than a library does",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Nothing is wrong with the split, since a standard stack reduces cognitive load and both decisions were taken inside one",
+        "feedback": "A standard stack does reduce cognitive load, and it says nothing about how much analysis each choice inside it deserves. Reversibility is what says that."
+      },
+      {
+        "id": "c",
+        "text": "The comparison held only two candidates where a feature matrix would have held more, so the shortlist was too short",
+        "feedback": "Feature matrices count irrelevant capabilities, which is on this lesson's failure list. Adding candidates to a comparison that cannot rule any of them out does not improve it."
+      },
+      {
+        "id": "d",
+        "text": "The libraries should have been prototyped rather than compared, since a prototype is what turns options into evidence",
+        "feedback": "A prototype is aimed at the riskiest assumption, with representative data and failure. A library that can be swapped out later is not the riskiest assumption on this team's list."
+      }
+    ],
+    "explanation": "Reversible choices deserve less analysis than durable data formats and public contracts. Analysis is not free, and spread evenly it gives a choice that can be undone the same scrutiny as one that cannot. The record format is the durable one here: it outlives the code that writes it, and committing to it is exactly the kind of irreversible data commitment that selection is supposed to precede rather than stumble into.",
+    "difficulty": "advanced",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-card1",
+    "type": "flashcard",
+    "front": "Technology selection",
+    "back": "A constrained decision about product needs, system qualities, team capability, operations, risk, and cost.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-card2",
+    "type": "flashcard",
+    "front": "The best technology choice",
+    "back": "The one whose tradeoffs the team can explain and operate.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-card3",
+    "type": "flashcard",
+    "front": "What an architecture record captures",
+    "back": "The decision and its review trigger.",
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-card4",
+    "type": "flashcard",
+    "front": "What managed products exchange",
+    "back": "Control and portability, for reduced operations.",
+    "reverse": true,
+    "tags": [
+      "technology-landscape"
+    ]
+  },
+  {
+    "id": "choosing-technologies-card5",
+    "type": "flashcard",
+    "front": "What open source gives",
+    "back": "Inspectability, but not free support.",
+    "tags": [
+      "technology-landscape"
+    ]
   }
 ]

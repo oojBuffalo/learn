@@ -235,5 +235,27 @@
       "evolving-an-architecture-mc1"
     ],
     "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-technology-landscape",
+    "title": "Technology landscape check",
+    "items": [
+      "frontend-technologies-mc1",
+      "frontend-technologies-mat1",
+      "frontend-technologies-ms1",
+      "backend-technologies-mc1",
+      "backend-technologies-sa1",
+      "backend-technologies-ms1",
+      "data-technologies-fb1",
+      "data-technologies-mat1",
+      "data-technologies-mc1",
+      "infrastructure-platforms-ms1",
+      "infrastructure-platforms-mc1",
+      "infrastructure-platforms-sa1",
+      "choosing-technologies-ms1",
+      "choosing-technologies-ord1",
+      "choosing-technologies-mc1"
+    ],
+    "passThreshold": 0.75
   }
 ]
