@@ -42,7 +42,7 @@ an owner attached; “the app is broken” does not.
 Take them in the order a request meets them. The browser presents documents and
 controls, runs frontend code, and sends protocol messages. Edge
 infrastructure terminates secure connections and routes traffic. Backend code
-validates requests and coordinates business behaviour. Data services preserve
+validates requests and coordinates business behavior. Data services preserve
 facts. Alongside all of them, delivery and observability systems keep the whole
 arrangement operable.
 
@@ -77,8 +77,6 @@ map the boxes hide. The boxes are not fixed roles either: a component may play
 several at once, and a backend is a server to the browser and a client to a
 database or a payment API.
 
-::activity{id="anatomy-of-a-web-app-mat1"}
-
 ## One purchase, from hostname to screen
 
 One purchase might proceed like this. The browser resolves a hostname,
@@ -108,6 +106,8 @@ As a list it is intimidating. Read against the map, entries turn into named
 boundaries: stale frontend state is local state never reconciled with what the
 response said; a deployment that changes one side of a contract first is an
 arrow whose two ends stopped agreeing.
+
+::activity{id="anatomy-of-a-web-app-mat1"}
 
 Retries earn their own line, because the repair is also a failure mode: a retry
 can repair transient failure, or amplify overload and duplicate effects.
@@ -141,7 +141,7 @@ record, and a UI state that distinguishes “pending” from “failed” — ob
 sitting in data services, at a payment boundary, and in the frontend.
 
 So the verdict is not that the response lied. A web app is the coordinated
-behaviour of the whole arrangement, not any single process, and one process's
+behavior of the whole arrangement, not any single process, and one process's
 reply could not settle a question about all of it. Which is why this map comes
 first: the rest of the library enlarges it, one region at a time.
 

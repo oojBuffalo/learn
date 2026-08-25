@@ -7,7 +7,8 @@ objectives:
   - Attach each mechanism to what it makes safe — survival of the old shape, control of the switch, or evidence
   - Price parallel paths, dual writes, rewrites and incremental extraction as four different bills
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [synchronous-and-asynchronous-design]
 tags: [architecture]
 ---
 
@@ -121,7 +122,7 @@ dependency decommissioned before its consumers are known. The opening scene is
 the first.
 
 So two questions price any path. Is every state along the way operable, and is
-there a measurable criterion for success? The failure list names both absences,
+there a measurable criterion for success? Both absences are named failures here,
 and a target diagram shows neither.
 
 ## Sources

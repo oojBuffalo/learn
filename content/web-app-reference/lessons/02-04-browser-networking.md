@@ -52,7 +52,7 @@ died on: the response existed, and it was filtered before the caller saw it.
 
 Along the way, connection pools amortize DNS, transport, and TLS work, so
 resolving a connection is often reusing one. Request modes and credential
-settings influence cross-origin behaviour. CORS is a browser rule that lets a
+settings influence cross-origin behavior. CORS is a browser rule that lets a
 server opt into exposing selected cross-origin responses to scripts; it is not
 server authentication. And navigation, subresource loading, and script-initiated
 fetches share this infrastructure but have different destinations and policy.

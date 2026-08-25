@@ -12,16 +12,15 @@ prerequisites: [scaling-and-resilience, third-party-integrations]
 tags: [quality-and-observability]
 ---
 
-## The dashboard that was green for whoever succeeded
+## The average that only counted the requests that worked
 
-A dashboard reports the latency objective is met. Support reports the
-application is unusable for some people. Both describe the same system.
+A latency dashboard reports one number, and the number is correct. It is an
+average, computed only over the requests that returned successfully. Support is
+hearing at the same time that the application is unusable for some people.
 
-The number on the dashboard is an average, computed only over requests that
-returned successfully. Teams exclude failed requests from latency, and averages
-are compact but hide slow cohorts — a failure mode and a tradeoff stacked on
-each other. The failing requests and the slow cohort are both outside that
-number.
+Teams exclude failed requests from latency, and averages are compact but hide
+slow cohorts — a failure mode and a tradeoff stacked on each other. The failing
+requests and the slow cohort are both outside that number.
 
 ## An indicator, a target, and a budget for missing it
 

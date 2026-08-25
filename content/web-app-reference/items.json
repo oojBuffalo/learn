@@ -12,7 +12,7 @@
       {
         "id": "b",
         "text": "Which process raised the error, since that is where the failure happened",
-        "feedback": "A process is where a failure surfaced, which is not the same as where the intended thing stopped being preserved. A web app is the coordinated behaviour of the arrangement, not any single process."
+        "feedback": "A process is where a failure surfaced, which is not the same as where the intended thing stopped being preserved. A web app is the coordinated behavior of the arrangement, not any single process."
       },
       {
         "id": "c",
@@ -34,34 +34,30 @@
   {
     "id": "anatomy-of-a-web-app-mat1",
     "type": "matching",
-    "prompt": "Match each responsibility to the part of the arrangement that holds it.",
+    "prompt": "Read against the map, each of these common failures is a boundary that did not preserve one of four things. Match each to the one that was lost.",
     "pairs": [
       {
-        "left": "Presents documents and controls, and sends protocol messages",
-        "right": "Browser"
+        "left": "Stale frontend state",
+        "right": "The response"
       },
       {
-        "left": "Terminates secure connections and routes traffic",
-        "right": "Edge infrastructure"
+        "left": "Lost identity",
+        "right": "Identity"
       },
       {
-        "left": "Validates requests and coordinates business behaviour",
-        "right": "Backend code"
+        "left": "Partial writes",
+        "right": "Data"
       },
       {
-        "left": "Preserves facts",
-        "right": "Data services"
-      },
-      {
-        "left": "Keeps the whole arrangement operable",
-        "right": "Delivery and observability"
+        "left": "Duplicate submissions",
+        "right": "The intended request"
       }
     ],
     "distractors": [
-      "Queue and workers",
-      "Payment API"
+      "Latency",
+      "Operational work"
     ],
-    "explanation": "Each part answers for one kind of thing, which is what makes “which boundary did not preserve what” a question anybody can act on. The two distractors are genuine participants — a backend publishes follow-up work to a queue and is a client to a payment API — but neither of them owns any of the five responsibilities listed here.",
+    "explanation": "The first question this lesson hands you is which boundary did not preserve the intended request, identity, data, or response, and four of the failures it names read straight against it. Stale frontend state is the one the lesson spells out: local state never reconciled with what the response said. A lost identity is a credential a boundary did not carry through, a partial write is facts the data services did not preserve, and a duplicate submission is one intended request that arrived as two. Latency and operational work are two of the four things an added boundary costs, not things a boundary fails to preserve.",
     "difficulty": "beginner",
     "tags": [
       "start-here"
@@ -183,9 +179,8 @@
   {
     "id": "anatomy-of-a-web-app-card1",
     "type": "flashcard",
-    "front": "A web app",
-    "back": "A distributed system with a human-facing browser interface. A typical interaction crosses presentation code, network infrastructure, server-side application logic, and one or more data systems, and the visible page is only the edge of it.",
-    "reverse": true,
+    "front": "What each part of the arrangement answers for",
+    "back": "The browser presents documents and controls, runs frontend code, and sends protocol messages. Edge infrastructure terminates secure connections and routes traffic. Backend code validates requests and coordinates business behavior. Data services preserve facts, and delivery and observability systems keep the whole arrangement operable.",
     "tags": [
       "start-here"
     ]
@@ -225,7 +220,7 @@
     "id": "anatomy-of-a-web-app-card5",
     "type": "flashcard",
     "front": "A success response is not the outcome",
-    "back": "For `POST /orders`, correctness may require a durable order, exactly one charge effect, inventory policy, a traceable audit record, and a UI state that distinguishes “pending” from “failed”. The web app is the coordinated behaviour, not any single process.",
+    "back": "For `POST /orders`, correctness may require a durable order, exactly one charge effect, inventory policy, a traceable audit record, and a UI state that distinguishes “pending” from “failed”. The web app is the coordinated behavior, not any single process.",
     "tags": [
       "start-here"
     ]
@@ -242,7 +237,7 @@
       },
       {
         "id": "b",
-        "text": "Routing and basic reachability, but nothing about HTTP behaviour",
+        "text": "Routing and basic reachability, but nothing about HTTP behavior",
         "correct": true
       },
       {
@@ -256,7 +251,7 @@
         "feedback": "A web app can be unavailable even when its host is perfectly reachable. Nothing here has looked at the app yet."
       }
     ],
-    "explanation": "Each check proves a property of one layer and the layers below it. A network can deliver packets while an HTTP request fails, so reachability says nothing about whether HTTP behaviour is correct.",
+    "explanation": "Each check proves a property of one layer and the layers below it. A network can deliver packets while an HTTP request fails, so reachability says nothing about whether HTTP behavior is correct.",
     "difficulty": "beginner",
     "tags": [
       "web-foundations"
@@ -501,7 +496,8 @@
     "difficulty": "intermediate",
     "tags": [
       "web-foundations"
-    ]
+    ],
+    "match": "fold"
   },
   {
     "id": "request-response-lifecycle-card1",
@@ -609,7 +605,8 @@
     "difficulty": "beginner",
     "tags": [
       "web-foundations"
-    ]
+    ],
+    "match": "fold"
   },
   {
     "id": "urls-dns-http-and-tls-mc2",
@@ -761,30 +758,30 @@
   {
     "id": "clients-servers-and-resources-mat1",
     "type": "matching",
-    "prompt": "Match each design choice to what it buys and what it costs.",
+    "prompt": "Match each design choice to the advantage its alternative offers, and that choosing it therefore gives up.",
     "pairs": [
       {
         "left": "Coarse representations",
-        "right": "Fewer round trips, unused data"
+        "right": "Reuse across clients"
       },
       {
-        "left": "Fine-grained resources",
-        "right": "Better reuse, chattier clients"
+        "left": "Action-oriented endpoints",
+        "right": "Stable nouns and generic HTTP behavior"
       },
       {
         "left": "Server authority",
-        "right": "Simpler invariants, responsiveness forgone"
+        "right": "Responsiveness"
       },
       {
         "left": "Optimistic client state",
-        "right": "Responsiveness, then reconciliation"
+        "right": "Simpler invariants"
       }
     ],
     "distractors": [
-      "Stable nouns and generic HTTP behavior",
+      "Fewer round trips",
       "Commands expressed more directly"
     ],
-    "explanation": "Each choice buys something at a stated price, and none of them has a default answer. Server authority is the one whose price you have to read off its alternative: what it gives up is the responsiveness optimistic client state can buy. The two distractors are real benefits — of resource-oriented and action-oriented designs respectively — but they belong to the choice of style, not to any of the four tradeoffs listed here.",
+    "explanation": "Every price here is read off the alternative rather than stated on its own. Coarse representations reduce round trips but can transfer unused data, while fine-grained resources improve reuse. Resource-oriented designs offer stable nouns and generic HTTP behavior, while action-oriented endpoints may express commands more directly. Server authority simplifies invariants, while optimistic client state can improve responsiveness at the cost of reconciliation. The two distractors are advantages each choice keeps rather than forgoes: fewer round trips is what coarse representations buy, and commands expressed more directly is what action-oriented endpoints buy.",
     "difficulty": "intermediate",
     "tags": [
       "web-foundations"
@@ -820,7 +817,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "The first three are failures of the boundary rather than of the logic behind it: the client was told something untrue, or told too little, or made to depend on a detail it should never have seen. The last two are the arrangement working — HTTP deliberately hides resource implementation, and negotiating a format is what content negotiation is for. A client that breaks on either had inferred undocumented behaviour.",
+    "explanation": "The first three are failures of the boundary rather than of the logic behind it: the client was told something untrue, or told too little, or made to depend on a detail it should never have seen. The last two are the arrangement working — HTTP deliberately hides resource implementation, and negotiating a format is what content negotiation is for. A client that breaks on either had inferred undocumented behavior.",
     "difficulty": "intermediate",
     "tags": [
       "web-foundations"
@@ -903,10 +900,10 @@
       }
     ],
     "distractors": [
-      "Default semantics and keyboard behaviour",
+      "Default semantics and keyboard behavior",
       "Pixels and accessibility information"
     ],
-    "explanation": "Each stage has one product, and naming it is what lets you place a symptom at a stage rather than at “the browser”. The two distractors are real, but neither belongs to a stage: default semantics and keyboard behaviour are what native elements contribute, and pixels together with accessibility information are what the whole pipeline turns network-delivered resources and application state into.",
+    "explanation": "Each stage has one product, and naming it is what lets you place a symptom at a stage rather than at “the browser”. The two distractors are real, but neither belongs to a stage: default semantics and keyboard behavior are what native elements contribute, and pixels together with accessibility information are what the whole pipeline turns network-delivered resources and application state into.",
     "difficulty": "beginner",
     "tags": [
       "browser-platform"
@@ -994,7 +991,7 @@
     "id": "rendering-and-the-dom-card2",
     "type": "flashcard",
     "front": "Native elements",
-    "back": "They contribute default semantics and keyboard behaviour. Native controls are less customizable but bring robust behaviour, so replacing one with a custom control trades those defaults for design.",
+    "back": "They contribute default semantics and keyboard behavior. Native controls are less customizable but bring robust behavior, so replacing one with a custom control trades those defaults for design.",
     "reverse": true,
     "tags": [
       "browser-platform"
@@ -1004,7 +1001,7 @@
     "id": "rendering-and-the-dom-card3",
     "type": "flashcard",
     "front": "What the HTML standard leaves open",
-    "back": "It specifies document behaviour and offers default rendering guidance while allowing user agents implementation freedom, which is why browsers may stream and overlap the rendering stages rather than running them in strict turns.",
+    "back": "It specifies document behavior and offers default rendering guidance while allowing user agents implementation freedom, which is why browsers may stream and overlap the rendering stages rather than running them in strict turns.",
     "examples": [
       "WHATWG, HTML Living Standard: Rendering"
     ],
@@ -1087,7 +1084,8 @@
     "difficulty": "intermediate",
     "tags": [
       "browser-platform"
-    ]
+    ],
+    "match": "fold"
   },
   {
     "id": "javascript-runtime-mc1",
@@ -1253,7 +1251,7 @@
       },
       {
         "id": "c",
-        "text": "Identity rules, so an operation can be recognised when it is sent again",
+        "text": "Identity rules, so an operation can be recognized when it is sent again",
         "correct": true
       },
       {
@@ -1341,7 +1339,7 @@
       {
         "id": "c",
         "text": "Resolving or reusing the connection",
-        "feedback": "A connection was resolved and the response travelled over it. Connection pools amortize DNS, transport and TLS work; none of that withholds a body."
+        "feedback": "A connection was resolved and the response traveled over it. Connection pools amortize DNS, transport and TLS work; none of that withholds a body."
       },
       {
         "id": "d",
@@ -1773,8 +1771,8 @@
       },
       {
         "id": "c",
-        "text": "The server should have recognised the second request as a duplicate without being told",
-        "feedback": "An idempotency key is how the second delivery is recognised as the same operation. Without one the two requests are indistinguishable."
+        "text": "The server should have recognized the second request as a duplicate without being told",
+        "feedback": "An idempotency key is how the second delivery is recognized as the same operation. Without one the two requests are indistinguishable."
       },
       {
         "id": "d",
@@ -1818,7 +1816,7 @@
       }
     ],
     "partialCredit": true,
-    "explanation": "Three of the failures are visible here. Color-only error cues exclude users; generic “invalid request” responses prevent correction; and preserving safe user input after a rejected submission is exactly what emptying every field failed to do. The other two are real failures that nothing on this screen is evidence of — the fields may be labelled correctly, and one rejection is not a sign that the client and server rules disagree.",
+    "explanation": "Three of the failures are visible here. Color-only error cues exclude users; generic “invalid request” responses prevent correction; and preserving safe user input after a rejected submission is exactly what emptying every field failed to do. The other two are real failures that nothing on this screen is evidence of — the fields may be labeled correctly, and one rejection is not a sign that the client and server rules disagree.",
     "difficulty": "intermediate",
     "tags": [
       "frontend"
@@ -1897,7 +1895,7 @@
   {
     "id": "forms-and-validation-card5",
     "type": "flashcard",
-    "front": "Native form behaviour",
+    "front": "Native form behavior",
     "back": "Native HTML supplies submission and constraint-validation behavior that applications may progressively enhance; controlled component state offers coordination while native form state reduces code.",
     "examples": [
       "WHATWG, HTML Living Standard: Forms"
@@ -1923,7 +1921,7 @@
       },
       {
         "id": "c",
-        "text": "Invalidation of anything that summarised the old name",
+        "text": "Invalidation of anything that summarized the old name",
         "correct": true
       },
       {
@@ -1955,7 +1953,7 @@
       {
         "id": "b",
         "text": "Cover it — showing data known to be stale is showing data known to be wrong",
-        "feedback": "Stale is not wrong; it is aged. Remote state has two clocks, and the frontend's copy ageing is the normal condition rather than a fault."
+        "feedback": "Stale is not wrong; it is aged. Remote state has two clocks, and the frontend's copy aging is the normal condition rather than a fault."
       },
       {
         "id": "c",
@@ -2278,12 +2276,12 @@
       {
         "id": "c",
         "text": "The lab measurements, which were taken on fast machines",
-        "feedback": "Lab tests on fast machines do hide real-device problems, and that is a separate failure. This number came from real journeys; what went wrong is how they were summarised."
+        "feedback": "Lab tests on fast machines do hide real-device problems, and that is a separate failure. This number came from real journeys; what went wrong is how they were summarized."
       },
       {
         "id": "d",
         "text": "Third-party scripts, whose time is not attributed to the page",
-        "feedback": "Third-party scripts block critical work, so their cost is inside these journeys rather than outside them. The summarising is what lost the slow readers."
+        "feedback": "Third-party scripts block critical work, so their cost is inside these journeys rather than outside them. The summarizing is what lost the slow readers."
       }
     ],
     "explanation": "Averages hide slow cohorts and long tails. That is one half of the puzzle this lesson opened with, and it has a companion in the other: lab tests on fast machines hide real-device problems. Both produce a number that is true and unrepresentative, which is why performance work should improve a measured user journey rather than a summary that has already averaged the journey away.",
@@ -4084,8 +4082,8 @@
   {
     "id": "api-design-card1",
     "type": "flashcard",
-    "front": "An API",
-    "back": "A contract for requesting behavior or information across a boundary. Contracts let clients and providers change independently, and turn undocumented assumptions into reviewable decisions that can be tested and observed.",
+    "front": "What an HTTP API still defines for itself",
+    "back": "Its method and status semantics are standardized, and everything application-specific remains its own work: the resources, the commands, the representations, and the policies. An API of that shape connects frontends, backends, services, partners, and automation.",
     "tags": [
       "apis-and-integration"
     ]
@@ -4676,7 +4674,8 @@
     "difficulty": "intermediate",
     "tags": [
       "apis-and-integration"
-    ]
+    ],
+    "match": "fold"
   },
   {
     "id": "third-party-integrations-card1",
@@ -4987,9 +4986,8 @@
   {
     "id": "authentication-and-authorization-card1",
     "type": "flashcard",
-    "front": "Authentication",
-    "back": "Establishing confidence in an identity. It begins at login or workload credential issuance.",
-    "reverse": true,
+    "front": "What an authorization decision takes in",
+    "back": "A principal, an action, a resource, the current context, and a policy — and what it produces is allow or deny. The step before it is a separate one: a credential produces an authenticated principal, and nothing further.",
     "tags": [
       "security"
     ]
@@ -4997,9 +4995,8 @@
   {
     "id": "authentication-and-authorization-card2",
     "type": "flashcard",
-    "front": "Authorization",
-    "back": "Deciding whether a principal may perform an action on a resource in the current context. A valid login never implies universal permission.",
-    "reverse": true,
+    "front": "An authorization check at the point of effect",
+    "back": "In this lesson's example the handler loads the invoice's tenant and classification, verifies the employee's current membership and `invoice.read` permission, records the decision context, and returns only permitted fields. A guessed ID from another tenant receives no data.",
     "tags": [
       "security"
     ]
@@ -5147,8 +5144,8 @@
   {
     "id": "browser-security-card1",
     "type": "flashcard",
-    "front": "An origin",
-    "back": "The scheme, host, and port tuple. Same-origin content has broad interaction; cross-origin interaction is constrained and selectively permitted.",
+    "front": "Same-origin against cross-origin interaction",
+    "back": "Same-origin content has broad interaction, while cross-origin interaction is constrained and selectively permitted. Origin is also the check a postMessage receiver has to make for itself: receivers that fail to verify the sending origin are a named failure here.",
     "reverse": true,
     "tags": [
       "security"
@@ -5744,7 +5741,7 @@
     "id": "contract-and-end-to-end-testing-card1",
     "type": "flashcard",
     "front": "A provider contract",
-    "back": "It states supported inputs and observable outputs.",
+    "back": "It states supported inputs and observable outputs. Contracts of this kind sit at HTTP APIs, event schemas, database adapters, browser-server interactions, and third-party integrations, and one end-to-end test traverses several of them.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -5754,7 +5751,7 @@
     "id": "contract-and-end-to-end-testing-card2",
     "type": "flashcard",
     "front": "A consumer assumption",
-    "back": "The subset of a provider contract actually relied upon.",
+    "back": "The subset of a provider contract that a caller actually relies upon. Schema checks alone cannot confirm it: they catch structural incompatibility, while schema compatibility hides changed semantics.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -5774,7 +5771,7 @@
     "id": "contract-and-end-to-end-testing-card4",
     "type": "flashcard",
     "front": "Provider tests",
-    "back": "They execute examples against the real boundary.",
+    "back": "They execute the contract's examples against the real boundary. In this lesson's example the provider verifies a consumer's published expectations on every change of its own.",
     "tags": [
       "quality-and-observability"
     ]
@@ -5783,7 +5780,7 @@
     "id": "contract-and-end-to-end-testing-card5",
     "type": "flashcard",
     "front": "What end-to-end evidence asks",
-    "back": "Whether a real user goal survives the integrated path.",
+    "back": "Whether a real user goal survives the integrated path. The suites that answer it create isolated data, act through public interfaces, and assert user-visible outcomes, and they justify their expense for critical flows and boundary combinations.",
     "tags": [
       "quality-and-observability"
     ]
@@ -5880,7 +5877,7 @@
     "id": "logs-metrics-and-traces-card1",
     "type": "flashcard",
     "front": "Structured logs",
-    "back": "They use stable event names and typed fields.",
+    "back": "They use stable event names and typed fields. That is what makes them queryable at all — free-form logs cannot be queried reliably — and a log is the signal that answers which event occurred.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -5890,7 +5887,7 @@
     "id": "logs-metrics-and-traces-card2",
     "type": "flashcard",
     "front": "Context propagation",
-    "back": "It connects signals across boundaries. Missing context is what breaks traces at queues.",
+    "back": "It connects signals across the boundaries instrumentation spans: browsers, edges, applications, data systems, queues, and platforms. Missing context is what breaks traces at queues.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -5900,7 +5897,7 @@
     "id": "logs-metrics-and-traces-card3",
     "type": "flashcard",
     "front": "Head sampling and tail sampling",
-    "back": "Head sampling decides early; tail sampling retains interesting completed traces at greater infrastructure cost.",
+    "back": "Head sampling decides early; tail sampling retains interesting completed traces at greater infrastructure cost. Either way the point of sampling is to bound what telemetry costs.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -5910,7 +5907,7 @@
     "id": "logs-metrics-and-traces-card4",
     "type": "flashcard",
     "front": "What more retention buys and costs",
-    "back": "Better investigation, against higher privacy and storage obligations.",
+    "back": "Better investigation, against higher privacy and storage obligations. The worked example keeps that second bill down by recording an object ID and a trace ID and no token, file content, or unrestricted filename.",
     "tags": [
       "quality-and-observability"
     ]
@@ -5919,8 +5916,7 @@
     "id": "logs-metrics-and-traces-card5",
     "type": "flashcard",
     "front": "Semantic conventions",
-    "back": "They make common operations comparable.",
-    "reverse": true,
+    "back": "They make common operations comparable. They sit alongside the rest of OpenTelemetry's common concepts for signals, instrumentation, and propagation.",
     "tags": [
       "quality-and-observability"
     ]
@@ -6047,7 +6043,7 @@
     "id": "debugging-production-systems-card2",
     "type": "flashcard",
     "front": "The golden signals",
-    "back": "Latency, traffic, errors, and saturation.",
+    "back": "Latency, traffic, errors, and saturation — the four a golden-signal dashboard reveals. Distributed traces then expose slow or failing spans, and structured logs provide the event detail.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -6057,7 +6053,7 @@
     "id": "debugging-production-systems-card3",
     "type": "flashcard",
     "front": "Safe mitigations",
-    "back": "Rollback, traffic shift, feature disablement, and load shedding.",
+    "back": "Rollback, traffic shift, feature disablement, and load shedding. Restarting is not among them: it clears symptoms quickly but destroys state and can hide leaks.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -6193,7 +6189,7 @@
     "id": "reliability-and-performance-card1",
     "type": "flashcard",
     "front": "An SLI, an SLO, and an SLA",
-    "back": "An SLI is a measurement, an SLO is its target, and an SLA is an agreement with consequences.",
+    "back": "An SLI is a measurement, an SLO is its target, and an SLA is an agreement with consequences. An error budget is what remains: the misses tolerated over a window.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -6203,7 +6199,7 @@
     "id": "reliability-and-performance-card2",
     "type": "flashcard",
     "front": "Availability ratios",
-    "back": "They count successful eligible events.",
+    "back": "They count successful eligible events, where latency histograms preserve tail behavior instead. Reliability and performance need both — one is the ability to deliver intended behavior, the other the time and resources it takes.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -6213,7 +6209,7 @@
     "id": "reliability-and-performance-card3",
     "type": "flashcard",
     "front": "Timeouts and retries",
-    "back": "Timeouts bound waiting; retries consume an explicit budget.",
+    "back": "Timeouts bound waiting; retries consume an explicit budget. Redundancy, failover, degradation, and recovery drills address failure too, though redundancy that shares one failure domain addresses none of it.",
     "reverse": true,
     "tags": [
       "quality-and-observability"
@@ -6223,7 +6219,7 @@
     "id": "reliability-and-performance-card4",
     "type": "flashcard",
     "front": "How to choose an indicator",
-    "back": "From what users care about rather than from what is easiest to measure.",
+    "back": "From what users care about rather than from what is easiest to measure, which is Google SRE's recommendation. The failure on the other side of it is optimizing a component that is not on the critical path.",
     "tags": [
       "quality-and-observability"
     ]
@@ -6232,7 +6228,7 @@
     "id": "reliability-and-performance-card5",
     "type": "flashcard",
     "front": "Performance budgets",
-    "back": "They limit frontend and backend regressions.",
+    "back": "They limit frontend and backend regressions. The worked example budgets edge and backend time separately, and degrades optional recommendations when the remaining error budget is low.",
     "tags": [
       "quality-and-observability"
     ]
@@ -6340,7 +6336,7 @@
     "id": "environments-and-configuration-card1",
     "type": "flashcard",
     "front": "An environment",
-    "back": "A running context with particular identities, data, dependencies, policies, and capacity.",
+    "back": "A running context with particular identities, data, dependencies, policies, and capacity. Development, test, staging, and production are separate ones, and keeping them separate is what limits accidental access across them.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6360,7 +6356,7 @@
     "id": "environments-and-configuration-card3",
     "type": "flashcard",
     "front": "Startup validation",
-    "back": "It rejects missing or malformed settings, failing before traffic is accepted.",
+    "back": "It rejects missing or malformed settings, failing before traffic is accepted. In the worked example it validates endpoints and limits and emits a redacted configuration fingerprint.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6370,7 +6366,7 @@
     "id": "environments-and-configuration-card4",
     "type": "flashcard",
     "front": "How environment identity is enforced",
-    "back": "Through accounts, networks, and permissions, not naming convention alone.",
+    "back": "Through accounts, networks, and permissions, not naming convention alone. The failure on the other side of that is staging sharing a database with production.",
     "tags": [
       "delivery-and-operations"
     ]
@@ -6379,7 +6375,7 @@
     "id": "environments-and-configuration-card5",
     "type": "flashcard",
     "front": "Environment drift",
-    "back": "It makes a tested artifact behave differently after promotion.",
+    "back": "It makes a tested artifact behave differently after promotion. The rule it defeats is the one this lesson is built on: build one immutable artifact, and bind environment-specific configuration at deployment or startup.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6486,7 +6482,7 @@
     "id": "continuous-integration-and-delivery-card1",
     "type": "flashcard",
     "front": "Continuous integration",
-    "back": "Merging small changes into a shared line with automated feedback.",
+    "back": "Merging small changes into a shared line with automated feedback. Required checks validate structure, tests, security policy, and compatibility, and fast checks are what make frequent integration possible.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6496,7 +6492,7 @@
     "id": "continuous-integration-and-delivery-card2",
     "type": "flashcard",
     "front": "Continuous delivery",
-    "back": "Keeping a verified artifact deployable through controlled promotion.",
+    "back": "Keeping a verified artifact deployable through controlled promotion. Deployment and release may occur at different times, which is the separation feature flags exist to make.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6506,7 +6502,7 @@
     "id": "continuous-integration-and-delivery-card3",
     "type": "flashcard",
     "front": "Deployment strategies",
-    "back": "Rolling, blue-green, and canary rollout.",
+    "back": "Rolling, blue-green, and canary rollout. Canary limits blast radius while requiring cohort-aware metrics, and health checks govern admission where user-facing signals govern promotion.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6525,7 +6521,7 @@
     "id": "continuous-integration-and-delivery-card5",
     "type": "flashcard",
     "front": "What every later environment receives",
-    "back": "The same artifact, with different configuration.",
+    "back": "The same artifact, with different configuration. That identity is what a pipeline rebuilding per environment destroys, and it is why the artifact is built once and identified before it is deployed at all.",
     "tags": [
       "delivery-and-operations"
     ]
@@ -6638,7 +6634,7 @@
     "id": "hosting-and-compute-card1",
     "type": "flashcard",
     "front": "Hosting",
-    "back": "It provides the environments where web workloads execute.",
+    "back": "It provides the environments where web workloads execute. The options run from virtual machines and containers to managed application platforms and functions, each assigning different responsibilities to the team and the provider.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6657,7 +6653,7 @@
     "id": "hosting-and-compute-card3",
     "type": "flashcard",
     "front": "Autoscaling",
-    "back": "It follows metrics with delay and needs capacity limits.",
+    "back": "It follows metrics with delay and needs capacity limits. The failures on the other side of those limits are named: scaling floods a fixed database, and cost grows from idle capacity or uncontrolled invocation.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6676,7 +6672,7 @@
     "id": "hosting-and-compute-card5",
     "type": "flashcard",
     "front": "Lower-level compute",
-    "back": "It offers control and portability at higher operational cost.",
+    "back": "It offers control and portability at higher operational cost, where managed platforms accelerate standard workloads but constrain networking, runtime, or startup behavior.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6720,10 +6716,13 @@
     "prompt": "An orchestrated service is under heavy load. It is still answering, only slowly, and it would recover if the load eased. One of the two checks this lesson names will instead have it replaced. Which one?",
     "accept": [
       "liveness",
+      "liveness check",
       "a liveness check",
       "the liveness check",
-      "liveness check",
-      "liveness checks"
+      "liveness checks",
+      "liveness probe",
+      "the liveness probe",
+      "the liveness one"
     ],
     "match": "fold",
     "hints": [
@@ -6806,7 +6805,7 @@
     "id": "containers-and-orchestration-card4",
     "type": "flashcard",
     "front": "Mutable tags",
-    "back": "They hide version identity.",
+    "back": "They hide version identity, even though images are otherwise layered, immutable inputs. It is a named container failure alongside images that run as privileged users and liveness checks that restart overloaded but recoverable processes.",
     "tags": [
       "delivery-and-operations"
     ]
@@ -6944,7 +6943,7 @@
     "id": "cdns-edge-and-load-balancing-card2",
     "type": "flashcard",
     "front": "TLS termination at the edge",
-    "back": "It authenticates the public origin.",
+    "back": "It authenticates the public origin. Every hop after it has to preserve the original scheme, host, client context, deadline, and trace information through trusted fields.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6954,7 +6953,7 @@
     "id": "cdns-edge-and-load-balancing-card3",
     "type": "flashcard",
     "front": "Rate limiting and request-size limits",
-    "back": "They reject abuse early.",
+    "back": "They reject abuse early. Rejecting early is what the layer is for: it lies between public DNS and application instances, and may include a CDN, a web application firewall, a reverse proxy, an API gateway, and regional or global load balancers.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -6964,7 +6963,7 @@
     "id": "cdns-edge-and-load-balancing-card4",
     "type": "flashcard",
     "front": "Cache keys and freshness",
-    "back": "They determine which responses can be reused.",
+    "back": "They determine which responses can be reused. Caching static and public content reduces origin load, while personalized content needs private or carefully varied keys.",
     "tags": [
       "delivery-and-operations"
     ]
@@ -6973,7 +6972,7 @@
     "id": "cdns-edge-and-load-balancing-card5",
     "type": "flashcard",
     "front": "Missing cache dimensions",
-    "back": "They leak private data.",
+    "back": "They leak private data. The worked example avoids that by varying public catalog responses on locale and region, and never sharing account responses at all.",
     "tags": [
       "delivery-and-operations"
     ]
@@ -6985,9 +6984,11 @@
     "accept": [
       "establish command",
       "establishing command",
-      "command",
       "establish incident command",
-      "incident command"
+      "establishing incident command",
+      "incident command",
+      "command",
+      "the command step"
     ],
     "match": "fold",
     "hints": [
@@ -7072,7 +7073,7 @@
     "id": "monitoring-and-incident-response-card1",
     "type": "flashcard",
     "front": "Monitoring",
-    "back": "It evaluates signals against expected service behavior.",
+    "back": "It evaluates signals against expected service behavior, consuming telemetry from every layer. Its goal is to reduce user harm and recovery time, not to produce the maximum number of alerts.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -7092,7 +7093,7 @@
     "id": "monitoring-and-incident-response-card3",
     "type": "flashcard",
     "front": "SLO burn-rate alerts",
-    "back": "They relate recent failure to an error budget.",
+    "back": "They relate recent failure to an error budget. In the worked example a checkout burn alert pages the service owner, and paging someone for every exception is the failure it avoids.",
     "reverse": true,
     "tags": [
       "delivery-and-operations"
@@ -7111,7 +7112,7 @@
     "id": "monitoring-and-incident-response-card5",
     "type": "flashcard",
     "front": "What to alert on",
-    "back": "Actionable user-visible symptoms, or imminent exhaustion.",
+    "back": "Actionable user-visible symptoms, or imminent exhaustion — not every exception. The named failures around it are dashboards that omit deployment markers, and monitoring that depends on the failed system.",
     "tags": [
       "delivery-and-operations"
     ]
@@ -7216,7 +7217,7 @@
     "id": "monoliths-modules-and-microservices-card1",
     "type": "flashcard",
     "front": "A monolith",
-    "back": "It deploys much of an application as one unit.",
+    "back": "It deploys much of an application as one unit. That simplifies local development, consistency, and operations, and it risks broad releases and hidden coupling.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7226,7 +7227,7 @@
     "id": "monoliths-modules-and-microservices-card2",
     "type": "flashcard",
     "front": "Modules",
-    "back": "They create internal boundaries within a unit.",
+    "back": "They create internal boundaries within a unit. A modular monolith enforces dependency directions inside one process and can still use local transactions.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7236,7 +7237,7 @@
     "id": "monoliths-modules-and-microservices-card3",
     "type": "flashcard",
     "front": "Microservices",
-    "back": "They create independently deployable network boundaries around capabilities.",
+    "back": "They create independently deployable network boundaries around capabilities, enabling independent lifecycle and scale while adding partial failure, compatibility, duplicated platform work, and cross-service consistency.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7361,7 +7362,7 @@
     "id": "layers-boundaries-and-coupling-card1",
     "type": "flashcard",
     "front": "Coupling",
-    "back": "The knowledge one part must have about another to change or operate correctly.",
+    "back": "The knowledge one part must have about another to change or operate correctly. Duplication can be cheaper than it when similar code represents different domain meanings.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7371,7 +7372,7 @@
     "id": "layers-boundaries-and-coupling-card2",
     "type": "flashcard",
     "front": "A boundary",
-    "back": "It defines what may cross, and in which direction.",
+    "back": "It defines what may cross, and in which direction. The direction to prefer runs from volatile delivery and infrastructure details toward stable application policy.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7381,7 +7382,7 @@
     "id": "layers-boundaries-and-coupling-card3",
     "type": "flashcard",
     "front": "An adapter",
-    "back": "It translates protocols and schemas.",
+    "back": "It translates protocols and schemas. In the worked example, HTTP and SQL adapters implement capabilities named in domain terms, so replacing a payment provider changes one adapter and its mapping rather than invoice policy.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7391,7 +7392,7 @@
     "id": "layers-boundaries-and-coupling-card4",
     "type": "flashcard",
     "front": "Dependency inversion",
-    "back": "It lets policy specify the capabilities it needs.",
+    "back": "It lets policy specify the capabilities it needs, so an invoice use case can depend on a repository, a clock, and a payment port expressed in domain terms rather than on whatever supplies them.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7401,7 +7402,7 @@
     "id": "layers-boundaries-and-coupling-card5",
     "type": "flashcard",
     "front": "Cohesion",
-    "back": "It keeps behavior that changes for the same reason together.",
+    "back": "It keeps behavior that changes for the same reason together. Encapsulation hides the representations likely to change, and architecture tests can enforce the module imports both of them allow.",
     "tags": [
       "architecture"
     ]
@@ -7506,7 +7507,7 @@
     "id": "synchronous-and-asynchronous-design-card1",
     "type": "flashcard",
     "front": "Synchronous interaction",
-    "back": "It keeps the caller waiting for a result.",
+    "back": "It keeps the caller waiting for a result: request, then outcome within one deadline. It is simple when work is fast and dependencies reliable, and long chains of it multiply latency and failure.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7516,7 +7517,7 @@
     "id": "synchronous-and-asynchronous-design-card2",
     "type": "flashcard",
     "front": "Asynchronous interaction",
-    "back": "It separates acceptance from completion and communicates later through state, messages, or callbacks.",
+    "back": "It separates acceptance from completion and communicates later through state, messages, or callbacks. It absorbs bursts and isolates availability while adding storage, workers, delayed feedback, ordering, and repair.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7526,7 +7527,7 @@
     "id": "synchronous-and-asynchronous-design-card3",
     "type": "flashcard",
     "front": "A correlation ID",
-    "back": "It connects a later result to the request that asked for it.",
+    "back": "It connects a later result to the request that asked for it — necessary because acceptance and completion are separate events, and the outcome arrives by query or notification rather than in the original reply.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7536,7 +7537,7 @@
     "id": "synchronous-and-asynchronous-design-card4",
     "type": "flashcard",
     "front": "Idempotency and deduplication",
-    "back": "They handle repeated delivery.",
+    "back": "They handle repeated delivery. The assumption they exist to refuse is the one named here: consumers assume one delivery, or global ordering.",
     "tags": [
       "architecture"
     ]
@@ -7545,7 +7546,7 @@
     "id": "synchronous-and-asynchronous-design-card5",
     "type": "flashcard",
     "front": "Request-reply over a queue",
-    "back": "It retains much synchronous coupling with more infrastructure.",
+    "back": "It retains much synchronous coupling with more infrastructure. Events go the other way, reducing direct knowledge and broadening compatibility obligations.",
     "tags": [
       "architecture"
     ]
@@ -7557,8 +7558,12 @@
     "accept": [
       "teams",
       "team",
+      "team growth",
       "growth in teams",
-      "teams growth"
+      "teams growth",
+      "number of teams",
+      "the number of teams",
+      "growth in the number of teams"
     ],
     "match": "fold",
     "hints": [
@@ -7653,7 +7658,7 @@
     "id": "scalability-tradeoffs-card2",
     "type": "flashcard",
     "front": "Sharding",
-    "back": "It assigns subsets by key.",
+    "back": "It assigns subsets by key. It improves throughput while making cross-shard queries and rebalancing expensive, and a hot partition key is how the choice goes wrong.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7662,8 +7667,8 @@
   {
     "id": "scalability-tradeoffs-card3",
     "type": "flashcard",
-    "front": "Backpressure",
-    "back": "It keeps demand from exceeding bounded capacity.",
+    "front": "Replication",
+    "back": "It increases read capacity or availability, and creates lag and failover complexity in exchange. Precomputation makes the same kind of trade in another currency: freshness and storage, for query latency.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7673,7 +7678,7 @@
     "id": "scalability-tradeoffs-card4",
     "type": "flashcard",
     "front": "Vertical scaling",
-    "back": "It enlarges a resource.",
+    "back": "It enlarges a resource, where horizontal scaling instead distributes work across instances and requires routable or partitioned state. The larger ceiling belongs to the second, and so does the coordination cost.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7683,7 +7688,7 @@
     "id": "scalability-tradeoffs-card5",
     "type": "flashcard",
     "front": "What scaling one resource does to the bottleneck",
-    "back": "It often moves the bottleneck rather than removing it.",
+    "back": "It often moves the bottleneck rather than removing it: application instances scaled past the database connections behind them, or distributed coordination becoming the new limit.",
     "tags": [
       "architecture"
     ]
@@ -7694,7 +7699,12 @@
     "prompt": "A migration plan passes through a stage in which the system can neither be rolled back nor observed. This lesson sets one requirement on every state between the start of an evolution and its end, and this stage fails it. Name the requirement in one word.",
     "accept": [
       "operable",
-      "operability"
+      "operability",
+      "operational",
+      "operable state",
+      "it must be operable",
+      "every state must be operable",
+      "every intermediate state must be operable"
     ],
     "match": "fold",
     "hints": [
@@ -7779,7 +7789,7 @@
     "id": "evolving-an-architecture-card1",
     "type": "flashcard",
     "front": "A compatibility adapter",
-    "back": "It isolates an old concept.",
+    "back": "It isolates an old concept so a new path can run beside it. Its named failure is the one where the temporary adapter becomes permanent.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7789,7 +7799,7 @@
     "id": "evolving-an-architecture-card2",
     "type": "flashcard",
     "front": "Expand–contract migration",
-    "back": "It supports overlapping versions.",
+    "back": "It supports overlapping versions. That matters because every intermediate state of an evolution has to be operable.",
     "tags": [
       "architecture"
     ]
@@ -7798,7 +7808,7 @@
     "id": "evolving-an-architecture-card3",
     "type": "flashcard",
     "front": "Branch by abstraction",
-    "back": "It switches implementations behind a stable interface.",
+    "back": "It switches implementations behind a stable interface, so both can run while authority moves. Parallel paths of that kind reduce migration risk while increasing temporary complexity and cost.",
     "reverse": true,
     "tags": [
       "architecture"
@@ -7808,7 +7818,7 @@
     "id": "evolving-an-architecture-card4",
     "type": "flashcard",
     "front": "Shadow traffic",
-    "back": "It compares results without serving them.",
+    "back": "It compares results without serving them. In the worked search extraction it runs before any cohort is routed, and long before the index becomes authoritative for discovery.",
     "tags": [
       "architecture"
     ]
@@ -7817,7 +7827,7 @@
     "id": "evolving-an-architecture-card5",
     "type": "flashcard",
     "front": "An architecture decision record",
-    "back": "It preserves context and reversal conditions.",
+    "back": "It preserves context and reversal conditions. The named failure it answers is the evolution whose success lacks measurable criteria.",
     "tags": [
       "architecture"
     ]
@@ -7927,7 +7937,7 @@
     "id": "frontend-technologies-card1",
     "type": "flashcard",
     "front": "React",
-    "back": "It uses component rendering around state updates.",
+    "back": "It uses component rendering around state updates — one of the component ecosystems that accelerate complex interfaces while adding runtime, build, and upgrade cost.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -7937,7 +7947,7 @@
     "id": "frontend-technologies-card2",
     "type": "flashcard",
     "front": "Vue and Svelte",
-    "back": "They offer different reactivity and compilation models.",
+    "back": "They offer different reactivity and compilation models, where Angular instead supplies a broad application framework. Meta-frameworks such as Next.js, Nuxt, and SvelteKit sit above all of them, combining routing, rendering, asset handling, and deployment conventions.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -7947,7 +7957,7 @@
     "id": "frontend-technologies-card3",
     "type": "flashcard",
     "front": "What frontend tools package differently",
-    "back": "Assumptions about rendering, state, routing, and delivery.",
+    "back": "Assumptions about rendering, state, routing, and delivery. Server-oriented frameworks improve initial delivery and integrated routing while coupling application structure to deployment conventions.",
     "tags": [
       "technology-landscape"
     ]
@@ -7966,7 +7976,7 @@
     "id": "frontend-technologies-card5",
     "type": "flashcard",
     "front": "Browser standards",
-    "back": "They remain the runtime contract beneath every frontend tool.",
+    "back": "They remain the runtime contract beneath every frontend tool, which is why browser-native approaches minimize dependencies and longevity risk — and why meta-framework behavior is not HTTP behavior.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8009,7 +8019,13 @@
     "type": "short-answer",
     "prompt": "A team argues for a backend stack because its members prefer the language's syntax. This lesson frames the choice around two things instead, and workload is the first. Name the second in one word.",
     "accept": [
-      "ownership"
+      "ownership",
+      "owner",
+      "owners",
+      "team ownership",
+      "who owns it",
+      "who owns the system",
+      "operational ownership"
     ],
     "match": "fold",
     "hints": [
@@ -8067,7 +8083,7 @@
     "id": "backend-technologies-card1",
     "type": "flashcard",
     "front": "Node.js",
-    "back": "It centers event-driven JavaScript and its package ecosystem.",
+    "back": "It centers event-driven JavaScript and its package ecosystem. The failure that follows the event loop is named here: CPU work blocks it, and blocking libraries exhaust async worker pools.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8087,7 +8103,7 @@
     "id": "backend-technologies-card3",
     "type": "flashcard",
     "front": "Rust",
-    "back": "It emphasizes memory safety without garbage collection.",
+    "back": "It emphasizes memory safety without garbage collection, where JVM stacks such as Spring and .NET instead supply a managed runtime with an integrated application or web platform.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8106,7 +8122,7 @@
     "id": "backend-technologies-card5",
     "type": "flashcard",
     "front": "What an integrated framework can obscure",
-    "back": "Cost and lifecycle, even while it accelerates CRUD, validation, and security conventions.",
+    "back": "Cost and lifecycle, even while it accelerates CRUD, validation, and security conventions. Minimal frameworks make the opposite trade: they expose the decisions and require the team to assemble policy.",
     "tags": [
       "technology-landscape"
     ]
@@ -8208,7 +8224,7 @@
     "id": "data-technologies-card1",
     "type": "flashcard",
     "front": "Redis",
-    "back": "It exposes in-memory data structures used for caching and coordination.",
+    "back": "It exposes in-memory data structures used for caching and coordination. In this lesson's example it holds short-lived hot summaries and is not one of the authorities — a cache that becomes authoritative is a named failure.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8218,7 +8234,7 @@
     "id": "data-technologies-card2",
     "type": "flashcard",
     "front": "Kafka",
-    "back": "It provides partitioned retained logs for event streams.",
+    "back": "It provides partitioned retained logs for event streams. Retention is the number to check on one: queue retention shorter than recovery time is a named failure.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8228,7 +8244,7 @@
     "id": "data-technologies-card3",
     "type": "flashcard",
     "front": "MongoDB",
-    "back": "It centers document aggregates.",
+    "back": "It centers document aggregates, where PostgreSQL and MySQL provide relational schemas, transactions, indexes, and SQL. One relational database handles more workloads than category marketing suggests.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8238,7 +8254,7 @@
     "id": "data-technologies-card4",
     "type": "flashcard",
     "front": "What polyglot persistence multiplies",
-    "back": "Security, schema evolution, backup, and expertise.",
+    "back": "Security, schema evolution, backup, and expertise. Specialized systems are justified by measured access or isolation needs rather than by category.",
     "tags": [
       "technology-landscape"
     ]
@@ -8247,7 +8263,7 @@
     "id": "data-technologies-card5",
     "type": "flashcard",
     "front": "Object stores",
-    "back": "They manage durable byte objects by key.",
+    "back": "They manage durable byte objects by key. In this lesson's example they are an authority alongside the relational database, and object metadata drifting from database rows is the failure that pairs the two.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8315,7 +8331,7 @@
         "feedback": "Higher abstractions reduce undifferentiated operations, and machines are the clearest case of that. This is the part a managed platform exists to absorb."
       }
     ],
-    "explanation": "Teams assume managed means unowned, and this lesson's five questions exist to separate the operational responsibilities a platform assumes from the ones that stay with the application team. Omitting data export and restore plans is on the failure list by name, and it belongs to the question no provider answers on your behalf: how do we leave. The worked example is a team doing the opposite, writing down an artifact and data export path while leaving is still hypothetical.",
+    "explanation": "Teams assume managed means unowned, and this lesson's five questions exist to separate the operational responsibilities a platform assumes from the ones that stay with the application team. Omitting data export and restore plans is one of the failures this lesson names, and it belongs to the question no provider answers on your behalf: how do we leave. The worked example is a team doing the opposite, writing down an artifact and data export path while leaving is still hypothetical.",
     "difficulty": "intermediate",
     "tags": [
       "technology-landscape"
@@ -8327,7 +8343,12 @@
     "prompt": "During a launch peak a platform begins refusing work, and the limit it enforced turns out to be a number nobody on the team had seen. This lesson names what appeared. Give it in one word.",
     "accept": [
       "quotas",
-      "quota"
+      "quota",
+      "a quota",
+      "the quotas",
+      "platform quota",
+      "platform quotas",
+      "quota limits"
     ],
     "match": "fold",
     "hints": [
@@ -8344,7 +8365,7 @@
     "id": "infrastructure-platforms-card1",
     "type": "flashcard",
     "front": "Kubernetes",
-    "back": "It orchestrates containerized workloads through declarative desired state.",
+    "back": "It orchestrates containerized workloads through declarative desired state. It standardizes many workload concepts while requiring significant platform ownership unless it is managed well.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8364,7 +8385,7 @@
     "id": "infrastructure-platforms-card3",
     "type": "flashcard",
     "front": "Edge platforms",
-    "back": "They run code and caches near users.",
+    "back": "They run code and caches near users — one of the abstraction levels mapped here, beside infrastructure clouds, container orchestrators, application platforms, and integrated backend services.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8506,7 +8527,7 @@
     "id": "choosing-technologies-card2",
     "type": "flashcard",
     "front": "The best technology choice",
-    "back": "The one whose tradeoffs the team can explain and operate.",
+    "back": "The one whose tradeoffs the team can explain and operate. Familiar technology lowers delivery risk but may not fit a hard requirement, and exceptional tools need exceptional justification.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8516,7 +8537,7 @@
     "id": "choosing-technologies-card3",
     "type": "flashcard",
     "front": "What an architecture record captures",
-    "back": "The decision and its review trigger.",
+    "back": "The decision and its review trigger. Recording why, not just what, is what lets a selection be revisited when evidence or constraints change.",
     "tags": [
       "technology-landscape"
     ]
@@ -8525,7 +8546,7 @@
     "id": "choosing-technologies-card4",
     "type": "flashcard",
     "front": "What managed products exchange",
-    "back": "Control and portability, for reduced operations.",
+    "back": "Control and portability, for reduced operations. The prototype that tests one of them has to prove recovery, quotas, and data export rather than a happy path.",
     "reverse": true,
     "tags": [
       "technology-landscape"
@@ -8535,7 +8556,7 @@
     "id": "choosing-technologies-card5",
     "type": "flashcard",
     "front": "What open source gives",
-    "back": "Inspectability, but not free support.",
+    "back": "Inspectability, but not free support. Support horizon and ecosystem health are assessed separately, alongside team familiarity, operability, migration path, and lock-in.",
     "tags": [
       "technology-landscape"
     ]

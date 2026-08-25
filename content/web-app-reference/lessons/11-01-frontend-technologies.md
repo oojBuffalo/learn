@@ -7,7 +7,8 @@ objectives:
   - Say what each frontend approach buys and what it charges for it
   - Refuse a category ranking as an answer to a question about interaction and team constraints
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [evolving-an-architecture]
 tags: [technology-landscape]
 ---
 
@@ -18,7 +19,7 @@ has asked for is a filter over a list. They adopt the framework at the top of
 their shortlist, and by the end of the week they own a rendering mode, an asset
 handling step, and deployment conventions nothing in the product required.
 
-Nothing is broken. This lesson names the move in its failure list: teams ship
+Nothing is broken. This lesson names the move among its failures: teams ship
 framework defaults they do not need. The shortlist answered a question about
 categories, and the product had asked one about interaction.
 
@@ -88,8 +89,8 @@ routing while coupling application structure to deployment conventions.
 
 A design system is the one with a condition attached. It creates consistency
 only when semantics, accessibility, tokens, and ownership accompany its
-components. A component library can hide inaccessible markup — a separate entry
-on the failure list, and this lesson's reason for keeping a library and a design
+components. A component library can hide inaccessible markup — a separate
+named failure, and this lesson's reason for keeping a library and a design
 system apart.
 
 ::activity{id="frontend-technologies-ms1"}
@@ -104,10 +105,10 @@ The shortlist ranked a category, and a ranking cannot say which capabilities a
 product requires, because the eight are not a scale. Server rendering is not
 more of view composition.
 
-The bill is already in the failure list. Defaults nobody needed are shipping,
-and dependency churn can consume more effort than product change. The first time
-this team debugs a caching behavior, it will also have to remember that
-meta-framework behavior is not HTTP behavior.
+The bill is already among the named failures. Defaults nobody needed are
+shipping, and dependency churn can consume more effort than product change. The
+first time this team debugs a caching behavior, it will also have to remember
+that meta-framework behavior is not HTTP behavior.
 
 The repair is not a better-ordered shortlist. It is to write down which of the
 eight capabilities the content and the filter require, and then ask each

@@ -66,10 +66,10 @@ Layout derives sizes and positions from it, paint produces drawing operations,
 and compositing combines layers.
 
 That is a dependency order, not a schedule. Browsers may stream and overlap
-these stages, and the HTML standard specifies document behaviour and offers
+these stages, and the HTML standard specifies document behavior and offers
 default rendering guidance while allowing user agents implementation freedom.
 Native elements enter here too: they contribute default semantics and keyboard
-behaviour that the tree gets without anyone writing it.
+behavior that the tree gets without anyone writing it.
 
 ::activity{id="rendering-and-the-dom-mat1"}
 
@@ -111,7 +111,7 @@ particular repeat of work.
 
 Two of those decisions have prices worth stating.
 
-Native controls are less customizable but bring robust behaviour. Replacing one
+Native controls are less customizable but bring robust behavior. Replacing one
 buys the design and gives up defaults you then owe the reader yourself.
 
 Large DOMs simplify “render everything” logic while increasing traversal, style,
@@ -142,4 +142,4 @@ thumb never needed the fourth question.
 
 ## Sources
 
-- WHATWG, [HTML Living Standard: Rendering](https://html.spec.whatwg.org/multipage/rendering.html) (accessed 2026-07-18) — the standard specifies document behaviour and offers default rendering guidance while allowing user agents implementation freedom
+- WHATWG, [HTML Living Standard: Rendering](https://html.spec.whatwg.org/multipage/rendering.html) (accessed 2026-07-18) — the standard specifies document behavior and offers default rendering guidance while allowing user agents implementation freedom

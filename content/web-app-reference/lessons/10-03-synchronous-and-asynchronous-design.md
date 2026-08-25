@@ -7,7 +7,8 @@ objectives:
   - Attach queues, state machines, correlation IDs and idempotency to the question each of them answers
   - Judge which named failure a described flow is committing, and where its authoritative state sits
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [monoliths-modules-and-microservices]
 tags: [architecture]
 ---
 

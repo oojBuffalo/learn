@@ -71,7 +71,7 @@ Three more are about the work rather than the measurement. Third-party scripts
 block critical work. Hydration can duplicate server work or make controls appear
 before they function — a page that looks finished and is not. And lazy loading
 above-the-fold content delays the thing the user came to see, which is the
-critical path being optimised in the wrong direction.
+critical path being optimized in the wrong direction.
 
 ::activity{id="frontend-performance-mc2"}
 
@@ -107,8 +107,8 @@ content may be more useful than replacing it with loading chrome.
 The cheapest check is not a measurement at all. It is a question: which stage is
 this journey waiting on?
 
-Ask it of the thing you were about to optimise. If you cannot answer, the
-optimisation is a guess — and the critical path often crosses server, network,
+Ask it of the thing you were about to optimize. If you cannot answer, the
+optimization is a guess — and the critical path often crosses server, network,
 and browser boundaries, so the guess has more places to be wrong than your code
 has stages.
 
@@ -122,7 +122,7 @@ beside them.
 
 Fourth, and it is a minute's work: check whether anything above the fold is
 being lazy loaded. Lazy loading above-the-fold content delays the thing the user
-came to see — a performance failure produced by an optimisation.
+came to see — a performance failure produced by an optimization.
 
 ## Sources
 

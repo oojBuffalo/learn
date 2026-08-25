@@ -81,7 +81,7 @@ forward the request. Two of those — rejecting and serving from cache — mean 
 backend never sees the message at all.
 
 The backend parses the message, establishes request context, authenticates,
-authorizes, validates, invokes application behaviour, and maps the result to a
+authorizes, validates, invokes application behavior, and maps the result to a
 response, in that order. The order is the point: rejection gets cheaper the
 earlier it happens.
 

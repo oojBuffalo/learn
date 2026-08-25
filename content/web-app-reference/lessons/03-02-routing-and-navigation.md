@@ -96,7 +96,7 @@ transitions but must reproduce document-level concerns.
 
 Read that second sentence as a bill. Titles, focus and scroll came with the
 document when the server sent one; a client router restores all three by hand,
-and the failures below are what an unpaid instalment looks like.
+and the failures below are what an unpaid installment looks like.
 
 ::activity{id="routing-and-navigation-mc2"}
 

@@ -7,7 +7,8 @@ objectives:
   - Apply the five conditions that justify paying the network and operational cost of a process boundary
   - Place each named failure mode on the side of the choice it belongs to — after a split, or inside one unit
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [monitoring-and-incident-response]
 tags: [architecture]
 ---
 
@@ -123,9 +124,9 @@ independent deployment, scaling, isolation, technology, or ownership justifies
 the boundary — and unclear ownership of code inside one unit is not one of the
 five, however often the word turns up on both sides.
 
-Take the second decision first and the failure list already names the result:
-many services that must deploy together. The boundaries were never drawn, so
-the network went around the tangle instead.
+Take the second decision first and one of the named failures already describes
+the result: many services that must deploy together. The boundaries were never
+drawn, so the network went around the tangle instead.
 
 ## Sources
 

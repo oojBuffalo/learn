@@ -76,7 +76,7 @@ the screen does not own. Read the last clause second. Notification is scheduled
 *after* commit, because a notification about an approval that did not commit is
 a statement about nothing.
 
-That ordering generalises. Strong invariants often belong inside one
+That ordering generalizes. Strong invariants often belong inside one
 transaction, since an invariant enforced across two commits is enforced nowhere
 in between. Cross-system processes require explicit intermediate states and
 compensation, because there is no single commit for the crossing part to hide

@@ -73,7 +73,7 @@ hops where the policy differs.
 
 ## Choosing the shape of your nouns
 
-Resource-oriented designs offer stable nouns and generic HTTP behaviour, while
+Resource-oriented designs offer stable nouns and generic HTTP behavior, while
 action-oriented endpoints may express commands more directly. Coarse
 representations reduce round trips but can transfer unused data; fine-grained
 resources improve reuse but may create chatty clients. Server authority
@@ -94,7 +94,7 @@ something the client was entitled to rely on, or something it was not entitled
 to rely on and relied on anyway.
 
 Problems arise when a URL encodes an implementation detail that later changes,
-when clients infer undocumented server behaviour, when status codes do not match
+when clients infer undocumented server behavior, when status codes do not match
 outcomes, or when a representation silently omits information needed to
 interpret it. Read as eliminations, these are informative. A URL that survives a
 storage migration tells you the identifier never named the storage. A client

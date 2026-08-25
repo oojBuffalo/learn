@@ -7,7 +7,8 @@ objectives:
   - Separate mechanisms that act on the work, on the resources, and on the demand
   - Name the currency each scaling choice is paid in, and where the constraint reappears afterward
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [monoliths-modules-and-microservices]
 tags: [architecture]
 ---
 

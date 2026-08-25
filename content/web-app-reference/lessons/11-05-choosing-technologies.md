@@ -7,7 +7,8 @@ objectives:
   - Set constraints measurable enough that a candidate can fail one
   - Size the analysis to how reversible the choice is
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [evolving-an-architecture]
 tags: [technology-landscape]
 ---
 
@@ -113,7 +114,7 @@ somebody listed. What it did not establish is whether any of them is required,
 whether the candidate meets a checkable constraint, or what it does under
 overload.
 
-The failure list says what tends to happen next. Benchmarks omit the real
+The failures named here say what tends to happen next. Benchmarks omit the real
 workload. Teams ignore upgrade or incident work. Selection assumes future
 headcount or scale that never arrives. And a prototype proves a happy path but
 not recovery, quotas, or data export — the table's own absence arriving later

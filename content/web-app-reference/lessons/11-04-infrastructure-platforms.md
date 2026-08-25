@@ -7,7 +7,8 @@ objectives:
   - Separate the operational responsibilities a platform assumes from the ones that stay with the team
   - Locate the dependencies a portability claim leaves out
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [evolving-an-architecture]
 tags: [technology-landscape]
 ---
 
@@ -36,7 +37,7 @@ backup, and support handled? How do we leave?
 
 Between them the five do one job: they clarify which operational
 responsibilities a platform assumes and which remain with the application team.
-Read that against the failure list and the shortest entry lines up: teams
+Read that against the failures named here and the shortest one lines up: teams
 assume managed means unowned.
 
 A platform hosts every deployed component and becomes part of its availability,
@@ -90,9 +91,9 @@ Narrow is the word to keep. A higher abstraction does not only take away
 operations nobody wanted; it takes away configuration somebody might have
 wanted, and what is left is the shape the platform allows.
 
-Three more sit on the same failure list. Platform quotas appear only under peak
-load. Teams omit data export and restore plans, or grant broad platform roles
-for convenience.
+Three more sit among the same named failures. Platform quotas appear only under
+peak load. Teams omit data export and restore plans, or grant broad platform
+roles for convenience.
 
 ::activity{id="infrastructure-platforms-sa1"}
 

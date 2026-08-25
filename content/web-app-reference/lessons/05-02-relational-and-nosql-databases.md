@@ -72,12 +72,12 @@ the last one: search and cache can be rebuilt, and orders remain authoritative.
 That is what makes running several stores survivable here. Losing the search
 index costs a rebuild.
 
-Read the outbox against the failure list. Dual writes to independent stores drift
-without a durable coordination pattern, and what this marketplace does instead is
-publish changes that have already committed. The primary database often holds
-authoritative application state, while specialized stores may support caching,
-search, analytics, graphs, or high-volume event access without becoming the
-authority for every fact.
+Read the outbox against the failures this lesson names. Dual writes to
+independent stores drift without a durable coordination pattern, and what this
+marketplace does instead is publish changes that have already committed. The
+primary database often holds authoritative application state, while specialized
+stores may support caching, search, analytics, graphs, or high-volume event
+access without becoming the authority for every fact.
 
 ::activity{id="relational-and-nosql-databases-ms1"}
 

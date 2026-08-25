@@ -37,7 +37,7 @@ articles walked into.
 
 Choosing between them is a choice along five axes: lifetime, sensitivity,
 size, consistency, and server visibility. Choose badly and you get stale state,
-privacy leaks, or offline behaviour that cannot reconcile.
+privacy leaks, or offline behavior that cannot reconcile.
 
 ## What each store is for, and what travels
 
@@ -55,7 +55,7 @@ three do not.
 
 Each has mechanisms of its own. HTTP freshness can avoid
 revalidation, and validators allow conditional requests. Cookie attributes
-constrain lifetime, transport, and cross-site behaviour. Origin-scoped APIs
+constrain lifetime, transport, and cross-site behavior. Origin-scoped APIs
 prevent arbitrary sites from reading one another's state.
 
 ::activity{id="browser-storage-and-caching-mat1"}
@@ -70,7 +70,7 @@ Read them as one family. Each is a fact kept somewhere whose rules do not match
 what the fact requires: a secret in a store scripts can read, a promise of
 permanence in a store the browser may evict and the user can clear, a per-user
 response in a cache that serves everybody, a value in a shape the next release
-will not recognise, and yesterday's article presented as today's.
+will not recognize, and yesterday's article presented as today's.
 
 One more needs no mistake at all. Multiple tabs can update shared origin storage
 without application-level coordination — two copies of the same app writing to
@@ -110,7 +110,7 @@ Every fact your frontend holds forces this decision, and postponing it is itself
 an answer — usually the nearest store.
 
 Put it in a cookie and you buy participation in requests, and pay cookie policy:
-attributes constraining lifetime, transport and cross-site behaviour that you
+attributes constraining lifetime, transport and cross-site behavior that you
 now have to get right.
 
 Put it in web storage and you buy simplicity, and pay durability and secrecy

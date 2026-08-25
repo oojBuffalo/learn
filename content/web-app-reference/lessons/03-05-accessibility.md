@@ -21,7 +21,7 @@ nothing at all.
 
 Every part of that interface worked. The submission went, the response came
 back, the error was displayed. It was displayed to one sense, in one place, and
-the reader was neither looking at that place nor able to see that colour.
+the reader was neither looking at that place nor able to see that color.
 
 ## Four questions, asked of every task
 

@@ -127,10 +127,10 @@ counterpart: the cache was never the source of truth, but it had quietly become
 the reason the database coped.
 
 The repair is in the example rather than in a bigger cache. Read the product page
-against the failure list and its jittered TTLs and single-flight refill are
-answers to load arriving all at once, not to staleness. And checkout still rereads
-the authority, because the one number that must not come from a projection is the
-one a customer is about to be charged.
+against the failures this lesson names and its jittered TTLs and single-flight
+refill are answers to load arriving all at once, not to staleness. And checkout
+still rereads the authority, because the one number that must not come from a
+projection is the one a customer is about to be charged.
 
 ## Sources
 

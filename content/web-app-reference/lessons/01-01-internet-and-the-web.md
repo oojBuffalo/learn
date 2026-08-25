@@ -122,7 +122,7 @@ What makes a symptom useful is less what it proves than what it eliminates.
 “It works by IP” narrows a problem toward naming or virtual-host configuration:
 reaching the host by address exercised the layers below it and left those two
 untested. “The TCP connection opens” is weaker than it feels. It shows that two
-endpoints found each other; it does not prove that HTTP behaviour above them is
+endpoints found each other; it does not prove that HTTP behavior above them is
 correct.
 
 That answers the puzzle this lesson opened with. Packets arriving and a

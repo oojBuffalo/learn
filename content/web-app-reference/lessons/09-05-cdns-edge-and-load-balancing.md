@@ -103,7 +103,8 @@ and regional consistency. Edge computation pays in dispersed code and observabil
 
 ## The cheapest thing to check first at the edge
 
-Order these by what it costs to find out, not by how bad each is.
+These are ordered by how cheaply each can be established, not by how much
+damage each does.
 
 Start with a cache key. Which dimensions is it built from, and does anything
 private share one? Missing cache dimensions leak private data, and a key is a

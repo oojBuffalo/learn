@@ -49,7 +49,7 @@ twice costs time and nothing else.
 Mutations request effects, and none of that transfers. They need explicit
 success semantics, idempotency, invalidation, and optimistic rollback — four
 obligations that exist because a second delivery is a second effect, and because
-anything else on the screen that summarised the old value is now wrong.
+anything else on the screen that summarized the old value is now wrong.
 
 Two mechanisms cut across both. Abort signals end local interest. Request
 identifiers or cache keys prevent old responses from overwriting newer state.

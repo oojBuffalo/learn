@@ -7,7 +7,8 @@ objectives:
   - Order interfaces, dependency inversion, adapters, encapsulation and cohesion by what each one contributes to the direction rule
   - Decide when a direct dependency or a duplication is cheaper than the boundary that would remove it
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [monoliths-modules-and-microservices]
 tags: [architecture]
 ---
 

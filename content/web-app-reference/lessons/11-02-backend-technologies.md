@@ -7,7 +7,8 @@ objectives:
   - Tell work that will not yield because it is computing from work that will not yield because it is waiting
   - Place runtime performance behind the four things this lesson says must clear first
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [evolving-an-architecture]
 tags: [technology-landscape]
 ---
 
@@ -52,8 +53,8 @@ emphasizes memory safety without garbage collection. Python frameworks span
 synchronous and asynchronous styles, and Ruby on Rails emphasizes convention
 and integrated application development.
 
-Those five questions have a negative space, and this lesson's failure list sits
-mostly inside it. CPU work blocks an event loop. Blocking libraries exhaust
+Those five questions have a negative space, and the failures this lesson names
+sit mostly inside it. CPU work blocks an event loop. Blocking libraries exhaust
 async worker pools. Framework globals leak request state. Dependency ecosystems
 introduce unreviewed supply-chain risk.
 

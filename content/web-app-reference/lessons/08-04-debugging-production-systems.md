@@ -96,7 +96,7 @@ and charges money and privacy budget. A shell buys reach and charges
 auditability. A restart buys speed and charges the state. A profile buys
 evidence and charges overhead, which is why the overhead has to be bounded.
 
-The failure list adds two ways the evidence itself misleads — clock skew and
+The named failures add two ways the evidence itself misleads — clock skew and
 sampling mislead timelines — and one way the exit is blocked: rollback fails
 because data migrations or flags were not backward compatible. Teams also query
 production stores without limits or expose customer data in copied logs.

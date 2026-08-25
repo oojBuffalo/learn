@@ -25,7 +25,7 @@ answer to an old question overwrote a fast answer to a new one.
 
 ## The language brings jobs; the browser brings the loop
 
-JavaScript executes inside a host environment, and the division of labour is
+JavaScript executes inside a host environment, and the division of labor is
 sharp. The language defines values, functions, execution contexts, modules,
 promises, and jobs. The browser supplies DOM, timers, networking, events, and an
 event loop that schedules host work.

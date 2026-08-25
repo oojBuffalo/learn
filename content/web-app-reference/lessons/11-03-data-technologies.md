@@ -7,7 +7,8 @@ objectives:
   - Say what has to be measured before a specialized store is justified beside a relational one
   - Read each of this lesson's data failures as a role that was never assigned
 estimatedMinutes: 12
-difficulty: intermediate
+difficulty: advanced
+prerequisites: [evolving-an-architecture]
 tags: [technology-landscape]
 ---
 
