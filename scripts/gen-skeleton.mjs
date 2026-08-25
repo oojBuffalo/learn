@@ -8,6 +8,28 @@ if (!SRC) {
 }
 const OUT = "content/web-app-reference";
 
+// This script is bootstrap-only, and every write below is destructive: it
+// replaces each lesson body with "Stub.", truncates items.json to [], and
+// rewrites the manifest. Refuse to run once the package has been written.
+{
+  let existing = null;
+  try {
+    existing = readFileSync(join(OUT, "items.json"), "utf8");
+  } catch {
+    // No items.json yet: bootstrapping is exactly what this script is for.
+  }
+  if (existing !== null && existing.trim() !== "[]") {
+    throw new Error(
+      `${join(OUT, "items.json")} is already written, so ${OUT} is not a skeleton any more. ` +
+        "gen-skeleton is bootstrap-only: running it now would overwrite every lesson " +
+        'body with "Stub." and truncate items.json back to []. It also never touches ' +
+        "quizzes.json or games.json, so those would be left referencing item ids that " +
+        "no longer exist. Delete the package deliberately if you really mean to " +
+        "regenerate the skeleton.",
+    );
+  }
+}
+
 const sections = readdirSync(SRC, { withFileTypes: true })
   .filter((d) => d.isDirectory() && /^\d\d-/.test(d.name))
   .map((d) => d.name)
@@ -26,14 +48,10 @@ for (const section of sections) {
   const listBlock = index.split(/^## Read this section$/m)[1] ?? "";
   const ordered = [...listBlock.split(/^## /m)[0].matchAll(/\]\(([^)]+\.md)\)/g)]
     .map((m) => basename(m[1], ".md"))
-    // Only real topic docs: they all carry a "## Summary" heading.
-    .filter((slug) => {
-      try {
-        return readFileSync(join(dir, `${slug}.md`), "utf8").includes("\n## Summary");
-      } catch {
-        return false;
-      }
-    });
+    // Only real topic docs: they all carry a "## Summary" heading. A read error
+    // is a broken link in the index, not a non-topic doc — let it surface,
+    // because swallowing it silently produces a short unit and no diagnostic.
+    .filter((slug) => readFileSync(join(dir, `${slug}.md`), "utf8").includes("\n## Summary"));
   if (ordered.length === 0) throw new Error(`${section}: no topic docs found`);
 
   const unitId = section.replace(/^\d\d-/, "");
