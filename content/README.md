@@ -3,6 +3,20 @@
 Authored study packages, kept here in folder form so they are diffable and
 reviewable. The app imports them as zips.
 
+## Packages
+
+### `web-app-reference`
+
+Ported from the Web App Reference markdown library: a whole-system tour of
+web applications, from the browser through the network and application code
+into storage and operations.
+
+The package is **generated-then-hand-written**. `scripts/gen-skeleton.mjs`
+produced the skeleton — manifest, lesson stubs, ids and reading order — from
+the source docs; every lesson body and every item was then hand-written
+against those docs. The script is bootstrap-only: never re-run it, because it
+would overwrite the written lessons with stubs again.
+
 ## Importing one
 
 The zip must contain the package's files at the **archive root** — zipping the
