@@ -1,0 +1,204 @@
+/* App shell: a fixed rail on the desk at ≥60rem, a top bar below it. */
+
+.shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  /* Explicit rows, or the top bar absorbs the leftover height of the viewport. */
+  grid-template-rows: auto 1fr;
+  min-height: 100dvh;
+}
+
+.rail {
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.rail-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+}
+
+.mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.1em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--t-md);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.mark em {
+  font-style: normal;
+  background: linear-gradient(var(--marker), var(--marker)) no-repeat 0 82%;
+  background-size: 100% 0.34em;
+  padding-inline: 0.06em;
+}
+
+.nav {
+  display: flex;
+  gap: var(--s1);
+  margin-left: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 2.75rem;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r);
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--fast) var(--ease), color var(--fast) var(--ease);
+}
+
+.nav-item:hover {
+  background: var(--paper-sunk);
+  color: var(--ink);
+}
+
+.nav-item[aria-current="page"] {
+  background: var(--paper-sunk);
+  color: var(--ink);
+}
+
+.nav-item svg {
+  color: var(--ink-3);
+  flex: none;
+}
+
+.nav-item[aria-current="page"] svg {
+  color: var(--ink);
+}
+
+.due-badge {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.3em 0.5em;
+  border-radius: var(--r-pill);
+  background: var(--marker);
+  color: var(--on-marker);
+  border: 1px solid var(--marker-edge);
+}
+
+.rail-foot {
+  display: none;
+}
+
+.content {
+  min-width: 0;
+  padding: var(--s5) var(--s4) var(--s8);
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+.page-head {
+  margin-bottom: var(--s5);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.page-title {
+  font-size: var(--t-2xl);
+  margin-top: var(--s2);
+}
+
+.page-sub {
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+  margin-top: var(--s2);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 2.5rem;
+  color: var(--ink-2);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+@media (min-width: 60rem) {
+  .shell {
+    grid-template-columns: var(--rail-w) 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  /* The rail is the grid column, so its paper reaches the bottom of the page;
+     only its contents stick to the top. */
+  .rail {
+    position: static;
+    border-bottom: 0;
+    border-right: 1px solid var(--rule);
+  }
+
+  .rail-inner {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s6);
+    padding: var(--s6) var(--s4);
+  }
+
+  .mark {
+    font-size: var(--t-lg);
+  }
+
+  .nav {
+    flex-direction: column;
+    margin-left: 0;
+    gap: var(--s1);
+  }
+
+  .nav-item {
+    font-size: var(--t-base);
+    padding: var(--s3);
+  }
+
+  .due-badge {
+    margin-left: auto;
+  }
+
+  .rail-foot {
+    display: block;
+    margin-top: auto;
+    font-family: var(--font-mono);
+    font-size: var(--t-micro);
+    line-height: 1.5;
+    color: var(--ink-3);
+  }
+
+  .content {
+    padding: var(--s7) var(--s6) var(--s8);
+  }
+}

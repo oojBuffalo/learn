@@ -1,0 +1,261 @@
+[
+  {
+    "id": "quiz-start-here",
+    "title": "Start here check",
+    "items": [
+      "anatomy-of-a-web-app-mc1",
+      "anatomy-of-a-web-app-mat1",
+      "anatomy-of-a-web-app-ord1",
+      "anatomy-of-a-web-app-mc2",
+      "anatomy-of-a-web-app-ms1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-web-foundations",
+    "title": "Web foundations check",
+    "items": [
+      "internet-and-the-web-mc1",
+      "internet-and-the-web-mc2",
+      "internet-and-the-web-mat1",
+      "request-response-lifecycle-ord1",
+      "request-response-lifecycle-mat1",
+      "request-response-lifecycle-sa1",
+      "request-response-lifecycle-ms1",
+      "urls-dns-http-and-tls-mc1",
+      "urls-dns-http-and-tls-mat1",
+      "urls-dns-http-and-tls-sa1",
+      "urls-dns-http-and-tls-mc2",
+      "clients-servers-and-resources-mc2",
+      "clients-servers-and-resources-mat1",
+      "clients-servers-and-resources-ms1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-browser-platform",
+    "title": "Browser platform check",
+    "items": [
+      "rendering-and-the-dom-mat1",
+      "rendering-and-the-dom-ms1",
+      "rendering-and-the-dom-mc1",
+      "javascript-runtime-ord1",
+      "javascript-runtime-sa1",
+      "javascript-runtime-mc1",
+      "browser-storage-and-caching-mat1",
+      "browser-storage-and-caching-mc1",
+      "browser-storage-and-caching-ms1",
+      "browser-networking-mc1",
+      "browser-networking-ms1",
+      "browser-networking-mc2"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-frontend",
+    "title": "Frontend check",
+    "items": [
+      "components-state-and-reactivity-mc1",
+      "components-state-and-reactivity-sa1",
+      "components-state-and-reactivity-mat1",
+      "routing-and-navigation-mc1",
+      "routing-and-navigation-ord1",
+      "routing-and-navigation-mc2",
+      "forms-and-validation-mc1",
+      "forms-and-validation-ms1",
+      "forms-and-validation-mat1",
+      "data-fetching-ms1",
+      "data-fetching-mc1",
+      "data-fetching-mc2",
+      "accessibility-ms1",
+      "accessibility-mc1",
+      "accessibility-mc2",
+      "frontend-performance-fb1",
+      "frontend-performance-mc1",
+      "frontend-performance-mc2"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-backend",
+    "title": "Backend check",
+    "items": [
+      "server-runtimes-mc1",
+      "server-runtimes-ms1",
+      "server-runtimes-mat1",
+      "backend-request-lifecycle-ord1",
+      "backend-request-lifecycle-mc1",
+      "backend-request-lifecycle-ms1",
+      "domain-and-application-logic-mc1",
+      "domain-and-application-logic-ms1",
+      "domain-and-application-logic-mc2",
+      "sessions-files-and-background-jobs-ord1",
+      "sessions-files-and-background-jobs-mc1",
+      "sessions-files-and-background-jobs-ms1",
+      "scaling-and-resilience-mc1",
+      "scaling-and-resilience-mat1",
+      "scaling-and-resilience-mc2"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-data",
+    "title": "Data check",
+    "items": [
+      "data-modeling-ms1",
+      "data-modeling-mc1",
+      "data-modeling-mat1",
+      "relational-and-nosql-databases-mc1",
+      "relational-and-nosql-databases-ms1",
+      "relational-and-nosql-databases-fb1",
+      "transactions-and-consistency-mc1",
+      "transactions-and-consistency-mat1",
+      "transactions-and-consistency-ms1",
+      "indexes-and-query-planning-sa1",
+      "indexes-and-query-planning-mc1",
+      "indexes-and-query-planning-ms1",
+      "caching-and-search-mat1",
+      "caching-and-search-mc1",
+      "caching-and-search-ms1",
+      "migrations-backups-and-recovery-mc1",
+      "migrations-backups-and-recovery-ord1",
+      "migrations-backups-and-recovery-ms1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-apis-and-integration",
+    "title": "APIs and integration check",
+    "items": [
+      "api-design-mc1",
+      "api-design-ms1",
+      "api-design-mat1",
+      "rest-graphql-and-rpc-mat1",
+      "rest-graphql-and-rpc-ms1",
+      "rest-graphql-and-rpc-mc1",
+      "realtime-and-event-driven-communication-mc1",
+      "realtime-and-event-driven-communication-ord1",
+      "realtime-and-event-driven-communication-ms1",
+      "identity-across-system-boundaries-mat1",
+      "identity-across-system-boundaries-mc1",
+      "identity-across-system-boundaries-ms1",
+      "third-party-integrations-mc1",
+      "third-party-integrations-ms1",
+      "third-party-integrations-sa1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-security",
+    "title": "Security check",
+    "items": [
+      "threat-modeling-ord1",
+      "threat-modeling-ms1",
+      "threat-modeling-mc1",
+      "authentication-and-authorization-mc1",
+      "authentication-and-authorization-mat1",
+      "authentication-and-authorization-ms1",
+      "browser-security-mat1",
+      "browser-security-mc1",
+      "browser-security-ms1",
+      "input-injection-and-output-safety-fb1",
+      "input-injection-and-output-safety-mc1",
+      "input-injection-and-output-safety-ms1",
+      "secrets-dependencies-and-supply-chain-sa1",
+      "secrets-dependencies-and-supply-chain-ms1",
+      "secrets-dependencies-and-supply-chain-mc1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-quality-and-observability",
+    "title": "Quality and observability check",
+    "items": [
+      "testing-strategy-mc1",
+      "testing-strategy-mat1",
+      "testing-strategy-ms1",
+      "contract-and-end-to-end-testing-mc1",
+      "contract-and-end-to-end-testing-mc2",
+      "contract-and-end-to-end-testing-ms1",
+      "logs-metrics-and-traces-sa1",
+      "logs-metrics-and-traces-fb1",
+      "logs-metrics-and-traces-mc1",
+      "debugging-production-systems-ord1",
+      "debugging-production-systems-mc1",
+      "debugging-production-systems-ms1",
+      "reliability-and-performance-ms1",
+      "reliability-and-performance-mat1",
+      "reliability-and-performance-mc1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-delivery-and-operations",
+    "title": "Delivery and operations check",
+    "items": [
+      "environments-and-configuration-fb1",
+      "environments-and-configuration-ms1",
+      "environments-and-configuration-mc1",
+      "continuous-integration-and-delivery-ord1",
+      "continuous-integration-and-delivery-mc1",
+      "continuous-integration-and-delivery-sa1",
+      "hosting-and-compute-mc1",
+      "hosting-and-compute-mat1",
+      "hosting-and-compute-ms1",
+      "containers-and-orchestration-mc1",
+      "containers-and-orchestration-sa1",
+      "containers-and-orchestration-ms1",
+      "cdns-edge-and-load-balancing-ms1",
+      "cdns-edge-and-load-balancing-mc1",
+      "cdns-edge-and-load-balancing-mat1",
+      "monitoring-and-incident-response-sa1",
+      "monitoring-and-incident-response-ms1",
+      "monitoring-and-incident-response-mc1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-architecture",
+    "title": "Architecture check",
+    "items": [
+      "monoliths-modules-and-microservices-mc1",
+      "monoliths-modules-and-microservices-ms1",
+      "monoliths-modules-and-microservices-mat1",
+      "layers-boundaries-and-coupling-fb1",
+      "layers-boundaries-and-coupling-mc1",
+      "layers-boundaries-and-coupling-ms1",
+      "synchronous-and-asynchronous-design-ms1",
+      "synchronous-and-asynchronous-design-ord1",
+      "synchronous-and-asynchronous-design-mc1",
+      "scalability-tradeoffs-sa1",
+      "scalability-tradeoffs-mc1",
+      "scalability-tradeoffs-ms1",
+      "evolving-an-architecture-sa1",
+      "evolving-an-architecture-ms1",
+      "evolving-an-architecture-mc1"
+    ],
+    "passThreshold": 0.75
+  },
+  {
+    "id": "quiz-technology-landscape",
+    "title": "Technology landscape check",
+    "items": [
+      "frontend-technologies-mc1",
+      "frontend-technologies-mat1",
+      "frontend-technologies-ms1",
+      "backend-technologies-mc1",
+      "backend-technologies-sa1",
+      "backend-technologies-ms1",
+      "data-technologies-fb1",
+      "data-technologies-mat1",
+      "data-technologies-mc1",
+      "infrastructure-platforms-ms1",
+      "infrastructure-platforms-mc1",
+      "infrastructure-platforms-sa1",
+      "choosing-technologies-ms1",
+      "choosing-technologies-ord1",
+      "choosing-technologies-mc1"
+    ],
+    "passThreshold": 0.75
+  }
+]
