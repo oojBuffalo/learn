@@ -54,9 +54,12 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
     for (const id of l.frontmatter.prerequisites ?? []) {
       if (!lessonIds.has(id)) err(l.file, "prerequisites", `prerequisite references missing lesson "${id}"`);
     }
-    for (const m of l.body.matchAll(/!\[[^\]]*\]\((assets\/[^)]+)\)/g)) {
-      const p = m[1]!;
-      if (!assetPaths.has(p)) err(l.file, "body", `image references missing asset "${p}"`);
+    // The destination is the first token (or a <…> group); an optional title follows it.
+    for (const m of l.body.matchAll(/!\[[^\]]*\]\(\s*(?:<([^>]*)>|([^\s)]+))/g)) {
+      const p = m[1] ?? m[2]!;
+      if (p.startsWith("assets/") && !assetPaths.has(p)) {
+        err(l.file, "body", `image references missing asset "${p}"`);
+      }
     }
   }
 
