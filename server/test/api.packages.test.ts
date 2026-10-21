@@ -67,6 +67,24 @@ describe("package routes", () => {
     expect(Buffer.from(await top.arrayBuffer())).toEqual(GOOD_FILES["assets/dot.png"]);
   });
 
+  it("serves assets whose names hold URL-reserved characters at their encoded URL", async () => {
+    const files = {
+      ...GOOD_FILES,
+      "items.json": JSON.stringify([
+        ...JSON.parse(GOOD_FILES["items.json"] as string),
+        { id: "m1", type: "short-answer", prompt: "?", accept: ["y"],
+          media: [{ src: "assets/a#b.png" }, { src: "assets/a%20b.png" }] },
+      ]),
+      "assets/a#b.png": Buffer.from("hash"),
+      "assets/a%20b.png": Buffer.from("percent"),
+    };
+    await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(files)) });
+    const hash = await app.request("/api/packages/demo/assets/a%23b.png");
+    expect(await hash.text()).toBe("hash");
+    const percent = await app.request("/api/packages/demo/assets/a%2520b.png");
+    expect(await percent.text()).toBe("percent");
+  });
+
   it("deletes content but keeps user state", async () => {
     await importGood();
     db.prepare(

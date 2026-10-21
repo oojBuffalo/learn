@@ -4,7 +4,9 @@ export default function Media({ packageId, media }: { packageId: string; media?:
   return (
     <div className="work-body">
       {media.map((m) => {
-        const url = `/api/packages/${packageId}/${m.src}`;
+        // `src` is a stored path, not a URL: `#`, `?` or `%` in a file name must
+        // reach the server as part of the name.
+        const url = `/api/packages/${packageId}/${m.src.split("/").map(encodeURIComponent).join("/")}`;
         return /\.mp3$/i.test(m.src) ? (
           <audio key={m.src} controls src={url} />
         ) : (
