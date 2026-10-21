@@ -34,8 +34,19 @@ describe("validateImages", () => {
     ]);
   });
 
-  it("matches a percent-encoded destination to the stored path", () => {
+  it("checks the stored path the asset route will decode the URL to", () => {
     expect(validateImages(pkg("![pic](assets/a%20b.png)\n", ["assets/a b.png"]))).toEqual([]);
+    expect(validateImages(pkg("![pic](assets/a%23b.png)\n", ["assets/a#b.png"]))).toEqual([]);
+    expect(validateImages(pkg("![pic](assets/dot.png?v=2#top)\n", ["assets/dot.png"]))).toEqual([]);
+    // A file literally named `a%20b.png` is requested as `a b.png`, which is absent.
+    expect(validateImages(pkg("![pic](assets/a%20b.png)\n", ["assets/a%20b.png"]))).toHaveLength(1);
+  });
+
+  it("uses the first definition of a label, as the renderer does", () => {
+    const body = "![pic][x]\n\n[x]: assets/missing.png\n[x]: assets/present.png\n";
+    expect(validateImages(pkg(body, ["assets/present.png"]))).toHaveLength(1);
+    const reversed = "![pic][x]\n\n[x]: assets/present.png\n[x]: assets/missing.png\n";
+    expect(validateImages(pkg(reversed, ["assets/present.png"]))).toEqual([]);
   });
 
   it("reports a missing asset and leaves other URLs alone", () => {

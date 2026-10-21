@@ -23,21 +23,25 @@ const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath, MATH_OP
  * Every reference definition in a document, rewritten as Markdown.
  *
  * A lesson renders as separate Markdown runs between its activities, and a run can
- * only resolve `![pic][dot]` against definitions it contains. Appending the whole
- * document's definitions to each run restores what a single parse would have seen.
+ * only resolve `![pic][dot]` against definitions it contains. Prefixing each run with
+ * the whole document's definitions restores what a single parse would have seen,
+ * including that the first definition of a label wins.
  *
  * Args:
  *   markdown: The full document.
  *
  * Returns:
- *   One definition per line, led by a blank line, or "" when there are none.
+ *   One definition per label in document order, followed by a blank line, or ""
+ *   when there are none.
  */
 export function referenceDefinitions(markdown: string): string {
   const lines: string[] = [];
+  const seen = new Set<string>();
   // Definitions are document-wide even when written inside a list or blockquote.
   const walk = (node: Node) => {
-    if (node.type === "definition") {
+    if (node.type === "definition" && !seen.has((node as Definition).identifier)) {
       const { url, title, label, identifier } = node as Definition;
+      seen.add(identifier);
       const dest = url.replace(/\\/g, "\\\\").replace(/[<>\n]/g, encodeURIComponent);
       const quoted = title ? ` "${title.replace(/["\\]/g, "\\$&")}"` : "";
       lines.push(`[${label ?? identifier}]: <${dest}>${quoted}`);
@@ -45,7 +49,7 @@ export function referenceDefinitions(markdown: string): string {
     if ("children" in node) (node.children as Node[]).forEach(walk);
   };
   walk(parser.parse(markdown));
-  return lines.length ? `\n\n${lines.join("\n")}\n` : "";
+  return lines.length ? `${lines.join("\n")}\n\n` : "";
 }
 
 /** Wide tables scroll inside their own box rather than widening the page. */

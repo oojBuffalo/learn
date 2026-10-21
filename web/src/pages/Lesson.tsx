@@ -71,7 +71,7 @@ export default function Lesson() {
       {segments.map((seg, i) =>
         seg.kind === "md" ? (
           <Markdown key={"md-" + i} packageId={packageId}>
-            {seg.md + definitions}
+            {definitions + seg.md}
           </Markdown>
         ) : data.items[seg.id] ? (
           <ActivityView key={seg.id} packageId={packageId} item={data.items[seg.id]!} />
