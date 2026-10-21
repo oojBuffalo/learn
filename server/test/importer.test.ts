@@ -79,6 +79,26 @@ describe("importPackage", () => {
     expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
   });
 
+  it("refuses non-YAML frontmatter without evaluating it", () => {
+    const marker = globalThis as { __frontmatterRan?: boolean };
+    delete marker.__frontmatterRan;
+    for (const lang of ["javascript", "js"]) {
+      const db = freshDb();
+      const bad = {
+        ...GOOD_FILES,
+        "lessons/01-intro.md": `---${lang}\n(globalThis.__frontmatterRan = true, { id: "intro", title: "Intro" })\n---\nBody\n`,
+      };
+      const res = importPackage(db, makeZip(bad));
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.errors).toContainEqual(
+          expect.objectContaining({ file: "lessons/01-intro.md", message: expect.stringContaining("must be YAML") }),
+        );
+      }
+    }
+    expect(marker.__frontmatterRan).toBeUndefined();
+  });
+
   it("reports independent semantic errors alongside parse errors", () => {
     const db = freshDb();
     const bad = {

@@ -7,6 +7,7 @@ import {
 import type { LoadedLesson, LoadedPackage, PackageError } from "@study/shared";
 import { z } from "zod";
 import { validateMath } from "./mathCheck.js";
+import { readLesson } from "./frontmatter.js";
 
 function zodErrors(file: string, e: z.ZodError): PackageError[] {
   return e.issues.map((i) => ({ file, path: i.path.join("."), message: i.message }));
@@ -41,7 +42,7 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
   if (lessonFiles.length === 0) errors.push({ file: "lessons/", path: "", message: "package has no lessons" });
   lessonFiles.forEach((file, order) => {
     try {
-      const { data, content } = matter(text(file)!);
+      const { data, content } = readLesson(text(file)!);
       const fm = lessonFrontmatterSchema.safeParse(data);
       if (fm.success) lessons.push({ file, order, frontmatter: fm.data, body: content });
       else errors.push(...zodErrors(file, fm.error));

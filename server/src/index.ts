@@ -7,11 +7,11 @@ import {
   gameSchema, itemSchema, lessonFrontmatterSchema, manifestSchema, quizSchema, validatePackage,
 } from "@study/shared";
 import type { LoadedPackage } from "@study/shared";
-import matter from "gray-matter";
 import { createApp } from "./app.js";
 import { openDb, type Db } from "./db.js";
 import { insertPackage } from "./importer.js";
 import { validateMath } from "./mathCheck.js";
+import { readLesson } from "./frontmatter.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SAMPLE_DIR = join(HERE, "..", "sample");
@@ -28,7 +28,7 @@ export function loadSamplePackage(): LoadedPackage {
   const maybeJson = <T>(p: string, parse: (v: unknown) => T): T[] =>
     existsSync(join(SAMPLE_DIR, p)) ? (JSON.parse(read(p)) as unknown[]).map(parse) : [];
   const lessons = readdirSync(join(SAMPLE_DIR, "lessons")).sort().map((f, order) => {
-    const { data, content } = matter(read(join("lessons", f)));
+    const { data, content } = readLesson(read(join("lessons", f)));
     return { file: `lessons/${f}`, order, frontmatter: lessonFrontmatterSchema.parse(data), body: content };
   });
   const pkg: LoadedPackage = {
