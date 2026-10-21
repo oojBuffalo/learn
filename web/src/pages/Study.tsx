@@ -5,6 +5,7 @@ import type { Rating } from "@study/shared";
 import { getDueCards, getFreeStudy, gradeCard, listPackages, type Card } from "../api.js";
 import { useDue } from "../App.js";
 import Markdown, { InlineMarkdown } from "../components/Markdown.js";
+import Media from "../components/Media.js";
 
 const RATINGS: Rating[] = ["again", "hard", "good", "easy"];
 const RATING_LABEL: Record<Rating, string> = {
@@ -241,6 +242,8 @@ export default function Study() {
             <Markdown className="card-face" packageId={card.packageId}>
               {card.front}
             </Markdown>
+            {/* Media belongs to the item's front, so a reversed card keeps it for the answer. */}
+            {card.direction === "front" && <Media packageId={card.packageId} media={card.media} />}
 
             {!revealed ? (
               <div className="actions actions-center">
@@ -254,6 +257,7 @@ export default function Study() {
                 <Markdown className="answer" packageId={card.packageId}>
                   {card.back}
                 </Markdown>
+                {card.direction === "back" && <Media packageId={card.packageId} media={card.media} />}
                 {card.examples && card.examples.length > 0 && (
                   <p className="examples">
                     {card.examples.map((example, i) => (

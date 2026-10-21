@@ -5,7 +5,8 @@ import type { AppEnv } from "../app.js";
 import type { Db } from "../db.js";
 
 interface CardRow { packageId: string; itemId: string; direction: "front" | "back";
-  front: string; back: string; examples?: string[]; isNew: boolean; dueAt: string | null;
+  front: string; back: string; examples?: string[]; media?: FlashcardItem["media"];
+  isNew: boolean; dueAt: string | null;
   /** Scheduler state, so the player can show what each grade would do. */
   state: CardState | null }
 
@@ -40,7 +41,7 @@ function allCards(db: Db, packageId?: string): CardRow[] {
         packageId: pkg, itemId: item.id, direction,
         front: direction === "front" ? item.front : item.back,
         back: direction === "front" ? item.back : item.front,
-        examples: item.examples, isNew: state === null, dueAt: state?.dueAt ?? null, state,
+        examples: item.examples, media: item.media, isNew: state === null, dueAt: state?.dueAt ?? null, state,
       });
     }
   }

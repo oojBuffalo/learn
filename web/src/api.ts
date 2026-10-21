@@ -13,6 +13,8 @@ export interface LessonPayload {
 export interface Card {
   packageId: string; itemId: string; direction: "front" | "back";
   front: string; back: string; examples?: string[]; isNew: boolean;
+  /** The item's pictures and audio, which may be what the card asks about. */
+  media?: { src: string; alt?: string }[];
   /** Scheduler state, or null for a card never reviewed in this direction. */
   state: CardState | null;
 }

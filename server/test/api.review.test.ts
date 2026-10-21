@@ -30,6 +30,21 @@ describe("review", () => {
     expect(back).toMatchObject({ front: "hello", back: "hola" }); // pre-swapped
   });
 
+  it("carries a flashcard's media into both study queues", async () => {
+    const items = JSON.parse(GOOD_FILES["items.json"] as string);
+    items[1].media = [{ src: "assets/dot.png", alt: "A dot" }];
+    await app.request("/api/packages/import", {
+      method: "POST",
+      body: new Uint8Array(makeZip({ ...GOOD_FILES, "items.json": JSON.stringify(items) })),
+    });
+    const media = [{ src: "assets/dot.png", alt: "A dot" }];
+    for (const url of ["/api/review/due", "/api/review/free-study?packageId=demo"]) {
+      const { cards } = await (await app.request(url)).json();
+      expect(cards.length).toBeGreaterThan(0);
+      for (const card of cards) expect(card.media).toEqual(media);
+    }
+  });
+
   it("grading good pushes the card out of the due queue", async () => {
     const res = await grade("front", "good");
     expect(res.status).toBe(200);
