@@ -6,6 +6,7 @@ import {
 } from "@study/shared";
 import type { LoadedLesson, LoadedPackage, PackageError } from "@study/shared";
 import { z } from "zod";
+import { validateImages } from "./imageCheck.js";
 import { validateMath } from "./mathCheck.js";
 import { readLesson } from "./frontmatter.js";
 
@@ -96,6 +97,7 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
   const pkg: LoadedPackage = { manifest, lessons, items, quizzes, games, assets };
   errors.push(...validatePackage(pkg));
   errors.push(...validateMath(pkg));
+  errors.push(...validateImages(pkg));
   return errors.length ? { pkg: null, errors } : { pkg, errors: [] };
 }
 

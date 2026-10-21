@@ -10,6 +10,7 @@ import type { LoadedPackage } from "@study/shared";
 import { createApp } from "./app.js";
 import { openDb, type Db } from "./db.js";
 import { insertPackage } from "./importer.js";
+import { validateImages } from "./imageCheck.js";
 import { validateMath } from "./mathCheck.js";
 import { readLesson } from "./frontmatter.js";
 
@@ -39,7 +40,7 @@ export function loadSamplePackage(): LoadedPackage {
     games: maybeJson("games.json", (v) => gameSchema.parse(v)),
     assets: [],
   };
-  const errs = [...validatePackage(pkg), ...validateMath(pkg)];
+  const errs = [...validatePackage(pkg), ...validateMath(pkg), ...validateImages(pkg)];
   if (errs.length) throw new Error(`sample package invalid: ${JSON.stringify(errs)}`);
   return pkg;
 }

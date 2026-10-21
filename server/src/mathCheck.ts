@@ -13,7 +13,7 @@ import type { LoadedPackage, PackageError, Passage } from "@study/shared";
  * `\$` escapes are excluded from math by the grammar itself rather than by a regex
  * that would have to be kept in step with it.
  */
-const processor = unified().use(remarkParse).use(remarkGfm).use(remarkMath, MATH_OPTIONS);
+export const processor = unified().use(remarkParse).use(remarkGfm).use(remarkMath, MATH_OPTIONS);
 
 /** `strict` is quieter here than in the browser; it would log on every import. */
 const CHECK_OPTIONS = { ...KATEX_OPTIONS, strict: "ignore", throwOnError: true } as const;

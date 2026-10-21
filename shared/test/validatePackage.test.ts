@@ -29,17 +29,6 @@ describe("validatePackage", () => {
     expect(validatePackage(pkg())).toEqual([]);
   });
 
-  it("checks an image's destination, not its title", () => {
-    const lesson = (body: string): Partial<LoadedPackage> => ({
-      lessons: [{ file: "lessons/01-a.md", order: 0, frontmatter: { id: "l1", title: "L1" }, body }],
-      assets: [{ path: "assets/dot.png", data: new Uint8Array() }],
-    });
-    expect(validatePackage(pkg(lesson('::activity{id="i1"}\n\n![pic](assets/dot.png "A dot")\n')))).toEqual([]);
-    expect(validatePackage(pkg(lesson("::activity{id=\"i1\"}\n\n![pic](<assets/dot.png> 'A dot')\n")))).toEqual([]);
-    const errs = validatePackage(pkg(lesson('::activity{id="i1"}\n\n![pic](assets/gone.png "A dot")\n')));
-    expect(errs).toEqual([expect.objectContaining({ message: 'image references missing asset "assets/gone.png"' })]);
-  });
-
   it("flags a directive referencing a missing item", () => {
     const errs = validatePackage(
       pkg({ lessons: [{ file: "lessons/01-a.md", order: 0, frontmatter: { id: "l1", title: "L1" }, body: '::activity{id="ghost"}' }] }),
