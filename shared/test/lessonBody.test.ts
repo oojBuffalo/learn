@@ -11,6 +11,19 @@ describe("splitLessonBody", () => {
     ]);
   });
 
+  it("leaves a directive shown inside a fenced code block alone", () => {
+    const body = 'Example:\n\n```md\n::activity{id="example"}\n```\n\n~~~~\n::activity{id="tilde"}\n~~~\n~~~~\n\n::activity{id="real"}\n';
+    expect(activityIdsInBody(body)).toEqual(["real"]);
+    expect(splitLessonBody(body)[0]).toEqual({
+      kind: "md",
+      md: 'Example:\n\n```md\n::activity{id="example"}\n```\n\n~~~~\n::activity{id="tilde"}\n~~~\n~~~~\n',
+    });
+  });
+
+  it("treats an unclosed fence as running to the end", () => {
+    expect(activityIdsInBody('```\n::activity{id="x"}\n')).toEqual([]);
+  });
+
   it("recognizes a directive in a CRLF file", () => {
     const body = 'Intro.\r\n\r\n::activity{id="mc1"}\r\n\r\nMore.\r\n';
     expect(activityIdsInBody(body)).toEqual(["mc1"]);
