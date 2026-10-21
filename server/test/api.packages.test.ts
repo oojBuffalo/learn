@@ -46,11 +46,25 @@ describe("package routes", () => {
 
   it("serves assets with mime type", async () => {
     await importGood();
-    const res = await app.request("/api/packages/demo/assets/assets/dot.png");
+    const res = await app.request("/api/packages/demo/assets/dot.png");
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("image/png");
     expect(res.headers.get("content-security-policy")).toBe("sandbox");
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+  });
+
+  it("serves a nested asset by its full path, without aliasing a shorter one", async () => {
+    const files = {
+      ...GOOD_FILES,
+      "lessons/01-intro.md": GOOD_FILES["lessons/01-intro.md"]!.toString() + "\n![nested](assets/assets/dot.png)\n",
+      "assets/assets/dot.png": Buffer.from("nested"),
+    };
+    await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(files)) });
+    const nested = await app.request("/api/packages/demo/assets/assets/dot.png");
+    expect(nested.status).toBe(200);
+    expect(Buffer.from(await nested.arrayBuffer()).toString()).toBe("nested");
+    const top = await app.request("/api/packages/demo/assets/dot.png");
+    expect(Buffer.from(await top.arrayBuffer())).toEqual(GOOD_FILES["assets/dot.png"]);
   });
 
   it("deletes content but keeps user state", async () => {

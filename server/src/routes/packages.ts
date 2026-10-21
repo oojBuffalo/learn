@@ -60,9 +60,10 @@ export function packageRoutes() {
     return c.body(null, 204);
   });
 
-  r.get("/:id/assets/*", (c) => {
-    const path = c.req.path.split("/assets/").slice(1).join("/assets/");
-    const assetPath = `assets/${path.replace(/^assets\//, "")}`;
+  // The client asks for `/:id/<stored path>`, and every stored path starts with
+  // `assets/`, so the whole remainder is the lookup key — nested folders included.
+  r.get("/:id/:path{assets/.+}", (c) => {
+    const assetPath = c.req.param("path");
     const row = c.get("db")
       .prepare("SELECT data FROM assets WHERE package_id = ? AND path = ?")
       .get(c.req.param("id"), assetPath) as { data: Buffer } | undefined;
