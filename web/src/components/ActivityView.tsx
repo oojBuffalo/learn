@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Answer, CheckResult, Item } from "@study/shared";
 import { fillBlankParts, stripMath } from "@study/shared";
@@ -247,6 +247,9 @@ function Options({
 }) {
   const [picked, setPicked] = useState<string[]>([]);
   const [options] = useState(() => (item.shuffle !== false ? shuffled(item.options) : item.options));
+  // Per instance, not per item: a lesson may embed the same exercise twice, and a
+  // shared native radio group would let one copy clear the other's selection.
+  const group = useId();
   const toggle = (id: string) =>
     setPicked(multi ? (picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id]) : [id]);
 
@@ -257,7 +260,7 @@ function Options({
           <label className="opt" key={o.id}>
             <input
               type={multi ? "checkbox" : "radio"}
-              name={item.id}
+              name={group}
               disabled={disabled}
               checked={picked.includes(o.id)}
               onChange={() => toggle(o.id)}

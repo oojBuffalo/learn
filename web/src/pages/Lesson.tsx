@@ -74,7 +74,7 @@ export default function Lesson() {
             {definitions + seg.md}
           </Markdown>
         ) : data.items[seg.id] ? (
-          <ActivityView key={seg.id} packageId={packageId} item={data.items[seg.id]!} />
+          <ActivityView key={"activity-" + i} packageId={packageId} item={data.items[seg.id]!} />
         ) : null,
       )}
 

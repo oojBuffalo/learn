@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { splitLessonBody } from "@study/shared";
 import Markdown, { referenceDefinitions } from "../src/components/Markdown.js";
 import Media from "../src/components/Media.js";
+import ActivityView from "../src/components/ActivityView.js";
 
 describe("referenceDefinitions", () => {
   it("lets a segment resolve a definition written in another segment", () => {
@@ -34,6 +35,28 @@ describe("referenceDefinitions", () => {
 
   it("adds nothing when there are no definitions", () => {
     expect(referenceDefinitions("Just [a link](https://example.com).")).toBe("");
+  });
+});
+
+describe("ActivityView", () => {
+  it("gives each copy of an exercise its own radio group", () => {
+    const item = {
+      id: "mc",
+      type: "multiple-choice",
+      prompt: "Pick",
+      shuffle: false,
+      options: [{ id: "a", text: "A", correct: true }, { id: "b", text: "B" }],
+    } as const;
+    const html = renderToStaticMarkup(
+      <>
+        <ActivityView packageId="p" item={item} />
+        <ActivityView packageId="p" item={item} />
+      </>,
+    );
+    const names = [...html.matchAll(/type="radio" name="([^"]+)"/g)].map((m) => m[1]);
+    expect(names).toHaveLength(4);
+    expect(new Set(names).size).toBe(2);
+    expect(names[0]).toBe(names[1]);
   });
 });
 
