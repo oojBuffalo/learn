@@ -70,9 +70,10 @@ it expresses an operation on a resource.
 
 One property of HTTP deserves singling out, because so much application design is
 a reaction to it. HTTP is explicitly a stateless application-level
-request-response protocol. Every session, cart and login you have built is an
-added mechanism, layered on a protocol that by itself carries nothing from one
-request to the next.
+request-response protocol: each request can be understood on its own, without
+reference to the ones before it. Every session, cart and login you have built is
+an added mechanism layered on top, such as a cookie the browser sends back with
+each later request so the server can find the state it kept.
 
 ::activity{id="internet-and-the-web-mc2"}
 
@@ -132,3 +133,4 @@ was failing.
 ## Sources
 
 - IETF, [RFC 9110: HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110.html) (accessed 2026-07-18) — HTTP statelessness
+- IETF, [RFC 6265: HTTP State Management Mechanism](https://www.rfc-editor.org/rfc/rfc6265.html) (accessed 2026-10-20) — cookies as an added session mechanism

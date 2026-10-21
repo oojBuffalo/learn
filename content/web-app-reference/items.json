@@ -264,7 +264,7 @@
     "options": [
       {
         "id": "a",
-        "text": "An added mechanism, built on top of a protocol that carries nothing between requests",
+        "text": "An added mechanism, built on top of a protocol in which each request stands on its own",
         "correct": true
       },
       {
@@ -335,7 +335,7 @@
     "id": "internet-and-the-web-card2",
     "type": "flashcard",
     "front": "HTTP statelessness",
-    "back": "HTTP is explicitly a stateless application-level request-response protocol, so nothing in it carries information from one request to the next. Application sessions are an added mechanism on top.",
+    "back": "HTTP is explicitly a stateless application-level request-response protocol: each request can be understood on its own, without reference to earlier ones. Application sessions are an added mechanism on top, such as a cookie the browser sends back with each later request.",
     "reverse": true,
     "examples": [
       "RFC 9110: HTTP Semantics"
@@ -348,7 +348,7 @@
     "id": "internet-and-the-web-card3",
     "type": "flashcard",
     "front": "DNS",
-    "back": "The distributed hierarchy that resolves names to addresses. It is the step a request that works by IP but not by name never got to exercise.",
+    "back": "The distributed hierarchy that resolves names to addresses. When a site works by IP but not by name, DNS is one suspect the symptom points at; virtual-host configuration that accepts the address but rejects the name is the other.",
     "reverse": true,
     "tags": [
       "web-foundations"
