@@ -88,7 +88,13 @@ const fillBlankSchema = z
       );
     },
     { message: "blanks must match the {{n}} placeholders in template", path: ["blanks"] },
-  );
+  )
+  // Every input for a slot shares one answer, so a repeated slot could never satisfy
+  // two different accept lists.
+  .refine((v) => new Set(v.blanks.map((b) => b.slot)).size === v.blanks.length, {
+    message: "each blank slot may appear only once",
+    path: ["blanks"],
+  });
 
 const shortAnswerSchema = z
   .object({

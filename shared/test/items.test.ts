@@ -66,6 +66,20 @@ describe("itemSchema", () => {
     ).toThrow(/blank/i);
   });
 
+  it("rejects fill-blank that declares the same slot twice", () => {
+    expect(() =>
+      itemSchema.parse({
+        ...base,
+        type: "fill-blank",
+        template: "{{1}} then {{1}}",
+        blanks: [
+          { slot: 1, accept: ["first"] },
+          { slot: 1, accept: ["second"] },
+        ],
+      }),
+    ).toThrow(/only once/);
+  });
+
   it("accepts a flashcard and defaults reverse to undefined", () => {
     const card = itemSchema.parse({
       id: "c1",
