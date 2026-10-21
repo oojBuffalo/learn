@@ -104,7 +104,12 @@ export default function Library() {
             type="file"
             accept=".zip"
             hidden
-            onChange={(e) => e.target.files?.[0] && onImport(e.target.files[0])}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              // Clear the selection so choosing the same archive again still fires.
+              e.target.value = "";
+              if (file) onImport(file);
+            }}
           />
         </div>
 
