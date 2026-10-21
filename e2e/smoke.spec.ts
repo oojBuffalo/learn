@@ -28,8 +28,16 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
 
   // review flow
   await page.getByRole("link", { name: "Study" }).click();
+  // A double grade while the first request is still out must not skip the next card.
+  let grades = 0;
+  await page.route("**/api/review/grade", async (route) => {
+    grades += 1;
+    await new Promise((r) => setTimeout(r, 300));
+    await route.continue();
+  });
   await page.getByRole("button", { name: "Reveal" }).click();
-  await page.getByRole("button", { name: "Good", exact: true }).click();
+  await page.keyboard.press("3");
+  await page.keyboard.press("3");
   await page.getByRole("button", { name: "Reveal" }).click();
   await page.getByRole("button", { name: "Good", exact: true }).click();
   await page.getByRole("button", { name: "Reveal" }).click();
@@ -37,6 +45,7 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
   await page.getByRole("button", { name: "Reveal" }).click();
   await page.getByRole("button", { name: "Good", exact: true }).click();
   await expect(page.getByText(/All caught up — 4 reviewed/)).toBeVisible();
+  expect(grades).toBe(4);
 
   // export produces a real zip
   await page.goto("/");

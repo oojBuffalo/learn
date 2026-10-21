@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { schedule } from "@study/shared";
 import type { Rating } from "@study/shared";
@@ -33,6 +33,12 @@ export default function Study() {
   const [reviewed, setReviewed] = useState(0);
   const [freePackage, setFreePackage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [grading, setGrading] = useState(false);
+  // A click and a key repeat can land before the first grade re-renders, so the
+  // in-flight check has to be synchronous.
+  const inFlight = useRef(false);
+  // Bumped whenever the queue is replaced, so a late response cannot edit the new one.
+  const session = useRef(0);
   const { refreshDue } = useDue();
 
   useEffect(() => {
@@ -42,6 +48,7 @@ export default function Study() {
   }, []);
 
   useEffect(() => {
+    session.current += 1;
     setRevealed(false);
     setReviewed(0);
     setTotal(0);
@@ -62,6 +69,7 @@ export default function Study() {
   }, [mode]);
 
   function loadFreeStudy(packageId: string) {
+    session.current += 1;
     setFreePackage(packageId);
     setRevealed(false);
     setReviewed(0);
@@ -85,20 +93,26 @@ export default function Study() {
   };
 
   async function grade(rating: Rating) {
-    if (!card) return;
+    if (!card || inFlight.current) return;
+    inFlight.current = true;
+    setGrading(true);
     const graded = card;
+    const startedIn = session.current;
     try {
       const { state } = await gradeCard(graded.packageId, graded.itemId, graded.direction, rating);
-      setReviewed((n) => n + 1);
-      setQueue((q) =>
-        rating === "again"
-          ? [...q!.slice(1), { ...graded, state, isNew: false }]
-          : q!.slice(1),
-      );
-      setRevealed(false);
       refreshDue();
+      if (session.current !== startedIn) return;
+      setReviewed((n) => n + 1);
+      setQueue((q) => {
+        if (!q || q[0] !== graded) return q;
+        return rating === "again" ? [...q.slice(1), { ...graded, state, isNew: false }] : q.slice(1);
+      });
+      setRevealed(false);
     } catch (e) {
-      setError(message(e));
+      if (session.current === startedIn) setError(message(e));
+    } finally {
+      inFlight.current = false;
+      setGrading(false);
     }
   }
 
@@ -266,6 +280,7 @@ export default function Study() {
                       key={r}
                       data-rating={r}
                       aria-label={RATING_LABEL[r]}
+                      disabled={grading}
                       onClick={() => grade(r)}
                     >
                       <b>{RATING_LABEL[r]}</b>
