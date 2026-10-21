@@ -19,9 +19,20 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
   await expect(page.locator(".opt .katex").first()).toBeVisible();
 
   // inline exercise: answer the embedded multiple-choice correctly
+  // Two clicks in one tick, before React re-renders, must still send one attempt.
+  let attempts = 0;
+  await page.route("**/api/attempts", async (route) => {
+    attempts += 1;
+    await new Promise((r) => setTimeout(r, 300));
+    await route.continue();
+  });
   await page.getByLabel(/just before you would forget/i).check();
-  await page.getByRole("button", { name: "Check" }).first().click();
+  await page.getByRole("button", { name: "Check" }).first().evaluate((button: HTMLButtonElement) => {
+    button.click();
+    button.click();
+  });
   await expect(page.getByText("✓ Correct")).toBeVisible();
+  expect(attempts).toBe(1);
 
   await page.getByRole("button", { name: "Mark lesson complete" }).click();
   await expect(page.getByRole("button", { name: "✓ Lesson completed" })).toBeVisible();

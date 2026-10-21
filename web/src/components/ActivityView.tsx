@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Answer, CheckResult, Item } from "@study/shared";
 import { fillBlankParts, stripMath } from "@study/shared";
@@ -25,10 +25,23 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
   const [hintsShown, setHintsShown] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = (answer: Answer) =>
+  const [pending, setPending] = useState(false);
+  // Synchronous, so a second click before the re-render cannot send another check
+  // whose late response would overwrite the verdict for the newer answer.
+  const inFlight = useRef(false);
+
+  const submit = (answer: Answer) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setPending(true);
     submitAnswer(packageId, item.id, answer)
       .then(setResult)
-      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => {
+        inFlight.current = false;
+        setPending(false);
+      });
+  };
 
   if (item.type === "flashcard") return <FlashcardReveal item={item} packageId={packageId} />;
 
@@ -41,7 +54,7 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
       <Media packageId={packageId} media={item.media} />
 
       <div className="work-body">
-        <AnswerForm item={item} disabled={!!result} onSubmit={submit} />
+        <AnswerForm item={item} disabled={!!result || pending} onSubmit={submit} />
 
         {item.hints?.slice(0, hintsShown).map((h, i) => (
           <p className="hint" key={i}>
