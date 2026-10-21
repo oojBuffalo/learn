@@ -55,18 +55,24 @@ export default function Study() {
     setQueue(null);
     setError(null);
     setFreePackage("");
-    if (mode === "due") {
-      getDueCards()
-        .then((cards) => {
-          setQueue(cards);
-          setTotal(cards.length);
-        })
-        .catch((e) => {
-          setQueue([]);
-          setError(message(e));
-        });
-    }
+    if (mode === "due") loadQueue(getDueCards());
   }, [mode]);
+
+  /** Fill the queue from a request, unless the queue was replaced while it was out. */
+  function loadQueue(request: Promise<Card[]>) {
+    const startedIn = session.current;
+    request
+      .then((cards) => {
+        if (session.current !== startedIn) return;
+        setQueue(cards);
+        setTotal(cards.length);
+      })
+      .catch((e) => {
+        if (session.current !== startedIn) return;
+        setQueue([]);
+        setError(message(e));
+      });
+  }
 
   function loadFreeStudy(packageId: string) {
     session.current += 1;
@@ -75,15 +81,7 @@ export default function Study() {
     setReviewed(0);
     setQueue(null);
     setError(null);
-    getFreeStudy(packageId)
-      .then((cards) => {
-        setQueue(cards);
-        setTotal(cards.length);
-      })
-      .catch((e) => {
-        setQueue([]);
-        setError(message(e));
-      });
+    loadQueue(getFreeStudy(packageId));
   }
 
   const card = queue?.[0] ?? null;
