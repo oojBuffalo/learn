@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LoadedPackage } from "../src/index.js";
-import { fillBlankSegments, prosePassages, stripMath } from "../src/index.js";
+import { fillBlankParts, fillBlankSegments, prosePassages, stripMath } from "../src/index.js";
 
 describe("stripMath", () => {
   it("drops balanced delimiters and keeps the source", () => {
@@ -19,6 +19,22 @@ describe("stripMath", () => {
 
   it("passes ordinary prose through untouched", () => {
     expect(stripMath("no math here")).toBe("no math here");
+  });
+});
+
+describe("fillBlankParts", () => {
+  it("alternates literal text with slots and keeps boundary whitespace", () => {
+    expect(fillBlankParts("The {{1}} thing")).toEqual([{ text: "The " }, { slot: "1" }, { text: " thing" }]);
+  });
+
+  it("keeps empty literal chunks when a blank opens or closes the template", () => {
+    expect(fillBlankParts("{{1}} and {{2}}")).toEqual([
+      { text: "" },
+      { slot: "1" },
+      { text: " and " },
+      { slot: "2" },
+      { text: "" },
+    ]);
   });
 });
 

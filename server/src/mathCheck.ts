@@ -54,27 +54,31 @@ export function validateMath(pkg: LoadedPackage): PackageError[] {
   const errors: PackageError[] = [];
 
   for (const passage of prosePassages(pkg)) {
-    if (!passage.text.includes("$")) continue;
+    // Cheap pre-filter: math needs a `$` delimiter or a fence tagged `math`.
+    if (!passage.text.includes("$") && !passage.text.includes("math")) continue;
 
     const err = (message: string) =>
       errors.push({ file: passage.file, path: passage.path, message });
     const tree = processor.parse(passage.text);
 
     visit(tree, (node) => {
-      if (node.type !== "inlineMath" && node.type !== "math") return;
+      // A fence tagged `math` parses as code, but rehype-katex renders it as display
+      // math, so it has to clear the same checks as `$$…$$`.
+      const fence = node.type === "code" && (node as { lang?: string | null }).lang === "math";
+      if (node.type !== "inlineMath" && node.type !== "math" && !fence) return;
       const math = node as unknown as MathNode;
-      const display = node.type === "math";
+      const display = node.type !== "inlineMath";
       const at = where(passage, math);
 
       if (passage.mode === "plain") {
         err(
           `${at}math is not supported here — this field is shown as plain text, so ` +
-            `"${quote(math.value)}" would reach the learner as literal dollar signs`,
+            `"${quote(math.value)}" would reach the learner as literal source`,
         );
         return;
       }
       if (display && passage.mode === "inline") {
-        err(`${at}display math ($$…$$) does not fit this field; use inline $…$ instead`);
+        err(`${at}display math ($$…$$ or a math fence) does not fit this field; use inline $…$ instead`);
         return;
       }
       try {

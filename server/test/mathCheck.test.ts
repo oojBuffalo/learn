@@ -43,6 +43,38 @@ describe("validateMath", () => {
     expect(validateMath(pkg(lesson("```math\n\\sum_{i=1}^{n} w_i\n```\n")))).toEqual([]);
   });
 
+  it("reports a KaTeX parse error inside a ```math fenced block", () => {
+    const errs = validateMath(pkg(lesson("Intro\n\n```math\n\\fracc{1}{2}\n```\n")));
+    expect(errs).toHaveLength(1);
+    expect(errs[0]!.message).toMatch(/^line 3: .*fracc/);
+  });
+
+  it("refuses a ```math fenced block in an option, which cannot hold a block", () => {
+    const errs = validateMath(
+      pkg(mc({ options: [{ id: "a", text: "```math\nx^2\n```", correct: true }, { id: "b", text: "B" }] })),
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0]).toMatchObject({ path: "mc.options[0].text" });
+    expect(errs[0]!.message).toMatch(/display math/);
+  });
+
+  it("refuses a ```math fenced block in a plain field", () => {
+    const errs = validateMath(
+      pkg({
+        items: [
+          {
+            id: "m",
+            type: "matching",
+            prompt: "Match",
+            pairs: [{ left: "L", right: "```math\nx\n```" }, { left: "L2", right: "R2" }],
+          } as LoadedPackage["items"][number],
+        ],
+      }),
+    );
+    expect(errs).toHaveLength(1);
+    expect(errs[0]).toMatchObject({ path: "m.pairs[0].right" });
+  });
+
   it("reports a KaTeX parse error with the file and path", () => {
     const errs = validateMath(pkg(mc({ prompt: "What is $\\fracc{1}{2}$?" })));
     expect(errs).toHaveLength(1);

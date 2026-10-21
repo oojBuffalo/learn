@@ -21,10 +21,11 @@ export {
   MATH_OPTIONS,
   KATEX_OPTIONS,
   prosePassages,
+  fillBlankParts,
   fillBlankSegments,
   stripMath,
 } from "./mathSource.js";
-export type { ProseMode, Passage } from "./mathSource.js";
+export type { FillBlankPart, ProseMode, Passage } from "./mathSource.js";
 export { answerSchema, attemptRequestSchema, checkAnswer, fold } from "./checking.js";
 export type { Answer, CheckResult } from "./checking.js";
 export { schedule } from "./scheduler.js";

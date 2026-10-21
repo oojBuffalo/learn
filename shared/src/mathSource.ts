@@ -39,9 +39,29 @@ export interface Passage {
   mode: ProseMode;
 }
 
+/** One piece of a fill-blank template: literal text, or the number of a blank. */
+export type FillBlankPart = { text: string } | { slot: string };
+
+/**
+ * Split a fill-blank template the way the player lays it out. The validator and the
+ * renderer both go through here, so they always agree on where the blanks fall.
+ *
+ * Args:
+ *   template: The template, with blanks written as `{{1}}`, `{{2}}`, ….
+ *
+ * Returns:
+ *   Literal chunks and slots in order. Literal chunks sit at even positions and may
+ *   be empty, so a template that opens or closes with a blank still alternates.
+ */
+export function fillBlankParts(template: string): FillBlankPart[] {
+  return template
+    .split(/(\{\{\d+\}\})/)
+    .map((piece, i) => (i % 2 ? { slot: piece.slice(2, -2) } : { text: piece }));
+}
+
 /** Literal chunks of a fill-blank template, which the player renders separately. */
 export function fillBlankSegments(template: string): string[] {
-  return template.split(/\{\{\d+\}\}/);
+  return fillBlankParts(template).flatMap((part) => ("text" in part ? [part.text] : []));
 }
 
 /**

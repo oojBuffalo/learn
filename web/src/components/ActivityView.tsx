@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
+import type { ReactNode } from "react";
 import type { Answer, CheckResult, Item } from "@study/shared";
-import { stripMath } from "@study/shared";
+import { fillBlankParts, stripMath } from "@study/shared";
 import { submitAnswer } from "../api.js";
 import Icon from "./Icon.js";
 import Markdown, { InlineMarkdown } from "./Markdown.js";
@@ -105,55 +106,56 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
   );
 }
 
+/** Author-written display text, which may carry Markdown and math. */
+const rich = (text: string) => <InlineMarkdown>{text}</InlineMarkdown>;
+
 /**
  * The graded answer in the item's own words, not raw JSON.
  *
- * `rich` marks the pieces that are author-written display text and so may carry
- * Markdown and math. The others are values the learner typed or picked, which are
- * shown verbatim — running them through Markdown could mangle a literal `*` or `_`
- * that is part of a correct answer.
+ * Author-written display text goes through `rich` so it may carry Markdown and math.
+ * Values the learner typed or picked are shown verbatim — running them through
+ * Markdown could mangle a literal `*` or `_` that is part of a correct answer.
  */
-function expectedParts(item: Task, expected: unknown): { parts: string[]; sep: string; rich: boolean } {
+function expectedParts(item: Task, expected: unknown): { parts: ReactNode[]; sep: string } {
   switch (item.type) {
     case "multiple-choice":
-      return {
-        parts: [item.options.find((o) => o.id === expected)?.text ?? String(expected)],
-        sep: "",
-        rich: true,
-      };
+      return { parts: [rich(item.options.find((o) => o.id === expected)?.text ?? String(expected))], sep: "" };
     case "multi-select": {
       const ids = new Set((Array.isArray(expected) ? expected : []).map(String));
-      return { parts: item.options.filter((o) => ids.has(o.id)).map((o) => o.text), sep: ", ", rich: true };
+      return { parts: item.options.filter((o) => ids.has(o.id)).map((o) => rich(o.text)), sep: ", " };
     }
     case "fill-blank": {
       const given = (expected ?? {}) as Record<string, string>;
-      return {
-        parts: item.blanks.map((b) => given[String(b.slot)] ?? b.accept[0] ?? ""),
-        sep: " · ",
-        rich: false,
-      };
+      return { parts: item.blanks.map((b) => given[String(b.slot)] ?? b.accept[0] ?? ""), sep: " · " };
     }
     case "short-answer":
-      return { parts: [String(expected ?? item.accept[0] ?? "")], sep: "", rich: false };
+      return { parts: [String(expected ?? item.accept[0] ?? "")], sep: "" };
     case "ordering": {
       const text = new Map(item.steps.map((s) => [s.id, s.text]));
       const ids = Array.isArray(expected) ? expected.map(String) : item.steps.map((s) => s.id);
-      return { parts: ids.map((id) => text.get(id) ?? id), sep: " → ", rich: true };
+      return { parts: ids.map((id) => rich(text.get(id) ?? id)), sep: " → " };
     }
     case "matching":
-      // Mixes a rich left with a plain right, so the whole summary row stays plain.
-      return { parts: item.pairs.map((p) => `${p.left} → ${p.right}`), sep: " · ", rich: false };
+      // The left may carry inline math; the right is a plain value, as in the form.
+      return {
+        parts: item.pairs.map((p) => (
+          <>
+            {rich(p.left)} → {p.right}
+          </>
+        )),
+        sep: " · ",
+      };
   }
 }
 
 function ExpectedAnswer({ item, expected }: { item: Task; expected: unknown }) {
-  const { parts, sep, rich } = expectedParts(item, expected);
+  const { parts, sep } = expectedParts(item, expected);
   return (
     <>
       {parts.map((part, i) => (
         <Fragment key={i}>
           {i > 0 && sep}
-          {rich ? <InlineMarkdown>{part}</InlineMarkdown> : part}
+          {part}
         </Fragment>
       ))}
     </>
@@ -299,25 +301,32 @@ function FillBlank({
   onSubmit: (a: Answer) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const parts = item.template.split(/(\{\{\d+\}\})/);
+  const parts = fillBlankParts(item.template);
 
   return (
     <>
       <p className="blank-line">
         {parts.map((part, i) => {
-          const m = /^\{\{(\d+)\}\}$/.exec(part);
-          return m ? (
-            <input
-              className="blank"
-              key={i}
-              aria-label={`Blank ${m[1]}`}
-              disabled={disabled}
-              value={answers[m[1]!] ?? ""}
-              onChange={(e) => setAnswers({ ...answers, [m[1]!]: e.target.value })}
-            />
-          ) : (
+          if ("slot" in part) {
+            return (
+              <input
+                className="blank"
+                key={i}
+                aria-label={`Blank ${part.slot}`}
+                disabled={disabled}
+                value={answers[part.slot] ?? ""}
+                onChange={(e) => setAnswers({ ...answers, [part.slot]: e.target.value })}
+              />
+            );
+          }
+          // Markdown trims a chunk's edges, which would glue words to the inputs, so
+          // the boundary whitespace is kept outside the renderer.
+          const [, lead, body, trail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(part.text)!;
+          return (
             <span key={i}>
-              <InlineMarkdown>{part}</InlineMarkdown>
+              {lead}
+              {body && <InlineMarkdown>{body}</InlineMarkdown>}
+              {trail}
             </span>
           );
         })}
