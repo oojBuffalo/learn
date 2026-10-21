@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LoadedPackage } from "../src/index.js";
-import { fillBlankParts, fillBlankSegments, prosePassages, stripMath } from "../src/index.js";
+import { checkAnswer, fillBlankParts, fillBlankSegments, itemSchema, prosePassages, stripMath } from "../src/index.js";
 
 describe("stripMath", () => {
   it("drops balanced delimiters and keeps the source", () => {
@@ -35,6 +35,22 @@ describe("fillBlankParts", () => {
       { slot: "2" },
       { text: "" },
     ]);
+  });
+});
+
+describe("fillBlankParts slot numbers", () => {
+  it("files a zero-padded placeholder under the slot the schema and checker use", () => {
+    const item = itemSchema.parse({
+      id: "fb",
+      type: "fill-blank",
+      prompt: "P",
+      template: "Answer: {{01}}",
+      blanks: [{ slot: 1, accept: ["yes"] }],
+    });
+    if (item.type !== "fill-blank") throw new Error("expected fill-blank");
+    const slot = fillBlankParts(item.template).flatMap((p) => ("slot" in p ? [p.slot] : []))[0]!;
+    expect(slot).toBe("1");
+    expect(checkAnswer(item, { type: "fill-blank", answers: { [slot]: "yes" } }).correct).toBe(true);
   });
 });
 

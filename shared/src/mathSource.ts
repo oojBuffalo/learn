@@ -56,7 +56,9 @@ export type FillBlankPart = { text: string } | { slot: string };
 export function fillBlankParts(template: string): FillBlankPart[] {
   return template
     .split(/(\{\{\d+\}\})/)
-    .map((piece, i) => (i % 2 ? { slot: piece.slice(2, -2) } : { text: piece }));
+    // Slots are numbers everywhere else (the schema and the checker), so `{{01}}` is
+    // slot "1" here too, or its answer would be filed under a key nothing expects.
+    .map((piece, i) => (i % 2 ? { slot: String(Number(piece.slice(2, -2))) } : { text: piece }));
 }
 
 /** Literal chunks of a fill-blank template, which the player renders separately. */
