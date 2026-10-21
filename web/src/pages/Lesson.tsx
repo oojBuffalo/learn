@@ -4,7 +4,7 @@ import { activityIdsInBody, splitLessonBody } from "@study/shared";
 import { getLesson, setProgress, type LessonPayload } from "../api.js";
 import ActivityView from "../components/ActivityView.js";
 import Icon from "../components/Icon.js";
-import Markdown from "../components/Markdown.js";
+import Markdown, { referenceDefinitions } from "../components/Markdown.js";
 
 interface Frontmatter {
   summary?: string;
@@ -47,6 +47,7 @@ export default function Lesson() {
 
   const fm = data.lesson.frontmatter as Frontmatter;
   const segments = splitLessonBody(data.lesson.body);
+  const definitions = referenceDefinitions(data.lesson.body);
   const embedded = new Set(activityIdsInBody(data.lesson.body));
   const extra = (fm.activities ?? []).filter((id) => !embedded.has(id));
   const done = data.progress === "completed";
@@ -70,7 +71,7 @@ export default function Lesson() {
       {segments.map((seg, i) =>
         seg.kind === "md" ? (
           <Markdown key={"md-" + i} packageId={packageId}>
-            {seg.md}
+            {seg.md + definitions}
           </Markdown>
         ) : data.items[seg.id] ? (
           <ActivityView key={seg.id} packageId={packageId} item={data.items[seg.id]!} />

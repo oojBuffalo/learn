@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
+import type { Definition } from "mdast";
+import type { Node } from "unist";
 import type { PluggableList } from "unified";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import remarkParse from "remark-parse";
+import { unified } from "unified";
 import rehypeKatex from "rehype-katex";
 import { KATEX_OPTIONS, MATH_OPTIONS } from "@study/shared";
 
@@ -12,6 +16,37 @@ import { KATEX_OPTIONS, MATH_OPTIONS } from "@study/shared";
  */
 const remarkPlugins: PluggableList = [remarkGfm, [remarkMath, MATH_OPTIONS]];
 const rehypePlugins: PluggableList = [[rehypeKatex, KATEX_OPTIONS]];
+
+const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath, MATH_OPTIONS);
+
+/**
+ * Every reference definition in a document, rewritten as Markdown.
+ *
+ * A lesson renders as separate Markdown runs between its activities, and a run can
+ * only resolve `![pic][dot]` against definitions it contains. Appending the whole
+ * document's definitions to each run restores what a single parse would have seen.
+ *
+ * Args:
+ *   markdown: The full document.
+ *
+ * Returns:
+ *   One definition per line, led by a blank line, or "" when there are none.
+ */
+export function referenceDefinitions(markdown: string): string {
+  const lines: string[] = [];
+  // Definitions are document-wide even when written inside a list or blockquote.
+  const walk = (node: Node) => {
+    if (node.type === "definition") {
+      const { url, title, label, identifier } = node as Definition;
+      const dest = url.replace(/\\/g, "\\\\").replace(/[<>\n]/g, encodeURIComponent);
+      const quoted = title ? ` "${title.replace(/["\\]/g, "\\$&")}"` : "";
+      lines.push(`[${label ?? identifier}]: <${dest}>${quoted}`);
+    }
+    if ("children" in node) (node.children as Node[]).forEach(walk);
+  };
+  walk(parser.parse(markdown));
+  return lines.length ? `\n\n${lines.join("\n")}\n` : "";
+}
 
 /** Wide tables scroll inside their own box rather than widening the page. */
 const components = {
