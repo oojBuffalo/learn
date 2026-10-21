@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 test("sample package: lesson → exercise → flashcard review", async ({ page }) => {
+  // A failed first load says so and can be retried, rather than loading forever.
+  await page.route("**/api/packages", (route) => route.fulfill({ status: 500, body: "{}" }), { times: 1 });
   await page.goto("/");
+  await expect(page.getByRole("alert")).toContainText("couldn’t be loaded");
+  await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("heading", { name: "Learning How to Learn" })).toBeVisible();
 
   await page.getByRole("link", { name: "Spaced Repetition" }).click();

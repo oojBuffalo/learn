@@ -66,7 +66,30 @@ export default function Library() {
     }
   }
 
-  if (!packages) return <p className="loading">Loading…</p>;
+  if (!packages) {
+    // Until the first list arrives there is nothing else to show, so a failure has to
+    // be shown here, with a way to ask again once the server is back.
+    if (errors.length === 0) return <p className="loading">Loading…</p>;
+    return (
+      <div className="page">
+        <div className="errors" role="alert">
+          <strong>Your library couldn’t be loaded.</strong>
+          <p>{errors[0]}</p>
+        </div>
+        <div className="actions">
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setErrors([]);
+              refresh();
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page">
