@@ -11,6 +11,11 @@ describe("splitLessonBody", () => {
     ]);
   });
 
+  it("recognizes a directive in a CRLF file", () => {
+    const body = 'Intro.\r\n\r\n::activity{id="mc1"}\r\n\r\nMore.\r\n';
+    expect(activityIdsInBody(body)).toEqual(["mc1"]);
+  });
+
   it("returns one md segment when there are no directives", () => {
     expect(splitLessonBody("Just text.")).toEqual([{ kind: "md", md: "Just text." }]);
   });

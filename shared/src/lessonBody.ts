@@ -9,7 +9,8 @@ export function splitLessonBody(body: string): BodySegment[] {
     if (buf.length) segments.push({ kind: "md", md: buf.join("\n") });
     buf = [];
   };
-  for (const line of body.split("\n")) {
+  // CRLF files would leave a trailing \r that keeps a directive line from matching.
+  for (const line of body.split(/\r?\n/)) {
     const m = DIRECTIVE_RE.exec(line);
     if (m && m[1]) {
       flush();
