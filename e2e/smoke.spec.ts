@@ -23,10 +23,12 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
   await expect(page.locator(".opt .katex").first()).toBeVisible();
 
   // inline exercise: answer the embedded multiple-choice correctly
-  // Two clicks in one tick, before React re-renders, must still send one attempt.
+  // The first check fails; then two clicks in one tick, before React re-renders,
+  // must still send just one more attempt, and its success clears the old error.
   let attempts = 0;
   await page.route("**/api/attempts", async (route) => {
     attempts += 1;
+    if (attempts === 1) return route.fulfill({ status: 500, body: "{}" });
     await new Promise((r) => setTimeout(r, 300));
     await route.continue();
   });
@@ -35,12 +37,15 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
   await page.getByRole("button", { name: "Mark lesson complete" }).click();
   await expect(page.getByRole("button", { name: "✓ Lesson completed" })).toBeVisible();
   await expect(page.getByLabel(/just before you would forget/i)).toBeChecked();
+  await page.getByRole("button", { name: "Check" }).first().click();
+  await expect(page.locator(".work").first().getByRole("alert")).toBeVisible();
   await page.getByRole("button", { name: "Check" }).first().evaluate((button: HTMLButtonElement) => {
     button.click();
     button.click();
   });
   await expect(page.getByText("✓ Correct")).toBeVisible();
-  expect(attempts).toBe(1);
+  await expect(page.locator(".work").first().getByRole("alert")).toHaveCount(0);
+  expect(attempts).toBe(2);
 
   // review flow
   await page.getByRole("link", { name: "Study" }).click();

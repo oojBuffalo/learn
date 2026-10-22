@@ -95,6 +95,7 @@ export default function Study() {
     if (!card || inFlight.current) return;
     inFlight.current = true;
     setGrading(true);
+    setError(null);
     const graded = card;
     const startedIn = session.current;
     try {

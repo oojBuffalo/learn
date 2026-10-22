@@ -34,6 +34,7 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
     if (inFlight.current) return;
     inFlight.current = true;
     setPending(true);
+    setError(null);
     submitAnswer(packageId, item.id, answer)
       .then(setResult)
       .catch((e) => setError(e instanceof Error ? e.message : String(e)))
