@@ -1,3 +1,4 @@
+import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
 import type { ElementContent, Root as HastRoot, RootContent } from "hast";
 import type { Root as MdastRoot } from "mdast";
@@ -110,21 +111,36 @@ export function LessonMarkdown({
   children: string;
   activity: (id: string) => ReactNode;
 }) {
-  const lessonComponents = {
-    ...components,
-    [ACTIVITY_TAG]: (props: { "data-id"?: string }) => <>{activity(props["data-id"] ?? "")}</>,
-  } as Components;
   return (
-    <ReactMarkdown
-      remarkPlugins={[...remarkPlugins, remarkActivities]}
-      rehypePlugins={[...rehypePlugins, rehypeProseRuns]}
-      components={lessonComponents}
-      urlTransform={assetUrls(packageId)}
-    >
-      {children}
-    </ReactMarkdown>
+    <ActivityRenderer.Provider value={activity}>
+      <ReactMarkdown
+        remarkPlugins={lessonRemarkPlugins}
+        rehypePlugins={lessonRehypePlugins}
+        components={lessonComponents}
+        urlTransform={assetUrls(packageId)}
+      >
+        {children}
+      </ReactMarkdown>
+    </ActivityRenderer.Provider>
   );
 }
+
+/**
+ * How the current lesson draws an activity. It arrives through context so that the
+ * slot below can be one module-level component: a component defined during render is
+ * a new type every time, and React would remount every exercise — losing typed
+ * answers, picks and verdicts — whenever the lesson page re-rendered.
+ */
+const ActivityRenderer = createContext<(id: string) => ReactNode>(() => null);
+
+function ActivitySlot(props: { "data-id"?: string }) {
+  const render = useContext(ActivityRenderer);
+  return <>{render(props["data-id"] ?? "")}</>;
+}
+
+const lessonRemarkPlugins: PluggableList = [...remarkPlugins, remarkActivities];
+const lessonRehypePlugins: PluggableList = [...rehypePlugins, rehypeProseRuns];
+const lessonComponents = { ...components, [ACTIVITY_TAG]: ActivitySlot } as Components;
 
 /** Nothing block-level can live inside a label, a table row or a bold run. */
 const BLOCK_ELEMENTS = [

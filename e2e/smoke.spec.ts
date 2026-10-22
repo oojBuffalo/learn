@@ -31,15 +31,16 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
     await route.continue();
   });
   await page.getByLabel(/just before you would forget/i).check();
+  // Marking the lesson complete re-renders the page; the pick must survive it.
+  await page.getByRole("button", { name: "Mark lesson complete" }).click();
+  await expect(page.getByRole("button", { name: "✓ Lesson completed" })).toBeVisible();
+  await expect(page.getByLabel(/just before you would forget/i)).toBeChecked();
   await page.getByRole("button", { name: "Check" }).first().evaluate((button: HTMLButtonElement) => {
     button.click();
     button.click();
   });
   await expect(page.getByText("✓ Correct")).toBeVisible();
   expect(attempts).toBe(1);
-
-  await page.getByRole("button", { name: "Mark lesson complete" }).click();
-  await expect(page.getByRole("button", { name: "✓ Lesson completed" })).toBeVisible();
 
   // review flow
   await page.getByRole("link", { name: "Study" }).click();
