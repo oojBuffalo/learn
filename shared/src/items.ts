@@ -3,7 +3,19 @@ import { idSchema } from "./ids.js";
 
 export const difficultySchema = z.enum(["beginner", "intermediate", "advanced"]);
 const mediaSchema = z.object({ src: z.string(), alt: z.string().optional() }).strict();
-const metaSchema = z.record(z.unknown());
+/**
+ * Free-form author metadata, carried through import and export untouched.
+ *
+ * A record parse silently drops an own `__proto__` key (JSON.parse creates one), so
+ * such a key would vanish on export. It is refused instead: keeping it as a plain
+ * property invites prototype pollution in whatever reads the metadata later.
+ */
+export const metaSchema = z
+  .custom<Record<string, unknown>>(
+    (v) => typeof v === "object" && v !== null && !Array.isArray(v),
+    { message: "meta must be an object" },
+  )
+  .refine((v) => !Object.hasOwn(v, "__proto__"), { message: 'meta may not use the key "__proto__"' });
 
 const itemBase = {
   id: idSchema,

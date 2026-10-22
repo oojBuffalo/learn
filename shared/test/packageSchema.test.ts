@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gameSchema, lessonFrontmatterSchema, manifestSchema, quizSchema } from "../src/index.js";
+import { gameSchema, itemSchema, lessonFrontmatterSchema, manifestSchema, quizSchema } from "../src/index.js";
 
 describe("manifestSchema", () => {
   it("accepts a minimal manifest", () => {
@@ -16,6 +16,20 @@ describe("manifestSchema", () => {
     expect(() =>
       manifestSchema.parse({ formatVersion: "9.0.0", id: "x", title: "X", version: "1" }),
     ).toThrow(/formatVersion/i);
+  });
+
+  it("carries meta through untouched, and refuses a __proto__ key rather than dropping it", () => {
+    const base = { formatVersion: "1.0.0", id: "p", title: "P", version: "1" };
+    const meta = { author: "a", nested: JSON.parse('{"__proto__": {"kept": true}, "n": [1]}') };
+    expect(manifestSchema.parse({ ...base, meta }).meta).toBe(meta);
+
+    const proto = JSON.parse('{"__proto__": {"note": "preserve me"}}');
+    expect(() => manifestSchema.parse({ ...base, meta: proto })).toThrow(/__proto__/);
+    expect(() =>
+      itemSchema.parse({ id: "c", type: "flashcard", front: "f", back: "b", meta: proto }),
+    ).toThrow(/__proto__/);
+    expect(() => quizSchema.parse({ id: "q", title: "Q", items: ["c"], meta: proto })).toThrow(/__proto__/);
+    expect(() => manifestSchema.parse({ ...base, meta: ["not", "an", "object"] })).toThrow(/object/);
   });
 
   it("accepts optional units and meta, rejects unknown fields", () => {

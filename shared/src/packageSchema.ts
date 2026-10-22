@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { idSchema } from "./ids.js";
-import { difficultySchema } from "./items.js";
+import { difficultySchema, metaSchema } from "./items.js";
 
 export const KNOWN_FORMAT_VERSIONS = ["1.0.0"];
-const metaSchema = z.record(z.unknown());
 
 export const manifestSchema = z
   .object({
