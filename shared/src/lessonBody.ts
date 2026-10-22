@@ -1,40 +1,54 @@
-export type BodySegment = { kind: "md"; md: string } | { kind: "activity"; id: string };
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import remarkParse from "remark-parse";
+import { unified } from "unified";
+import { MATH_OPTIONS } from "./mathSource.js";
 
 const DIRECTIVE_RE = /^::activity\{id="([A-Za-z0-9][A-Za-z0-9_-]*)"\}[ \t]*$/;
-/** A CommonMark code fence: up to three spaces, then three or more ` or ~. */
-const FENCE_RE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
 
-export function splitLessonBody(body: string): BodySegment[] {
-  const segments: BodySegment[] = [];
-  let buf: string[] = [];
-  const flush = () => {
-    if (buf.length) segments.push({ kind: "md", md: buf.join("\n") });
-    buf = [];
-  };
-  // Inside a fenced code block a directive line is an example, not an activity.
-  let fence: string | null = null;
-  // CRLF files would leave a trailing \r that keeps a directive line from matching.
-  for (const line of body.split(/\r?\n/)) {
-    const f = FENCE_RE.exec(line);
-    if (fence === null && f && !(f[1]![0] === "`" && f[2]!.includes("`"))) {
-      fence = f[1]!;
-    } else if (fence !== null && f && f[1]![0] === fence[0] && f[1]!.length >= fence.length && !f[2]!.trim()) {
-      fence = null;
-    }
-    const m = fence === null ? DIRECTIVE_RE.exec(line) : null;
-    if (m && m[1]) {
-      flush();
-      segments.push({ kind: "activity", id: m[1] });
-    } else {
-      buf.push(line);
-    }
-  }
-  flush();
-  return segments.length ? segments : [{ kind: "md", md: "" }];
+/** The player's Markdown dialect, so an activity found here is one it will render. */
+const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath, MATH_OPTIONS);
+
+interface MdNode {
+  type: string;
+  value?: string;
+  children?: MdNode[];
 }
 
+/**
+ * The activity a top-level Markdown node stands for, if any.
+ *
+ * A directive is a paragraph that is nothing but `::activity{id="…"}`, written as its
+ * own block at the top level of the lesson. Deciding this on parsed nodes rather than
+ * raw lines is what keeps code samples, list items and quotes that merely contain
+ * directive text from being mistaken for one.
+ *
+ * Args:
+ *   node: A child of the lesson's mdast root.
+ *
+ * Returns:
+ *   The activity's item id, or null when the node is ordinary content.
+ */
+export function directiveId(node: MdNode): string | null {
+  if (node.type !== "paragraph" || node.children?.length !== 1) return null;
+  const [only] = node.children;
+  if (only?.type !== "text" || only.value === undefined) return null;
+  return DIRECTIVE_RE.exec(only.value)?.[1] ?? null;
+}
+
+/**
+ * Item ids of the activities embedded in a lesson body, in reading order.
+ *
+ * Args:
+ *   body: The lesson's Markdown.
+ *
+ * Returns:
+ *   One id per directive, repeats included.
+ */
 export function activityIdsInBody(body: string): string[] {
-  return splitLessonBody(body)
-    .filter((s): s is Extract<BodySegment, { kind: "activity" }> => s.kind === "activity")
-    .map((s) => s.id);
+  const root = parser.parse(body) as MdNode;
+  return (root.children ?? []).flatMap((node) => {
+    const id = directiveId(node);
+    return id ? [id] : [];
+  });
 }

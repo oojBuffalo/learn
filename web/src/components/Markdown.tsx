@@ -1,14 +1,12 @@
 import type { ReactNode } from "react";
-import type { Definition } from "mdast";
-import type { Node } from "unist";
+import type { ElementContent, Root as HastRoot, RootContent } from "hast";
+import type { Root as MdastRoot } from "mdast";
 import type { PluggableList } from "unified";
-import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform, type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
 import rehypeKatex from "rehype-katex";
-import { KATEX_OPTIONS, MATH_OPTIONS } from "@study/shared";
+import { directiveId, KATEX_OPTIONS, MATH_OPTIONS } from "@study/shared";
 
 /**
  * One dialect for the whole app. The importer parses with the same settings, so a
@@ -16,41 +14,6 @@ import { KATEX_OPTIONS, MATH_OPTIONS } from "@study/shared";
  */
 const remarkPlugins: PluggableList = [remarkGfm, [remarkMath, MATH_OPTIONS]];
 const rehypePlugins: PluggableList = [[rehypeKatex, KATEX_OPTIONS]];
-
-const parser = unified().use(remarkParse).use(remarkGfm).use(remarkMath, MATH_OPTIONS);
-
-/**
- * Every reference definition in a document, rewritten as Markdown.
- *
- * A lesson renders as separate Markdown runs between its activities, and a run can
- * only resolve `![pic][dot]` against definitions it contains. Prefixing each run with
- * the whole document's definitions restores what a single parse would have seen,
- * including that the first definition of a label wins.
- *
- * Args:
- *   markdown: The full document.
- *
- * Returns:
- *   One definition per label in document order, followed by a blank line, or ""
- *   when there are none.
- */
-export function referenceDefinitions(markdown: string): string {
-  const lines: string[] = [];
-  const seen = new Set<string>();
-  // Definitions are document-wide even when written inside a list or blockquote.
-  const walk = (node: Node) => {
-    if (node.type === "definition" && !seen.has((node as Definition).identifier)) {
-      const { url, title, label, identifier } = node as Definition;
-      seen.add(identifier);
-      const dest = url.replace(/\\/g, "\\\\").replace(/[<>\n]/g, encodeURIComponent);
-      const quoted = title ? ` "${title.replace(/["\\]/g, "\\$&")}"` : "";
-      lines.push(`[${label ?? identifier}]: <${dest}>${quoted}`);
-    }
-    if ("children" in node) (node.children as Node[]).forEach(walk);
-  };
-  walk(parser.parse(markdown));
-  return lines.length ? `${lines.join("\n")}\n\n` : "";
-}
 
 /** Wide tables scroll inside their own box rather than widening the page. */
 const components = {
@@ -60,6 +23,10 @@ const components = {
     </div>
   ),
 };
+
+/** Package assets are served by the API; everything else goes through the default guard. */
+const assetUrls = (packageId: string) => (url: string) =>
+  url.startsWith("assets/") ? `/api/packages/${packageId}/${url}` : defaultUrlTransform(url);
 
 export default function Markdown({
   packageId,
@@ -76,13 +43,86 @@ export default function Markdown({
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
         components={components}
-        urlTransform={(url) =>
-          url.startsWith("assets/") ? `/api/packages/${packageId}/${url}` : defaultUrlTransform(url)
-        }
+        urlTransform={assetUrls(packageId)}
       >
         {children}
       </ReactMarkdown>
     </div>
+  );
+}
+
+const ACTIVITY_TAG = "study-activity";
+
+/** Mark each top-level directive paragraph to come out as an empty activity element. */
+function remarkActivities() {
+  return (tree: MdastRoot) => {
+    for (const node of tree.children) {
+      const id = directiveId(node);
+      if (id) Object.assign(node, { children: [], data: { hName: ACTIVITY_TAG, hProperties: { dataId: id } } });
+    }
+  };
+}
+
+/**
+ * Wrap each run of content between activities in its own `.prose` block, so the page
+ * keeps the layout of separate reading passages with exercise cards between them.
+ */
+function rehypeProseRuns() {
+  return (tree: HastRoot) => {
+    const out: RootContent[] = [];
+    let run: ElementContent[] = [];
+    const blank = (node: ElementContent | undefined) => node?.type === "text" && !node.value.trim();
+    const flush = () => {
+      while (blank(run[0])) run.shift();
+      while (blank(run[run.length - 1])) run.pop();
+      if (run.length) {
+        out.push({ type: "element", tagName: "div", properties: { className: ["prose"] }, children: run });
+      }
+      run = [];
+    };
+    for (const node of tree.children) {
+      if (node.type === "element" && node.tagName === ACTIVITY_TAG) {
+        flush();
+        out.push(node);
+      } else if (node.type !== "doctype") {
+        run.push(node);
+      }
+    }
+    flush();
+    tree.children = out;
+  };
+}
+
+/**
+ * A lesson body: its prose and the activities embedded in it.
+ *
+ * The body is parsed once, as one document, so anything Markdown resolves across the
+ * whole of it — reference definitions, footnotes, a code fence that holds directive
+ * text — behaves exactly as the importer validated it. Only top-level directive
+ * paragraphs become activities, the same rule `activityIdsInBody` applies.
+ */
+export function LessonMarkdown({
+  packageId,
+  children,
+  activity,
+}: {
+  packageId: string;
+  children: string;
+  activity: (id: string) => ReactNode;
+}) {
+  const lessonComponents = {
+    ...components,
+    [ACTIVITY_TAG]: (props: { "data-id"?: string }) => <>{activity(props["data-id"] ?? "")}</>,
+  } as Components;
+  return (
+    <ReactMarkdown
+      remarkPlugins={[...remarkPlugins, remarkActivities]}
+      rehypePlugins={[...rehypePlugins, rehypeProseRuns]}
+      components={lessonComponents}
+      urlTransform={assetUrls(packageId)}
+    >
+      {children}
+    </ReactMarkdown>
   );
 }
 

@@ -1,40 +1,47 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { splitLessonBody } from "@study/shared";
-import Markdown, { referenceDefinitions } from "../src/components/Markdown.js";
+import { LessonMarkdown } from "../src/components/Markdown.js";
 import Media from "../src/components/Media.js";
 import ActivityView from "../src/components/ActivityView.js";
 
-describe("referenceDefinitions", () => {
-  it("lets a segment resolve a definition written in another segment", () => {
-    const body = '![pic][dot]\n\n::activity{id="mc1"}\n\nMore.\n\n[dot]: assets/dot.png "A dot"\n';
-    const first = splitLessonBody(body)[0]!;
-    if (first.kind !== "md") throw new Error("expected markdown first");
-    const html = renderToStaticMarkup(
-      <Markdown packageId="p">{referenceDefinitions(body) + first.md}</Markdown>,
+const lesson = (body: string) =>
+  renderToStaticMarkup(
+    <LessonMarkdown packageId="p" activity={(id) => <aside data-activity={id} />}>
+      {body}
+    </LessonMarkdown>,
+  );
+
+describe("LessonMarkdown", () => {
+  it("keeps activities between prose blocks rather than inside them", () => {
+    const html = lesson('Intro.\n\n::activity{id="a"}\n\nMiddle.\n\n::activity{id="a"}\n');
+    expect(html).toBe(
+      '<div class="prose"><p>Intro.</p></div><aside data-activity="a"></aside>' +
+        '<div class="prose"><p>Middle.</p></div><aside data-activity="a"></aside>',
     );
+  });
+
+  it("resolves a reference image across an activity", () => {
+    const html = lesson('![pic][dot]\n\n::activity{id="mc1"}\n\n[dot]: assets/dot.png "A dot"\n');
     expect(html).toContain('<img src="/api/packages/p/assets/dot.png" alt="pic" title="A dot"/>');
   });
 
-  it("collects definitions nested in containers and round-trips awkward values", () => {
-    const body = '> [q]: <assets/a b.png> "say \\"hi\\""\n\n- [r]: assets/c.png\n';
-    const html = renderToStaticMarkup(<Markdown packageId="p">{referenceDefinitions(body) + "![x][q] ![y][r]"}</Markdown>);
-    expect(html).toContain('src="/api/packages/p/assets/a%20b.png"');
-    expect(html).toContain('title="say &quot;hi&quot;"');
-    expect(html).toContain('src="/api/packages/p/assets/c.png"');
-  });
-
-  it("keeps the document's first definition of a label, even over a later run's own", () => {
-    const body = '![a][x]\n\n[x]: assets/first.png\n\n::activity{id="mc1"}\n\n![b][x]\n\n[x]: assets/second.png\n';
-    const second = splitLessonBody(body)[2]!;
-    if (second.kind !== "md") throw new Error("expected markdown after the activity");
-    const html = renderToStaticMarkup(<Markdown packageId="p">{referenceDefinitions(body) + second.md}</Markdown>);
-    expect(html).toContain('src="/api/packages/p/assets/first.png"');
+  it("keeps the first definition of a label", () => {
+    const html = lesson('![a][x]\n\n[x]: assets/first.png\n\n::activity{id="mc1"}\n\n![b][x]\n\n[x]: assets/second.png\n');
     expect(html).not.toContain("second.png");
+    expect(html.match(/assets\/first\.png/g)).toHaveLength(2);
   });
 
-  it("adds nothing when there are no definitions", () => {
-    expect(referenceDefinitions("Just [a link](https://example.com).")).toBe("");
+  it("links a footnote to a definition written after an activity", () => {
+    const html = lesson('A fact[^note].\n\n::activity{id="mc1"}\n\n[^note]: Explanation of the fact.\n');
+    expect(html).toContain('href="#user-content-fn-note"');
+    expect(html).toContain("Explanation of the fact.");
+    expect(html).not.toContain("[^note]");
+  });
+
+  it("renders an activity after a fence opened on a list-item line", () => {
+    const html = lesson('- ```text\n  hello\n  ```\n\n::activity{id="mc1"}\n');
+    expect(html).toContain('<aside data-activity="mc1"></aside>');
+    expect(html).not.toContain("::activity");
   });
 });
 

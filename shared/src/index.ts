@@ -13,8 +13,7 @@ export {
   KNOWN_FORMAT_VERSIONS,
 } from "./packageSchema.js";
 export type { Manifest, LessonFrontmatter, Quiz, Game } from "./packageSchema.js";
-export { splitLessonBody, activityIdsInBody } from "./lessonBody.js";
-export type { BodySegment } from "./lessonBody.js";
+export { activityIdsInBody, directiveId } from "./lessonBody.js";
 export { validatePackage } from "./validatePackage.js";
 export type { LoadedPackage, LoadedLesson, PackageError } from "./validatePackage.js";
 export {

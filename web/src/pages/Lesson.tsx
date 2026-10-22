@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { activityIdsInBody, splitLessonBody } from "@study/shared";
+import { activityIdsInBody } from "@study/shared";
 import { getLesson, setProgress, type LessonPayload } from "../api.js";
 import ActivityView from "../components/ActivityView.js";
 import Icon from "../components/Icon.js";
-import Markdown, { referenceDefinitions } from "../components/Markdown.js";
+import { LessonMarkdown } from "../components/Markdown.js";
 
 interface Frontmatter {
   summary?: string;
@@ -46,8 +46,6 @@ export default function Lesson() {
   if (!data) return <p className="loading">Loading…</p>;
 
   const fm = data.lesson.frontmatter as Frontmatter;
-  const segments = splitLessonBody(data.lesson.body);
-  const definitions = referenceDefinitions(data.lesson.body);
   const embedded = new Set(activityIdsInBody(data.lesson.body));
   const extra = (fm.activities ?? []).filter((id) => !embedded.has(id));
   const done = data.progress === "completed";
@@ -68,15 +66,12 @@ export default function Lesson() {
         {fm.summary && <p className="page-sub">{fm.summary}</p>}
       </header>
 
-      {segments.map((seg, i) =>
-        seg.kind === "md" ? (
-          <Markdown key={"md-" + i} packageId={packageId}>
-            {definitions + seg.md}
-          </Markdown>
-        ) : data.items[seg.id] ? (
-          <ActivityView key={"activity-" + i} packageId={packageId} item={data.items[seg.id]!} />
-        ) : null,
-      )}
+      <LessonMarkdown
+        packageId={packageId}
+        activity={(id) => (data.items[id] ? <ActivityView packageId={packageId} item={data.items[id]!} /> : null)}
+      >
+        {data.lesson.body}
+      </LessonMarkdown>
 
       {extra.length > 0 && (
         <>
