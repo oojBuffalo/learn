@@ -33,9 +33,19 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
     await route.continue();
   });
   await page.getByLabel(/just before you would forget/i).check();
-  // Marking the lesson complete re-renders the page; the pick must survive it.
+  // A failed save says so and can be retried. Marking the lesson complete
+  // re-renders the page; the pick must survive it.
+  let completions = 0;
+  await page.route("**/api/lessons/**/progress", (route) =>
+    route.request().postDataJSON().status === "completed" && ++completions === 1
+      ? route.fulfill({ status: 500, body: "{}" })
+      : route.continue(),
+  );
+  await page.getByRole("button", { name: "Mark lesson complete" }).click();
+  await expect(page.locator(".finish").getByRole("alert")).toContainText("wasn’t saved");
   await page.getByRole("button", { name: "Mark lesson complete" }).click();
   await expect(page.getByRole("button", { name: "✓ Lesson completed" })).toBeVisible();
+  await expect(page.locator(".finish").getByRole("alert")).toHaveCount(0);
   await expect(page.getByLabel(/just before you would forget/i)).toBeChecked();
   await page.getByRole("button", { name: "Check" }).first().click();
   await expect(page.locator(".work").first().getByRole("alert")).toBeVisible();

@@ -18,6 +18,7 @@ export default function Lesson() {
   const { packageId = "", lessonId = "" } = useParams();
   const [data, setData] = useState<LessonPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     getLesson(packageId, lessonId)
@@ -89,12 +90,20 @@ export default function Lesson() {
         <button
           className="btn btn-primary"
           disabled={done}
-          onClick={() =>
-            setProgress(packageId, lessonId, "completed").then(() => setData({ ...data, progress: "completed" }))
-          }
+          onClick={() => {
+            setSaveError(null);
+            setProgress(packageId, lessonId, "completed")
+              .then(() => setData((d) => d && { ...d, progress: "completed" }))
+              .catch((e) => setSaveError(e instanceof Error ? e.message : String(e)));
+          }}
         >
           {done ? "✓ Lesson completed" : "Mark lesson complete"}
         </button>
+        {saveError && (
+          <p className="errors" role="alert">
+            Your progress wasn’t saved ({saveError}). Try again in a moment.
+          </p>
+        )}
       </div>
     </div>
   );
