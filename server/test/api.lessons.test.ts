@@ -35,6 +35,20 @@ describe("lesson routes", () => {
     expect(body.progress).toBe("completed");
   });
 
+  it("keeps a completion when a delayed in-progress write lands after it", async () => {
+    const progress = (status: string) =>
+      app.request("/api/lessons/demo/intro/progress", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    expect((await progress("in-progress")).status).toBe(200);
+    expect((await (await app.request("/api/lessons/demo/intro")).json()).progress).toBe("in-progress");
+    expect((await progress("completed")).status).toBe(200);
+    expect((await progress("in-progress")).status).toBe(200);
+    expect((await (await app.request("/api/lessons/demo/intro")).json()).progress).toBe("completed");
+  });
+
   it("404s unknown lessons", async () => {
     expect((await app.request("/api/lessons/demo/ghost")).status).toBe(404);
   });

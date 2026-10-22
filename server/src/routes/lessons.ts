@@ -39,9 +39,14 @@ export function lessonRoutes() {
     if (status !== "in-progress" && status !== "completed") {
       return c.json({ error: { code: "bad_request", message: "status must be in-progress|completed" } }, 400);
     }
+    // Opening a lesson fires an unawaited in-progress write, which can land after the
+    // completion it preceded. Completion is final, so that late write must not undo it.
     db.prepare(
       `INSERT INTO lesson_progress (package_id, lesson_id, status, updated_at) VALUES (?, ?, ?, ?)
-       ON CONFLICT(package_id, lesson_id) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at`,
+       ON CONFLICT(package_id, lesson_id) DO UPDATE SET
+         status = CASE WHEN lesson_progress.status = 'completed' THEN 'completed' ELSE excluded.status END,
+         updated_at = CASE WHEN lesson_progress.status = 'completed' THEN lesson_progress.updated_at
+                           ELSE excluded.updated_at END`,
     ).run(packageId, lessonId, status, new Date().toISOString());
     return c.json({ ok: true });
   });
