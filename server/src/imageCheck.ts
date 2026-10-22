@@ -3,20 +3,33 @@ import { prosePassages } from "@study/shared";
 import type { LoadedPackage, PackageError } from "@study/shared";
 import { processor } from "./mathCheck.js";
 
+/** Stands in for `/api/packages/<id>/`, where the player resolves `assets/…` URLs. */
+const PACKAGE_ROOT = "http://package.invalid/root/";
+
 /**
  * The stored path the asset route will look up for an image destination.
  *
- * The browser drops any query or fragment and sends the path percent-encoded; the
- * route hands it back fully decoded. So `assets/a%23b.png` is the file `a#b.png`,
- * and `assets/a%20b.png` is `a b.png`, never a file literally named `a%20b.png`.
+ * The browser resolves the URL (dropping any query or fragment and collapsing `.` and
+ * `..` segments) and sends the path percent-encoded; the route hands it back fully
+ * decoded. So `assets/sub/../dot.png` is `assets/dot.png`, `assets/a%23b.png` is the
+ * file `a#b.png`, and `assets/a%20b.png` is `a b.png`, never a file literally named
+ * `a%20b.png`.
+ *
+ * Returns:
+ *   The key, or null when the URL resolves somewhere other than a package asset.
  */
-function lookupKey(url: string): string {
-  const path = url.split(/[?#]/, 1)[0]!;
+function lookupKey(url: string): string | null {
+  const { pathname } = new URL(url, PACKAGE_ROOT);
+  const root = new URL(PACKAGE_ROOT).pathname;
+  if (!pathname.startsWith(root)) return null;
+  const path = pathname.slice(root.length);
+  let key = path;
   try {
-    return decodeURIComponent(path);
+    key = decodeURIComponent(path);
   } catch {
-    return path;
+    // Malformed escapes reach the route undecoded too.
   }
+  return key.startsWith("assets/") ? key : null;
 }
 
 /**
@@ -56,7 +69,9 @@ export function validateImages(pkg: LoadedPackage): PackageError[] {
     });
 
     for (const url of urls) {
-      if (!url.startsWith("assets/") || assets.has(lookupKey(url))) continue;
+      if (!url.startsWith("assets/")) continue;
+      const key = lookupKey(url);
+      if (key !== null && assets.has(key)) continue;
       errors.push({ file: passage.file, path: passage.path, message: `image references missing asset "${url}"` });
     }
   }

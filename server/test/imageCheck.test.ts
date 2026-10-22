@@ -42,6 +42,13 @@ describe("validateImages", () => {
     expect(validateImages(pkg("![pic](assets/a%20b.png)\n", ["assets/a%20b.png"]))).toHaveLength(1);
   });
 
+  it("resolves dot segments the way the browser will", () => {
+    expect(validateImages(pkg("![dot](assets/sub/../dot.png)\n", ["assets/dot.png"]))).toEqual([]);
+    expect(validateImages(pkg("![dot](assets/./sub/%2E%2E/dot.png)\n", ["assets/dot.png"]))).toEqual([]);
+    // Climbing out of assets/ lands outside the asset route, so nothing is served.
+    expect(validateImages(pkg("![m](assets/../manifest.json)\n", ["assets/manifest.json"]))).toHaveLength(1);
+  });
+
   it("uses the first definition of a label, as the renderer does", () => {
     const body = "![pic][x]\n\n[x]: assets/missing.png\n[x]: assets/present.png\n";
     expect(validateImages(pkg(body, ["assets/present.png"]))).toHaveLength(1);
