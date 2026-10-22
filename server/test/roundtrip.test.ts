@@ -43,6 +43,24 @@ describe("export round-trip", () => {
     expect(rt.assets).toEqual(original.assets);
   });
 
+  it("exports a body that opens with a delimiter block verbatim, without evaluating it", () => {
+    const marker = globalThis as { __exportProbe?: number };
+    delete marker.__exportProbe;
+    const tricky = [
+      "---javascript\n({ foo: (globalThis.__exportProbe = 123) })\n---\nHello\n",
+      "---\nnot: frontmatter\n---\nStill body.\n",
+    ];
+    for (const body of tricky) {
+      const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+      const files = { ...FILES, "lessons/01-intro.md": `---\nid: intro\ntitle: Intro\n---\n${body}` };
+      expect(importPackage(db, makeZip(files))).toEqual({ ok: true, packageId: "demo" });
+      const reread = readPackageZip(exportPackage(db, "demo")!);
+      expect(reread.errors).toEqual([]);
+      expect(reread.pkg!.lessons[0]).toMatchObject({ frontmatter: { id: "intro", title: "Intro" }, body });
+    }
+    expect(marker.__exportProbe).toBeUndefined();
+  });
+
   it("returns null for an unknown package", () => {
     const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
     expect(exportPackage(db, "nope")).toBeNull();

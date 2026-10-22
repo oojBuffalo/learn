@@ -1,5 +1,4 @@
 import AdmZip from "adm-zip";
-import matter from "gray-matter";
 import {
   itemSchema, lessonFrontmatterSchema, manifestSchema, quizSchema, gameSchema,
   validatePackage,
@@ -8,7 +7,7 @@ import type { LoadedLesson, LoadedPackage, PackageError } from "@study/shared";
 import { z } from "zod";
 import { validateImages } from "./imageCheck.js";
 import { validateMath } from "./mathCheck.js";
-import { readLesson } from "./frontmatter.js";
+import { readLesson, writeLesson } from "./frontmatter.js";
 
 function zodErrors(file: string, e: z.ZodError): PackageError[] {
   return e.issues.map((i) => ({ file, path: i.path.join("."), message: i.message }));
@@ -107,7 +106,7 @@ export function buildPackageZip(pkg: LoadedPackage): Buffer {
     zip.addFile(p, Buffer.isBuffer(s) ? s : Buffer.from(s as any));
   add("manifest.json", JSON.stringify(pkg.manifest, null, 2) + "\n");
   for (const l of pkg.lessons) {
-    add(l.file, matter.stringify(l.body, l.frontmatter as object));
+    add(l.file, writeLesson(l.frontmatter as object, l.body));
   }
   if (pkg.items.length) add("items.json", JSON.stringify(pkg.items, null, 2) + "\n");
   if (pkg.quizzes.length) add("quizzes.json", JSON.stringify(pkg.quizzes, null, 2) + "\n");

@@ -32,3 +32,21 @@ export function readLesson(source: string): { data: Record<string, unknown>; con
   const { data, content } = matter(source, OPTIONS);
   return { data, content };
 }
+
+/**
+ * Write a lesson file: YAML frontmatter, then the body exactly as stored.
+ *
+ * `matter.stringify` re-parses a string argument with the default engines, so a body
+ * that itself opens with a `---javascript` block would be evaluated. Handing it a
+ * file object skips that parse and leaves the body untouched.
+ *
+ * Args:
+ *   frontmatter: The lesson's frontmatter fields.
+ *   body: The lesson's Markdown.
+ *
+ * Returns:
+ *   The file's text.
+ */
+export function writeLesson(frontmatter: object, body: string): string {
+  return matter.stringify({ content: body }, frontmatter, { ...OPTIONS, language: "yaml" });
+}
