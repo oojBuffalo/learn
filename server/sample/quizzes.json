@@ -1,0 +1,8 @@
+[
+  {
+    "id": "quiz-basics",
+    "title": "Study techniques check",
+    "items": ["mc-forgetting", "fb-intervals", "sa-recall", "ord-study-loop"],
+    "passThreshold": 0.75
+  }
+]

@@ -1,0 +1,278 @@
+[
+  {
+    "id": "game-start-here-match",
+    "template": "matching",
+    "title": "Start here — match them up",
+    "source": {
+      "tags": [
+        "start-here"
+      ]
+    }
+  },
+  {
+    "id": "game-start-here-speed",
+    "template": "timed-round",
+    "title": "Start here — quick fire",
+    "source": {
+      "tags": [
+        "start-here"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-web-foundations-match",
+    "template": "matching",
+    "title": "Web foundations — match them up",
+    "source": {
+      "tags": [
+        "web-foundations"
+      ]
+    }
+  },
+  {
+    "id": "game-web-foundations-speed",
+    "template": "timed-round",
+    "title": "Web foundations — quick fire",
+    "source": {
+      "tags": [
+        "web-foundations"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-browser-platform-match",
+    "template": "matching",
+    "title": "Browser platform — match them up",
+    "source": {
+      "tags": [
+        "browser-platform"
+      ]
+    }
+  },
+  {
+    "id": "game-browser-platform-speed",
+    "template": "timed-round",
+    "title": "Browser platform — quick fire",
+    "source": {
+      "tags": [
+        "browser-platform"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-frontend-match",
+    "template": "matching",
+    "title": "Frontend — match them up",
+    "source": {
+      "tags": [
+        "frontend"
+      ]
+    }
+  },
+  {
+    "id": "game-frontend-speed",
+    "template": "timed-round",
+    "title": "Frontend — quick fire",
+    "source": {
+      "tags": [
+        "frontend"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-backend-match",
+    "template": "matching",
+    "title": "Backend — match them up",
+    "source": {
+      "tags": [
+        "backend"
+      ]
+    }
+  },
+  {
+    "id": "game-backend-speed",
+    "template": "timed-round",
+    "title": "Backend — quick fire",
+    "source": {
+      "tags": [
+        "backend"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-data-match",
+    "template": "matching",
+    "title": "Data — match them up",
+    "source": {
+      "tags": [
+        "data"
+      ]
+    }
+  },
+  {
+    "id": "game-data-speed",
+    "template": "timed-round",
+    "title": "Data — quick fire",
+    "source": {
+      "tags": [
+        "data"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-apis-and-integration-match",
+    "template": "matching",
+    "title": "APIs and integration — match them up",
+    "source": {
+      "tags": [
+        "apis-and-integration"
+      ]
+    }
+  },
+  {
+    "id": "game-apis-and-integration-speed",
+    "template": "timed-round",
+    "title": "APIs and integration — quick fire",
+    "source": {
+      "tags": [
+        "apis-and-integration"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-security-match",
+    "template": "matching",
+    "title": "Security — match them up",
+    "source": {
+      "tags": [
+        "security"
+      ]
+    }
+  },
+  {
+    "id": "game-security-speed",
+    "template": "timed-round",
+    "title": "Security — quick fire",
+    "source": {
+      "tags": [
+        "security"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-quality-and-observability-match",
+    "template": "matching",
+    "title": "Quality and observability — match them up",
+    "source": {
+      "tags": [
+        "quality-and-observability"
+      ]
+    }
+  },
+  {
+    "id": "game-quality-and-observability-speed",
+    "template": "timed-round",
+    "title": "Quality and observability — quick fire",
+    "source": {
+      "tags": [
+        "quality-and-observability"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-delivery-and-operations-match",
+    "template": "matching",
+    "title": "Delivery and operations — match them up",
+    "source": {
+      "tags": [
+        "delivery-and-operations"
+      ]
+    }
+  },
+  {
+    "id": "game-delivery-and-operations-speed",
+    "template": "timed-round",
+    "title": "Delivery and operations — quick fire",
+    "source": {
+      "tags": [
+        "delivery-and-operations"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-architecture-match",
+    "template": "matching",
+    "title": "Architecture — match them up",
+    "source": {
+      "tags": [
+        "architecture"
+      ]
+    }
+  },
+  {
+    "id": "game-architecture-speed",
+    "template": "timed-round",
+    "title": "Architecture — quick fire",
+    "source": {
+      "tags": [
+        "architecture"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  },
+  {
+    "id": "game-technology-landscape-match",
+    "template": "matching",
+    "title": "Technology landscape — match them up",
+    "source": {
+      "tags": [
+        "technology-landscape"
+      ]
+    }
+  },
+  {
+    "id": "game-technology-landscape-speed",
+    "template": "timed-round",
+    "title": "Technology landscape — quick fire",
+    "source": {
+      "tags": [
+        "technology-landscape"
+      ]
+    },
+    "settings": {
+      "timeLimitSeconds": 60
+    }
+  }
+]

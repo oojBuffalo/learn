@@ -1,0 +1,20 @@
+[
+  {
+    "id": "quiz-matching-recsys",
+    "title": "Matching and recommendation check",
+    "description": "Nine questions across both halves of the lesson: the theory and the systems that ship.",
+    "items": [
+      "mc-scarcity",
+      "ord-deferred-acceptance",
+      "sa-blocking-pair",
+      "ms-collaborative-filtering",
+      "ord-funnel",
+      "fb-retrieval",
+      "mc-offline-gap",
+      "mc-dispatch",
+      "match-cases"
+    ],
+    "shuffle": true,
+    "passThreshold": 0.75
+  }
+]

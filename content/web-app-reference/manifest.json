@@ -1,0 +1,150 @@
+{
+  "formatVersion": "1.0.0",
+  "id": "web-app-reference",
+  "title": "Web App Reference",
+  "version": "1.0.0",
+  "description": "A whole-system tour of web applications: follow one user action from the browser, across networks and application code, into storage and operations, and back.",
+  "language": "en",
+  "tags": [
+    "web",
+    "systems",
+    "architecture"
+  ],
+  "objectives": [
+    "Trace a browser action end to end without treating the network or the server as a black box",
+    "Place validation, authorization, invariants and persistence at deliberate boundaries",
+    "Read an architecture as a set of tradeoffs rather than a set of tools",
+    "Connect releases and telemetry to user-visible objectives"
+  ],
+  "units": [
+    {
+      "id": "start-here",
+      "title": "Start here",
+      "lessonIds": [
+        "anatomy-of-a-web-app"
+      ]
+    },
+    {
+      "id": "web-foundations",
+      "title": "Web foundations",
+      "lessonIds": [
+        "internet-and-the-web",
+        "request-response-lifecycle",
+        "urls-dns-http-and-tls",
+        "clients-servers-and-resources"
+      ]
+    },
+    {
+      "id": "browser-platform",
+      "title": "Browser platform",
+      "lessonIds": [
+        "rendering-and-the-dom",
+        "javascript-runtime",
+        "browser-storage-and-caching",
+        "browser-networking"
+      ]
+    },
+    {
+      "id": "frontend",
+      "title": "Frontend",
+      "lessonIds": [
+        "components-state-and-reactivity",
+        "routing-and-navigation",
+        "forms-and-validation",
+        "data-fetching",
+        "accessibility",
+        "frontend-performance"
+      ]
+    },
+    {
+      "id": "backend",
+      "title": "Backend",
+      "lessonIds": [
+        "server-runtimes",
+        "backend-request-lifecycle",
+        "domain-and-application-logic",
+        "sessions-files-and-background-jobs",
+        "scaling-and-resilience"
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Data",
+      "lessonIds": [
+        "data-modeling",
+        "relational-and-nosql-databases",
+        "transactions-and-consistency",
+        "indexes-and-query-planning",
+        "caching-and-search",
+        "migrations-backups-and-recovery"
+      ]
+    },
+    {
+      "id": "apis-and-integration",
+      "title": "APIs and integration",
+      "lessonIds": [
+        "api-design",
+        "rest-graphql-and-rpc",
+        "realtime-and-event-driven-communication",
+        "identity-across-system-boundaries",
+        "third-party-integrations"
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Security",
+      "lessonIds": [
+        "threat-modeling",
+        "authentication-and-authorization",
+        "browser-security",
+        "input-injection-and-output-safety",
+        "secrets-dependencies-and-supply-chain"
+      ]
+    },
+    {
+      "id": "quality-and-observability",
+      "title": "Quality and observability",
+      "lessonIds": [
+        "testing-strategy",
+        "contract-and-end-to-end-testing",
+        "logs-metrics-and-traces",
+        "debugging-production-systems",
+        "reliability-and-performance"
+      ]
+    },
+    {
+      "id": "delivery-and-operations",
+      "title": "Delivery and operations",
+      "lessonIds": [
+        "environments-and-configuration",
+        "continuous-integration-and-delivery",
+        "hosting-and-compute",
+        "containers-and-orchestration",
+        "cdns-edge-and-load-balancing",
+        "monitoring-and-incident-response"
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "lessonIds": [
+        "monoliths-modules-and-microservices",
+        "layers-boundaries-and-coupling",
+        "synchronous-and-asynchronous-design",
+        "scalability-tradeoffs",
+        "evolving-an-architecture"
+      ]
+    },
+    {
+      "id": "technology-landscape",
+      "title": "Technology landscape",
+      "lessonIds": [
+        "frontend-technologies",
+        "backend-technologies",
+        "data-technologies",
+        "infrastructure-platforms",
+        "choosing-technologies"
+      ]
+    }
+  ]
+}

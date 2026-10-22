@@ -1,0 +1,39 @@
+/* ---- Math ----
+   KaTeX ships its own typographic opinions; these reconcile them with the
+   reading face and the layout rules the rest of the app already follows. */
+
+/* `.katex` sets the `font` shorthand, which silently resets weight and style.
+   Math inside a bold run or a flashcard front must not de-bold. */
+:is(strong, b, em, i, .card-face, h1, h2, h3) .katex {
+  font-weight: inherit;
+  font-style: inherit;
+}
+
+/* 1.21em is tuned against a 16px sans body; it reads large beside Literata. */
+:is(.prose, .answer, .blank-line) .katex {
+  font-size: 1.1em;
+}
+
+.card-face .katex {
+  font-size: 1em; /* the face is already set at --t-xl */
+}
+
+:is(.opt, .order-text, .match-left, .hint, .expected, .examples) .katex {
+  font-size: 1.05em;
+}
+
+/* Display math scrolls in its own box, exactly like `.prose pre`. KaTeX marks it
+   `white-space: nowrap` and offers no overflow handling of its own. */
+:is(.prose, .answer) .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block: 0.4em; /* room for the scrollbar without clipping descenders */
+  margin-block: 1.2em;
+}
+
+/* Malformed math reaches this state only in packages imported before the
+   importer began rejecting it. Mono makes it read as source, not as prose. */
+.katex-error {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
