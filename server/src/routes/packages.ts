@@ -68,7 +68,7 @@ export function packageRoutes() {
       .prepare("SELECT data FROM assets WHERE package_id = ? AND path = ?")
       .get(c.req.param("id"), assetPath) as { data: Buffer } | undefined;
     if (!row) return c.json({ error: { code: "not_found", message: "unknown asset" } }, 404);
-    const ext = assetPath.split(".").pop() ?? "";
+    const ext = (assetPath.split(".").pop() ?? "").toLowerCase();
     return c.body(row.data.buffer.slice(row.data.byteOffset, row.data.byteOffset + row.data.byteLength) as ArrayBuffer, 200, {
       "Content-Type": MIME[ext] ?? "application/octet-stream",
       "Content-Security-Policy": "sandbox",

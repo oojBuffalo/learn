@@ -67,6 +67,21 @@ describe("package routes", () => {
     expect(Buffer.from(await top.arrayBuffer())).toEqual(GOOD_FILES["assets/dot.png"]);
   });
 
+  it("picks the MIME type whatever the extension's case", async () => {
+    const files = {
+      ...GOOD_FILES,
+      "items.json": JSON.stringify([
+        ...JSON.parse(GOOD_FILES["items.json"] as string),
+        { id: "m1", type: "short-answer", prompt: "?", accept: ["y"], media: [{ src: "assets/diagram.SVG" }] },
+      ]),
+      "assets/diagram.SVG": Buffer.from("<svg xmlns='http://www.w3.org/2000/svg'/>"),
+    };
+    await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(files)) });
+    const res = await app.request("/api/packages/demo/assets/diagram.SVG");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("image/svg+xml");
+  });
+
   it("serves assets whose names hold URL-reserved characters at their encoded URL", async () => {
     const files = {
       ...GOOD_FILES,
