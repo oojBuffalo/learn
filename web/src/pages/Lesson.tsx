@@ -47,8 +47,7 @@ export default function Lesson() {
   if (!data) return <p className="loading">Loading…</p>;
 
   const fm = data.lesson.frontmatter as Frontmatter;
-  const embedded = new Set(activityIdsInBody(data.lesson.body));
-  const extra = (fm.activities ?? []).filter((id) => !embedded.has(id));
+  const extra = lessonExtras(fm.activities, data.lesson.body);
   const done = data.progress === "completed";
   const facts = [fm.difficulty, fm.estimatedMinutes ? `${fm.estimatedMinutes} min read` : null, ...(fm.tags ?? [])]
     .filter(Boolean)
@@ -107,4 +106,19 @@ export default function Lesson() {
       </div>
     </div>
   );
+}
+
+/**
+ * Picks the frontmatter activities that a lesson page shows under "Practice".
+ *
+ * Args:
+ *   activities: The lesson frontmatter's `activities` ids, if any.
+ *   body: The lesson's markdown body, whose `::activity` directives embed items inline.
+ *
+ * Returns:
+ *   The frontmatter activities that the body does not embed, each once, in listed order.
+ */
+export function lessonExtras(activities: readonly string[] | undefined, body: string): string[] {
+  const embedded = new Set(activityIdsInBody(body));
+  return [...new Set(activities ?? [])].filter((id) => !embedded.has(id));
 }
