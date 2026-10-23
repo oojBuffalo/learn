@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemSchema } from "../src/index.js";
+import { itemSchema, regexHazard } from "../src/index.js";
 
 const base = { id: "q1", prompt: "Pick one." };
 
@@ -119,6 +119,12 @@ describe("itemSchema", () => {
 
   it("reports an uncompilable pattern once, as invalid", () => {
     const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["[unterminated"] });
+    expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: "must be a valid regular expression" })]);
+  });
+
+  it("reports an uncompilable pattern once even when it also looks hazardous", () => {
+    expect(regexHazard("(a+)+[")).not.toBeNull();
+    const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["(a+)+["] });
     expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: "must be a valid regular expression" })]);
   });
 
