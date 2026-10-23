@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Answer, CheckableItem, Item } from "../src/index.js";
 import { MAX_ANSWER_TEXT, checkAnswer, expectedAnswer, fold } from "../src/index.js";
 
@@ -107,6 +107,19 @@ describe("checkAnswer", () => {
   it("short-answer: vets every stored regex before running any", () => {
     const rx: Item = { id: "r9", type: "short-answer", prompt: "?", match: "regex", accept: ["^ok$", "(a+)+"] };
     expect(() => checkAnswer(rx, { type: "short-answer", text: "ok" })).toThrow(/unsafe regular expression/);
+  });
+
+  it("short-answer: runs no stored regex when any is unsafe", () => {
+    const rx: Item = { id: "r12", type: "short-answer", prompt: "?", match: "regex", accept: ["^ok$", "(a+)+"] };
+    const test = vi.spyOn(RegExp.prototype, "test");
+    try {
+      expect(() => checkAnswer(rx, { type: "short-answer", text: "ok" })).toThrow(/unsafe regular expression/);
+      const ran = test.mock.contexts.map((re) => (re as RegExp).source);
+      expect(ran).not.toContain("^ok$");
+      expect(ran).not.toContain("(a+)+");
+    } finally {
+      test.mockRestore();
+    }
   });
 
   it("short-answer: leaves fold and exact accept entries unvetted", () => {
