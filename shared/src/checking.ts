@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { idSchema } from "./ids.js";
-import type { Item } from "./items.js";
+import type { CheckableItem, Item } from "./items.js";
 
 export const answerSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("multiple-choice"), optionId: z.string() }).strict(),
@@ -33,6 +33,41 @@ export function fold(s: string): string {
   return s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
+/**
+ * The answer key for a checkable item, in the shape `CheckResult.expected` carries.
+ *
+ * Multiple-choice gives the correct option id. Multi-select gives the correct option ids in
+ * option order. Fill-blank gives an object from each blank's slot to its first accepted
+ * answer. Short-answer gives its first accepted answer. Ordering gives the step ids in order.
+ * Matching gives the item's pairs.
+ *
+ * Args:
+ *   item: A checkable item (any item type except a flashcard). A validated package
+ *     guarantees the shape: a multiple-choice item has exactly one correct option.
+ *
+ * Returns:
+ *   The expected answer for the item's type, as described above.
+ *
+ * Raises:
+ *   TypeError: A multiple-choice item has no correct option. A validated package never does.
+ */
+export function expectedAnswer(item: CheckableItem): unknown {
+  switch (item.type) {
+    case "multiple-choice":
+      return item.options.find((o) => o.correct)!.id;
+    case "multi-select":
+      return item.options.filter((o) => o.correct).map((o) => o.id);
+    case "fill-blank":
+      return Object.fromEntries(item.blanks.map((b) => [b.slot, b.accept[0]]));
+    case "short-answer":
+      return item.accept[0];
+    case "ordering":
+      return item.steps.map((s) => s.id);
+    case "matching":
+      return item.pairs;
+  }
+}
+
 export function checkAnswer(item: Item, input: Answer): CheckResult {
   const parsed = answerSchema.safeParse(input);
   if (!parsed.success) throw new Error(`invalid answer: ${parsed.error.issues[0]?.message ?? "wrong shape"}`);
@@ -50,7 +85,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
       return {
         correct,
         score: correct ? 1 : 0,
-        expected: correctOpt.id,
+        expected: expectedAnswer(item),
         feedback: correct ? undefined : picked.feedback,
       };
     }
@@ -71,7 +106,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
       return {
         correct: exact,
         score: exact ? 1 : item.partialCredit ? partial : 0,
-        expected: [...correctIds],
+        expected: expectedAnswer(item),
       };
     }
     case "fill-blank": {
@@ -88,7 +123,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
         if (ok) right += 1;
       }
       const score = right / item.blanks.length;
-      return { correct: score === 1, score, expected: Object.fromEntries(item.blanks.map((b) => [b.slot, b.accept[0]])) };
+      return { correct: score === 1, score, expected: expectedAnswer(item) };
     }
     case "short-answer": {
       const a = answer as Extract<Answer, { type: "short-answer" }>;
@@ -99,7 +134,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
           : mode === "regex"
             ? item.accept.some((acc) => new RegExp(acc).test(a.text.trim()))
             : item.accept.some((acc) => fold(acc) === fold(a.text));
-      return { correct: ok, score: ok ? 1 : 0, expected: item.accept[0] };
+      return { correct: ok, score: ok ? 1 : 0, expected: expectedAnswer(item) };
     }
     case "ordering": {
       const a = answer as Extract<Answer, { type: "ordering" }>;
@@ -114,7 +149,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
       }
       const right = want.filter((id, i) => a.orderedIds[i] === id).length;
       const score = right / want.length;
-      return { correct: score === 1, score, expected: want };
+      return { correct: score === 1, score, expected: expectedAnswer(item) };
     }
     case "matching": {
       const a = answer as Extract<Answer, { type: "matching" }>;
@@ -135,7 +170,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
       if (unknownRight) throw new Error(`unknown matching choice "${unknownRight.right}"`);
       const right = a.pairs.filter((p) => want.get(p.left) === p.right).length;
       const score = right / item.pairs.length;
-      return { correct: score === 1, score, expected: item.pairs };
+      return { correct: score === 1, score, expected: expectedAnswer(item) };
     }
   }
 }
