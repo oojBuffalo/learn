@@ -186,6 +186,7 @@ describe("checkAnswer", () => {
     expect(checkAnswer(exact, { type: "short-answer", text: " Café " }).correct).toBe(true);
     expect(checkAnswer(exact, { type: "short-answer", text: "cafe" }).correct).toBe(false);
     expect(checkAnswer(exact, { type: "short-answer", text: "café" }).correct).toBe(false);
+    expect(checkAnswer(exact, { type: "short-answer", text: "Cafe" }).correct).toBe(false);
   });
 
   it("matching: a distractor is a legal choice that scores wrong", () =>
