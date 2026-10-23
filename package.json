@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "workspaces": ["shared", "server", "web", "e2e"],
+  "engines": { "node": ">=20" },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p shared && tsc --noEmit -p server && tsc --noEmit -p web",
