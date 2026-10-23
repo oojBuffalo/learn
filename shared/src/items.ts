@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { idSchema } from "./ids.js";
+import { regexHazard } from "./regexSafety.js";
 
 export const difficultySchema = z.enum(["beginner", "intermediate", "advanced"]);
 const mediaSchema = z.object({ src: z.string(), alt: z.string().optional() }).strict();
@@ -127,7 +128,10 @@ const shortAnswerSchema = z
           path: ["accept", index],
           message: "must be a valid regular expression",
         });
+        return;
       }
+      const message = regexHazard(pattern);
+      if (message) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["accept", index], message });
     });
   });
 

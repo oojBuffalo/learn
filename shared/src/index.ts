@@ -25,7 +25,8 @@ export {
   stripMath,
 } from "./mathSource.js";
 export type { FillBlankPart, ProseMode, Passage } from "./mathSource.js";
-export { answerSchema, attemptRequestSchema, checkAnswer, expectedAnswer, fold } from "./checking.js";
+export { MAX_ANSWER_TEXT, answerSchema, attemptRequestSchema, checkAnswer, expectedAnswer, fold } from "./checking.js";
 export type { Answer, CheckResult } from "./checking.js";
+export { MAX_PATTERN_LENGTH, regexHazard } from "./regexSafety.js";
 export { schedule } from "./scheduler.js";
 export type { Rating, CardState } from "./scheduler.js";

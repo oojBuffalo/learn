@@ -111,6 +111,20 @@ describe("itemSchema", () => {
     })).toThrow(/regular expression/i);
   });
 
+  it("rejects a backtracking-prone regular expression at accept.0", () => {
+    const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["(a+)+$"] });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: expect.stringMatching(/^a repeated group/) })]);
+  });
+
+  it("reports an uncompilable pattern once, as invalid", () => {
+    const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["[unterminated"] });
+    expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: "must be a valid regular expression" })]);
+  });
+
+  it("checks hazards only in regex mode", () =>
+    expect(itemSchema.safeParse({ ...base, type: "short-answer", accept: ["(a+)+$"] }).success).toBe(true));
+
   it("rejects duplicate ordering step ids", () => {
     expect(() => itemSchema.parse({
       ...base,
