@@ -18,7 +18,7 @@
   font-size: 1em; /* the face is already set at --t-xl */
 }
 
-:is(.opt, .order-text, .match-left, .hint, .expected, .examples) .katex {
+:is(.opt, .order-text, .match-left, .tile-text, .hint, .expected, .examples) .katex {
   font-size: 1.05em;
 }
 
