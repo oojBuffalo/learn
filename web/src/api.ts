@@ -1,7 +1,8 @@
 import type { Answer, CardState, CheckResult, Item, PackageError, Rating } from "@study/shared";
 import type { AttemptRecord, AttemptsQuery, CheckableItem, Game, GameMove, GameMoveResult, GameResult, GameSettings, GameSubmission, Quiz, QuizResult, QuizSubmission } from "@study/shared";
+import type { Note, NoteCreate, NotePatch, Explanation, ExplanationCreate, ExplanationPatch, OrphanGroup, OrphanCounts, PurgeOrphansRequest } from "@study/shared";
 
-export interface LessonSummary { id: string; title: string; summary?: string; status: string }
+export interface LessonSummary { id: string; title: string; summary?: string; status: string; updatedAt?: string }
 export interface PackageSummary {
   id: string; title: string; description?: string; version: string;
   tags?: string[]; lessonCount: number; lessons: LessonSummary[];
@@ -44,8 +45,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) throw new ApiError(body.error?.message ?? res.statusText, body.error?.code ?? "unknown", body.error?.details);
   return body as T;
 }
-const json = (body: unknown): RequestInit => ({
-  method: "POST",
+const json = (body: unknown, method: "POST" | "PATCH" = "POST"): RequestInit => ({
+  method,
   headers: { "content-type": "application/json" },
   body: JSON.stringify(body),
 });
@@ -82,3 +83,15 @@ export const listAttempts = (query: Partial<AttemptsQuery>) => {
 };
 export const isStale = (e: unknown): boolean =>
   e instanceof ApiError && (e.code === "not_found" || e.code === "not_checkable");
+
+export const listNotes = () => req<{ notes: Note[] }>("/api/notes").then((r) => r.notes);
+export const getNote = (id: number) => req<{ note: Note }>(`/api/notes/${id}`).then((r) => r.note);
+export const createNote = (input: NoteCreate) => req<{ note: Note }>("/api/notes", json(input)).then((r) => r.note);
+export const updateNote = (id: number, patch: NotePatch) => req<{ note: Note }>(`/api/notes/${id}`, json(patch, "PATCH")).then((r) => r.note);
+export const deleteNote = (id: number) => req<void>(`/api/notes/${id}`, { method: "DELETE" });
+export const listExplanations = (opts: { revisit?: boolean } = {}) => req<{ explanations: Explanation[] }>(`/api/explanations${opts.revisit === true ? "?revisit=1" : ""}`).then((r) => r.explanations);
+export const getExplanation = (id: number) => req<{ explanation: Explanation }>(`/api/explanations/${id}`).then((r) => r.explanation);
+export const createExplanation = (input: ExplanationCreate) => req<{ explanation: Explanation }>("/api/explanations", json(input)).then((r) => r.explanation);
+export const updateExplanation = (id: number, patch: ExplanationPatch) => req<{ explanation: Explanation }>(`/api/explanations/${id}`, json(patch, "PATCH")).then((r) => r.explanation);
+export const getOrphans = () => req<{ packages: OrphanGroup[] }>("/api/maintenance/orphans").then((r) => r.packages);
+export const purgeOrphans = (input: PurgeOrphansRequest) => req<{ purged: OrphanCounts }>("/api/maintenance/orphans/purge", json(input)).then((r) => r.purged);
