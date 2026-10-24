@@ -127,3 +127,24 @@ describe("validatePackage", () => {
     expect(validatePackage(pkg({ quizzes: [{ id: "q1", title: "Q", items: ["i1"] }] })))
       .toEqual([{ file: "quizzes.json", path: "q1", message: 'quiz item "i1" is a flashcard (not quizzable)' }]));
 });
+
+it("refuses a quiz, a roundSize or a matching text that no request could carry", () => {
+  const i1: Item = { id: "i1", type: "flashcard", front: "a", back: "b" };   // the lesson body embeds it
+  const sas = Array.from({ length: 201 }, (_, k): Item => ({ id: `s${k}`, type: "short-answer", prompt: "?", accept: ["x"] }));
+  const quiz = (n: number) => pkg({ items: [i1, ...sas], quizzes: [{ id: "q1", title: "Q", items: sas.slice(0, n).map((i) => i.id) }] });
+  expect(validatePackage(quiz(200))).toEqual([]);
+  expect(validatePackage(quiz(201))).toEqual([{ file: "quizzes.json", path: "q1", message: "quiz lists more than 200 items" }]);
+  const mat = (right: string, distractors?: string[]): Item =>
+    ({ id: "mt", type: "matching", prompt: "?", pairs: [{ left: "a", right }, { left: "b", right: "2" }], distractors });
+  const game = (roundSize: number, item = mat("1")) => pkg({ items: [i1, item],
+    games: [{ id: "g1", template: "matching", title: "M", source: { itemIds: ["mt"] }, settings: { roundSize } }] });
+  expect(validatePackage(game(200))).toEqual([]);
+  expect(validatePackage(game(201))).toEqual([{ file: "games.json", path: "g1", message: "roundSize may be at most 200" }]);
+  const tooLong = { file: "items.json", path: "mt", message: "matching text may be at most 2000 characters" };
+  expect(validatePackage(game(6, mat("x".repeat(2000), ["y".repeat(2000)])))).toEqual([]);
+  expect(validatePackage(game(6, mat("x".repeat(2001), ["y".repeat(2001)])))).toEqual([tooLong]);   // once per item
+  expect(validatePackage(game(6, mat("1", ["y".repeat(2001)])))).toEqual([tooLong]);                 // a distractor counts
+  const longLeft = mat("1");
+  if (longLeft.type === "matching") longLeft.pairs[0]!.left = "x".repeat(2001);
+  expect(validatePackage(game(6, longLeft))).toEqual([tooLong]);
+});
