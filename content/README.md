@@ -75,6 +75,57 @@ Constraints the renderer imposes, learned the hard way:
   `explanation`.
 - Every schema is strict: one unknown key anywhere is a hard import failure.
 
+
+## Quizzes and games
+
+Quizzes list non-flashcard item ids in the order they run. `shuffle` defaults to
+false; when true it shuffles the question order once per run. An item's own
+`shuffle` still controls its option order. Quiz scores average every item score,
+including partial credit; unanswered items score 0. `passThreshold` gives pass/fail
+when present, otherwise neither is shown. An optional `timeLimitSeconds` counts
+down from Start; expiry locks and submits the current answers, with stored time
+capped at the limit. Every run is one history entry.
+
+| template | `roundSize` counts | default `roundSize` | default `timeLimitSeconds` |
+|---|---|---|---|
+| `matching` | pairs | 6 | none (stopwatch) |
+| `timed-round` | questions | 10 | 60 |
+| `order-it` | ordering items | 3 | none (stopwatch) |
+
+A tag source selects any listed tag, in items.json order; an `itemIds` source
+keeps listed order and ignores duplicate ids. Only compatible item types enter
+the pool: matching items, multiple-choice/multi-select questions, and ordering
+items respectively. A round deals `min(roundSize, available units)`.
+
+Matching pools pairs across its items, keeping the first pair for a repeated
+left. Repeated right texts remain separate tiles. Up to 2 authored distractors
+from the dealt items join the right column, excluding any equal to a dealt right.
+It scores matched ÷ (dealt pairs + misses). Timed-round and order-it average item
+scores, including multi-select partial credit and ordering positions; unanswered
+items score 0. Time is shown and recorded, never scored. Expiry ends and logs the
+round, with stored time capped at its limit. Every move and final score is checked
+on the server; the browser deals the round.
+
+Import refuses duplicate quiz item ids with `quiz lists item "<id>" more than
+once`, and duplicate frontmatter activities with `activities lists item "<id>"
+more than once`. Repeated `::activity` directives in a lesson body remain allowed.
+It also refuses content exceeding the request limits:
+
+- `quiz lists more than 200 items`
+- `roundSize may be at most 200`
+- `matching text may be at most 2000 characters` (each left, right or distractor)
+
+For short-answer `match: "regex"`, a pattern is at most 200 characters and uses no
+backreferences. A group followed by `*`, `+` or `{n,}` may not contain, at any
+depth, `*`, `+`, `{n,}`, `{n,m}` with m > 1, `?`, `{0,1}` or an alternation. A group
+followed by `{n}` with n > 1 or `{n,m}` with m > 1 may not contain `*`, `+`, `{n,}`
+or an alternation. Lazy forms count the same. Thus `(a+)+`, `(a|aa)+`, `(a+){2,5}`,
+`(a?a)+` and `(a|a){30}` are refused, while `^colou?r$` and `(\d{1,3}\.){3}` pass
+the guard. Write alternatives as separate `accept` entries or use a character
+class. The guard is not a full backtracking analysis: overlapping repeats in
+sequence and ranged repeats inside bounded repeats can still pass. Typed answers
+(short-answer text and each fill-blank value) are capped at 200 characters.
+
 ## Math
 
 Math is KaTeX, which covers a large subset of LaTeX's math mode. Write `$…$` for
@@ -106,8 +157,9 @@ Where math works, and where it doesn't:
 | option `text` and `feedback`, `hints`, ordering `steps`, matching `left`, fill-blank literals, flashcard `front`/`back`/`examples` | inline only |
 | matching `right`, `distractors`, `accept` values | none |
 | frontmatter `title`/`summary`, manifest `title`/`description` | none |
+| quiz `title`/`description`, game `title` | none |
 
-Matching's right-hand values sit inside a `<select>`, which can only hold text —
+Lesson matching's right-hand values sit inside a `<select>`, which can only hold text —
 so put the notation on the left. Flashcard faces are laid out inline, which is
 why display math is refused there. Anything in the "none" rows renders verbatim,
 so a lone `$` there is fine and needs no escaping.

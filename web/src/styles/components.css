@@ -190,6 +190,7 @@
 }
 
 .sheet-foot {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: var(--s2);
@@ -799,6 +800,29 @@ kbd {
   font-family: var(--font-mono);
   font-size: var(--t-sm);
 }
+
+/* ---- Play lists ---- */
+.history { list-style: none; padding: 0; }
+.history li { display: flex; align-items: center; flex-wrap: wrap; gap: var(--s3); padding: var(--s3) 0; border-top: 1px solid var(--rule); }
+.history time { font-size: var(--t-sm); color: var(--ink-2); }
+.chip-pass { background: var(--marker-wash); color: var(--on-wash); border-color: var(--marker-edge); }
+.chip-fail { background: var(--pen-red-soft); color: var(--pen-red); border-color: var(--pen-red); }
+
+/* ---- Quiz ---- */
+.quiz-bar { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); padding: var(--s4) 0; background: var(--paper); border-top: 1px solid var(--rule); z-index: 10; }
+.clock { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.play-summary { margin-block: var(--s5); font-size: var(--t-lg); }
+
+/* ---- Games ---- */
+.game-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-block: var(--s4); }
+.board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s3); }
+.board-col { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; }
+.tile { min-height: 2.75rem; padding: var(--s3); border: 1px solid var(--rule); border-radius: var(--r); background: var(--paper); color: var(--ink); text-align: left; overflow-wrap: anywhere; }
+.tile[aria-pressed="true"] { border-color: var(--ink); background: var(--paper-sunk); box-shadow: inset 0 0 0 1px var(--ink); }
+.tile.is-matched { background: var(--marker-wash); color: var(--on-wash); border-color: var(--marker-edge); }
+.tile.is-wrong { background: var(--pen-red-soft); border-color: var(--pen-red); animation: tile-shake 600ms ease; }
+@keyframes tile-shake { 25%, 75% { transform: translateX(-2px); } 50% { transform: translateX(2px); } }
+@media (prefers-reduced-motion: reduce) { .tile.is-wrong { animation: none; } }
 
 @media (max-width: 30rem) {
   .grades {

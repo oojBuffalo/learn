@@ -16,6 +16,31 @@ export type { Manifest, LessonFrontmatter, Quiz, Game } from "./packageSchema.js
 export { activityIdsInBody, directiveId } from "./lessonBody.js";
 export { validatePackage } from "./validatePackage.js";
 export type { LoadedPackage, LoadedLesson, PackageError } from "./validatePackage.js";
+export { shuffle, scramble } from "./random.js";
+export {
+  GAME_COMPAT,
+  GAME_DEFAULTS,
+  MAX_MATCH_DISTRACTORS,
+  gameSettings,
+  resolveGameItems,
+  matchingPairs,
+  unitCount,
+  roundSizeFor,
+} from "./games.js";
+export type { GameSettings, MatchPair } from "./games.js";
+export { dealGame, checkGameMove, scoreGame } from "./games.js";
+export type { GameDeal, GameMoveResult, GameResult } from "./games.js";
+export { quizItemIds, isPassing, scoreQuiz } from "./quiz.js";
+export type { QuizItemResult, QuizResult } from "./quiz.js";
+export {
+  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, ratingSchema,
+  progressRequestSchema, gradeRequestSchema, quizAnswerSchema, quizSubmissionSchema,
+  matchPickSchema, gameItemAnswerSchema, gameMoveSchema, gamePlaySchema,
+  gameSubmissionSchema, attemptBodySchema, attemptsQuerySchema,
+} from "./requests.js";
+export type {
+  QuizAnswer, QuizSubmission, GameMove, GamePlay, GameSubmission, AttemptsQuery, AttemptRecord,
+} from "./requests.js";
 export {
   MATH_OPTIONS,
   KATEX_OPTIONS,

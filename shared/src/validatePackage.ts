@@ -1,6 +1,8 @@
 import type { Game, LessonFrontmatter, Manifest, Quiz } from "./packageSchema.js";
 import type { Item } from "./items.js";
+import { GAME_COMPAT, resolveGameItems } from "./games.js";
 import { activityIdsInBody } from "./lessonBody.js";
+import { MAX_PLAY_ITEMS, MAX_MATCH_TEXT } from "./requests.js";
 
 export interface LoadedLesson {
   frontmatter: LessonFrontmatter;
@@ -21,12 +23,6 @@ export interface PackageError {
   path: string;
   message: string;
 }
-
-const GAME_COMPAT: Record<Game["template"], Item["type"][]> = {
-  matching: ["matching"],
-  "timed-round": ["multiple-choice", "multi-select"],
-  "order-it": ["ordering"],
-};
 
 /**
  * Lists each id that appears more than once, once per id.
@@ -100,6 +96,8 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
   for (const q of pkg.quizzes) {
     if (quizIds.has(q.id)) err("quizzes.json", q.id, `duplicate quiz id "${q.id}"`);
     quizIds.add(q.id);
+    if (new Set(q.items).size > MAX_PLAY_ITEMS)
+      err("quizzes.json", q.id, `quiz lists more than ${MAX_PLAY_ITEMS} items`);
     for (const id of q.items) {
       if (!itemIds.has(id)) err("quizzes.json", q.id, `quiz references missing item "${id}"`);
       else if (itemIds.get(id)!.type === "flashcard")
@@ -112,20 +110,27 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
   for (const g of pkg.games) {
     if (gameIds.has(g.id)) err("games.json", g.id, `duplicate game id "${g.id}"`);
     gameIds.add(g.id);
-    const compat = GAME_COMPAT[g.template];
-    const source =
-      "itemIds" in g.source
-        ? g.source.itemIds.map((id) => {
-            if (!itemIds.has(id)) err("games.json", g.id, `game references missing item "${id}"`);
-            return itemIds.get(id);
-          })
-        : pkg.items.filter((i) => i.tags?.some((t) => (g.source as { tags: string[] }).tags.includes(t)));
-    const usable = source.filter((i): i is Item => !!i && compat.includes(i.type));
-    if (usable.length === 0)
-      err("games.json", g.id, `game "${g.id}" (${g.template}) has no compatible items (needs: ${compat.join("/")})`);
+    if (g.settings?.roundSize !== undefined && g.settings.roundSize > MAX_PLAY_ITEMS)
+      err("games.json", g.id, `roundSize may be at most ${MAX_PLAY_ITEMS}`);
+    if ("itemIds" in g.source) {
+      for (const id of g.source.itemIds) {
+        if (!itemIds.has(id)) err("games.json", g.id, `game references missing item "${id}"`);
+      }
+    }
+    if (resolveGameItems(g, pkg.items).length === 0) {
+      err(
+        "games.json",
+        g.id,
+        `game "${g.id}" (${g.template}) has no compatible items (needs: ${GAME_COMPAT[g.template].join("/")})`,
+      );
+    }
   }
 
   for (const item of pkg.items) {
+    if (item.type === "matching" && [
+      ...item.pairs.flatMap((pair) => [pair.left, pair.right]), ...(item.distractors ?? []),
+    ].some((text) => text.length > MAX_MATCH_TEXT))
+      err("items.json", item.id, `matching text may be at most ${MAX_MATCH_TEXT} characters`);
     for (const m of item.media ?? []) {
       if (!assetPaths.has(m.src)) err("items.json", item.id, `media references missing asset "${m.src}"`);
     }

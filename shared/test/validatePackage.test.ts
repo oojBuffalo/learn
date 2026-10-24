@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { LessonFrontmatter } from "../src/index.js";
+import type { Game, Item, LessonFrontmatter } from "../src/index.js";
 import type { LoadedPackage } from "../src/index.js";
 import { validatePackage } from "../src/index.js";
 
@@ -95,4 +95,56 @@ describe("validatePackage", () => {
     expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1" }, 'A\n\n::activity{id="i1"}\n\nB\n\n::activity{id="i1"}\n')] }))).toEqual([]));
   it("does not count a frontmatter activity that the body also embeds", () =>
     expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1", activities: ["i1"] })] }))).toEqual([]));
+
+  // Characterization tests for the game-source refactor: they pass before and after it.
+  const i1: Item = { id: "i1", type: "flashcard", front: "a", back: "b" };
+  const i2: Item = { id: "i2", type: "short-answer", prompt: "?", accept: ["yes"] };
+  const m1: Item = {
+    id: "m1", type: "multiple-choice", prompt: "?", tags: ["x"],
+    options: [{ id: "a", text: "A", correct: true }, { id: "b", text: "B" }],
+  };
+  const tagGame: Game = { id: "g1", template: "timed-round", title: "T", source: { tags: ["x"] } };
+  const msgs = (p: LoadedPackage) => validatePackage(p).map((e) => e.message).join("\n");
+  it("accepts a tag-sourced game with a compatible item", () =>
+    expect(validatePackage(pkg({ items: [i1, i2, m1], games: [tagGame] }))).toEqual([]));
+  it("flags a tag-sourced game whose tagged items are all incompatible", () =>
+    expect(msgs(pkg({ items: [{ ...i1, tags: ["x"] }, i2], games: [tagGame] })))
+      .toContain('game "g1" (timed-round) has no compatible items (needs: multiple-choice/multi-select)'));
+  it("flags timed-round and order-it games over incompatible items", () => {
+    const text = msgs(pkg({ games: [
+      { id: "g2", template: "timed-round", title: "T", source: { itemIds: ["i2"] } },
+      { id: "g3", template: "order-it", title: "O", source: { itemIds: ["i2"] } },
+    ] }));
+    expect(text).toContain('game "g2" (timed-round) has no compatible items (needs: multiple-choice/multi-select)');
+    expect(text).toContain('game "g3" (order-it) has no compatible items (needs: ordering)');
+  });
+  it("keeps reporting missing game items", () => {
+    const text = msgs(pkg({ games: [{ id: "g4", template: "matching", title: "M", source: { itemIds: ["ghost"] } }] }));
+    expect(text).toContain('game references missing item "ghost"');
+    expect(text).toContain('game "g4" (matching) has no compatible items (needs: matching)');
+  });
+  it("flags a flashcard in a quiz", () =>
+    expect(validatePackage(pkg({ quizzes: [{ id: "q1", title: "Q", items: ["i1"] }] })))
+      .toEqual([{ file: "quizzes.json", path: "q1", message: 'quiz item "i1" is a flashcard (not quizzable)' }]));
+});
+
+it("refuses a quiz, a roundSize or a matching text that no request could carry", () => {
+  const i1: Item = { id: "i1", type: "flashcard", front: "a", back: "b" };   // the lesson body embeds it
+  const sas = Array.from({ length: 201 }, (_, k): Item => ({ id: `s${k}`, type: "short-answer", prompt: "?", accept: ["x"] }));
+  const quiz = (n: number) => pkg({ items: [i1, ...sas], quizzes: [{ id: "q1", title: "Q", items: sas.slice(0, n).map((i) => i.id) }] });
+  expect(validatePackage(quiz(200))).toEqual([]);
+  expect(validatePackage(quiz(201))).toEqual([{ file: "quizzes.json", path: "q1", message: "quiz lists more than 200 items" }]);
+  const mat = (right: string, distractors?: string[]): Item =>
+    ({ id: "mt", type: "matching", prompt: "?", pairs: [{ left: "a", right }, { left: "b", right: "2" }], distractors });
+  const game = (roundSize: number, item = mat("1")) => pkg({ items: [i1, item],
+    games: [{ id: "g1", template: "matching", title: "M", source: { itemIds: ["mt"] }, settings: { roundSize } }] });
+  expect(validatePackage(game(200))).toEqual([]);
+  expect(validatePackage(game(201))).toEqual([{ file: "games.json", path: "g1", message: "roundSize may be at most 200" }]);
+  const tooLong = { file: "items.json", path: "mt", message: "matching text may be at most 2000 characters" };
+  expect(validatePackage(game(6, mat("x".repeat(2000), ["y".repeat(2000)])))).toEqual([]);
+  expect(validatePackage(game(6, mat("x".repeat(2001), ["y".repeat(2001)])))).toEqual([tooLong]);   // once per item
+  expect(validatePackage(game(6, mat("1", ["y".repeat(2001)])))).toEqual([tooLong]);                 // a distractor counts
+  const longLeft = mat("1");
+  if (longLeft.type === "matching") longLeft.pairs[0]!.left = "x".repeat(2001);
+  expect(validatePackage(game(6, longLeft))).toEqual([tooLong]);
 });

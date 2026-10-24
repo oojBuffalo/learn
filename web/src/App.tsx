@@ -5,6 +5,10 @@ import Icon from "./components/Icon.js";
 import Library from "./pages/Library.js";
 import Lesson from "./pages/Lesson.js";
 import Study from "./pages/Study.js";
+import Quizzes from "./pages/Quizzes.js";
+import Games from "./pages/Games.js";
+import Quiz from "./pages/Quiz.js";
+import Game from "./pages/Game.js";
 
 /** Cards waiting — the one number the app exists to drive to zero. */
 const DueContext = createContext<{ due: number | null; refreshDue: () => void }>({
@@ -17,6 +21,16 @@ export const useDue = () => useContext(DueContext);
 function LessonRoute() {
   const { packageId, lessonId } = useParams();
   return <Lesson key={`${packageId}/${lessonId}`} />;
+}
+
+function QuizRoute() {
+  const { packageId, quizId } = useParams();
+  return <Quiz key={`${packageId}/${quizId}`} />;
+}
+
+function GameRoute() {
+  const { packageId, gameId } = useParams();
+  return <Game key={`${packageId}/${gameId}`} />;
 }
 
 export default function App() {
@@ -46,11 +60,11 @@ export default function App() {
             <nav className="nav" aria-label="Main">
               <NavLink className="nav-item" to="/" end>
                 <Icon name="library" />
-                Library
+                <span className="nav-label">Library</span>
               </NavLink>
               <NavLink className="nav-item" to="/study">
                 <Icon name="study" />
-                Study
+                <span className="nav-label">Study</span>
                 {due !== null && due > 0 && (
                   <span className="due-badge">
                     {due}
@@ -58,6 +72,8 @@ export default function App() {
                   </span>
                 )}
               </NavLink>
+              <NavLink className="nav-item" to="/quizzes"><Icon name="quiz" /><span className="nav-label">Quizzes</span></NavLink>
+              <NavLink className="nav-item" to="/games"><Icon name="game" /><span className="nav-label">Games</span></NavLink>
             </nav>
             <p className="rail-foot">
               Everything stays on this machine.
@@ -71,6 +87,10 @@ export default function App() {
             <Route path="/" element={<Library />} />
             <Route path="/lesson/:packageId/:lessonId" element={<LessonRoute />} />
             <Route path="/study" element={<Study />} />
+            <Route path="/quizzes" element={<Quizzes />} />
+            <Route path="/quizzes/:packageId/:quizId" element={<QuizRoute />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/games/:packageId/:gameId" element={<GameRoute />} />
           </Routes>
         </main>
       </div>
