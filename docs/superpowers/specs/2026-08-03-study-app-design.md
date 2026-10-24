@@ -1,7 +1,7 @@
 # Study App — Design
 
 **Date:** 2026-08-03
-**Status:** Approved; Stages 1–2 implemented
+**Status:** Approved; Stages 1–3 implemented
 
 ## Overview
 
@@ -284,7 +284,8 @@ whose source resolves to zero compatible items fails validation at import.
 
 **Content tables** — replaced wholesale on re-import, keyed by stable IDs:
 `packages`, `lessons`, `items` (type-specific fields in a validated JSON column;
-content is read-mostly, so no over-normalization), `quizzes`, `games`.
+content is read-mostly, so no over-normalization), `quizzes`, `games`, `assets`
+(the package's media files).
 
 **User-state tables** — never touched by import:
 
@@ -297,8 +298,27 @@ content is read-mostly, so no over-normalization), `quizzes`, `games`.
 - `explanations` — explain-back write-ups: linked lesson, Markdown body, self-rated
   confidence, timestamp.
 
-If a re-import drops an item, its orphaned user state is kept but hidden (purgeable
-via a maintenance action) — never silently deleted.
+Content removed by a re-import or a package delete leaves **orphaned** user state.
+A row is live while what it points at exists:
+
+- `card_state`, `review_log`: the flashcard item and a valid `front` or `back`
+  direction; `back` additionally needs `reverse: true`;
+- `attempts`: the item (`exercise`), or the quiz / game named by `ref_id` (`quiz`, `game`);
+- `lesson_progress`, `explanations`: the lesson;
+- `notes`: nothing (standalone), the package (package note) or the lesson (lesson note).
+
+Orphaned rows are kept but **hidden**: the app leaves them out of every default view
+(the Notes and Explain-back lists, the due queue and badge, lesson status, Home,
+attempt history). `GET /notes` and `GET /explanations` still return them, each flagged
+`orphaned: true`; the app shows them in the Notes page's "From removed content"
+views or by id, and Library → **Leftover progress** counts them. They are live again
+when the same ids are re-imported. They are never deleted silently: Leftover progress
+purges one package's orphaned rows after a confirm, and deletes notes and explanations
+only when "Also delete …" is ticked (it starts unticked). Standalone notes are always live.
+
+The purge recounts and deletes inside one transaction. It compares the confirmed
+counts only for kinds being purged; a mismatch returns 409 `orphans_changed` with
+no rows deleted. Live rows and other packages' state are never part of that purge.
 
 ## 4. Study modes
 
@@ -318,11 +338,21 @@ Every mode makes you *do* something with the material:
   matches against the clock), **Timed round** (multiple-choice countdown), **Order it**
   (arrange sequences). Scores are logged to `attempts`.
 - **Notes** — Markdown editor; notes attach to a package/lesson or stand alone.
-- **Explain-back** — pick a lesson, explain it in your own words in Markdown,
-  self-rate confidence. Low-confidence explanations resurface on the home screen as
-  "revisit" prompts.
-- **Home screen** — cards due today, lessons in progress, revisit prompts: one glance
-  says what to work on.
+  Write/Preview keeps the entered text intact. Local drafts can be restored after
+  leaving an editor; failed saves preserve the text. Typing during a save remains
+  unsaved and in the draft, even when the editor is left before that save finishes.
+  A first save keeps the editor mounted and focused. Bodies are validated before
+  saving, rather than truncated by a textarea length limit.
+- **Explain-back** — pick a lesson, explain it in your own words in Markdown, and rate
+  your confidence 1–5 (1 Lost, 2 Shaky, 3 Getting there, 4 Solid, 5 Could teach it; no
+  default). A lesson in the library has one **revisit** prompt while its latest
+  explanation (highest id) is rated 2 or lower. Explaining it again at 3+, raising the
+  latest rating to 3+, or a Leftover progress purge that deletes it clears it; a newer
+  low explanation replaces it. Rereading, completing the lesson or time passing does
+  not. There is no dismiss.
+- **Home screen** (`/`) — cards due (the nav badge's number, new cards included), up to 5
+  lessons in progress ordered by when you last opened them, and up to 5 revisit prompts,
+  lowest confidence first: one glance says what to work on.
 
 ## 5. API and pages
 
@@ -343,17 +373,27 @@ REST JSON API (all under `/api`):
   `{kind:"game", packageId, gameId, play, elapsedSeconds}`;
   `GET /attempts?packageId&kind&refId&limit` (refId needs kind quiz|game; limit
   1–200, default 50; newest first; rows for removed content are hidden)
-- `GET /packages` also lists each package's quizzes and games with `runs` and `best`.
-- Errors: 400 `invalid_request`, 404 `not_found`, 422 `not_checkable` /
-  `invalid_package`; a rejected request writes nothing.
-- `GET/POST/PATCH/DELETE /notes`
-- `GET/POST/PATCH /explanations`
+- `GET /packages` also lists each package's quizzes and games with `runs` and `best`;
+  each lesson carries `updatedAt` (last opened) once started. Completion is final:
+  reopening a completed lesson does not change its completion time.
+- `GET /notes` (every note, each with an `orphaned` flag), `POST /notes`,
+  `GET/PATCH/DELETE /notes/:id`; bodies are Markdown, non-blank, at most 100 000 characters
+- `GET /explanations` (every explanation, each with an `orphaned` flag; `?revisit=1`:
+  revisit prompts only), `POST /explanations`, `GET/PATCH /explanations/:id` (no delete;
+  see §3 for the purge); bodies are Markdown, non-blank, at most 100 000 characters
+- `GET /maintenance/orphans`, `POST /maintenance/orphans/purge` (`packageId`,
+  `includeWriting`, and the `expected` counts the user confirmed; a mismatch returns 409
+  `orphans_changed` and deletes nothing)
+- Errors: 400 `invalid_request`, 404 `not_found`, 409 `orphans_changed` (purge only),
+  422 `not_checkable` / `invalid_package`; a rejected request writes nothing.
 
 Answer checking happens server-side (single source of truth in `shared/` checking
 functions), so results in `attempts` are trustworthy.
 
-Pages: **Home**, **Library** (packages → lessons), **Lesson**, **Study** (due queue +
-free study), **Quiz**, **Games**, **Notes** (incl. explain-back).
+Pages: **Home** (`/`), **Library** (`/library`: packages → lessons, plus Leftover progress),
+**Lesson**, **Study** (due queue + free study), **Quiz**, **Games**, **Notes** (`/notes`,
+with explain-back at `/notes/explain/…`). Navigation order is Home, Library, Study,
+Quizzes, Games, Notes; small screens keep the navigation accessible by scrolling it.
 
 ## 6. Error handling
 
@@ -363,7 +403,7 @@ free study), **Quiz**, **Games**, **Notes** (incl. explain-back).
   UI surfaces errors inline/toast.
 - SQLite in WAL mode; writes wrapped in transactions.
 - Re-import conflicts: content is replaced by id; orphaned user state kept hidden
-  (§3).
+  (§3); purgeable from Library → Leftover progress.
 
 ## 7. Testing
 
@@ -382,6 +422,6 @@ free study), **Quiz**, **Games**, **Notes** (incl. explain-back).
    with a bundled sample package so the app is usable on day one. *(done)*
 2. **Quizzes + games** — quiz runner with history; the three game templates. *(done)*
 3. **Notes + explain-back + Home polish** — notes editor, explanations with revisit
-   prompts, dashboard.
+   prompts, dashboard. *(done)*
 
 Each stage gets its own implementation plan.
