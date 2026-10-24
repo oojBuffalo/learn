@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { LessonFrontmatter } from "../src/index.js";
+import type { Game, Item, LessonFrontmatter } from "../src/index.js";
 import type { LoadedPackage } from "../src/index.js";
 import { validatePackage } from "../src/index.js";
 
@@ -95,4 +95,35 @@ describe("validatePackage", () => {
     expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1" }, 'A\n\n::activity{id="i1"}\n\nB\n\n::activity{id="i1"}\n')] }))).toEqual([]));
   it("does not count a frontmatter activity that the body also embeds", () =>
     expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1", activities: ["i1"] })] }))).toEqual([]));
+
+  // Characterization tests for the game-source refactor: they pass before and after it.
+  const i1: Item = { id: "i1", type: "flashcard", front: "a", back: "b" };
+  const i2: Item = { id: "i2", type: "short-answer", prompt: "?", accept: ["yes"] };
+  const m1: Item = {
+    id: "m1", type: "multiple-choice", prompt: "?", tags: ["x"],
+    options: [{ id: "a", text: "A", correct: true }, { id: "b", text: "B" }],
+  };
+  const tagGame: Game = { id: "g1", template: "timed-round", title: "T", source: { tags: ["x"] } };
+  const msgs = (p: LoadedPackage) => validatePackage(p).map((e) => e.message).join("\n");
+  it("accepts a tag-sourced game with a compatible item", () =>
+    expect(validatePackage(pkg({ items: [i1, i2, m1], games: [tagGame] }))).toEqual([]));
+  it("flags a tag-sourced game whose tagged items are all incompatible", () =>
+    expect(msgs(pkg({ items: [{ ...i1, tags: ["x"] }, i2], games: [tagGame] })))
+      .toContain('game "g1" (timed-round) has no compatible items (needs: multiple-choice/multi-select)'));
+  it("flags timed-round and order-it games over incompatible items", () => {
+    const text = msgs(pkg({ games: [
+      { id: "g2", template: "timed-round", title: "T", source: { itemIds: ["i2"] } },
+      { id: "g3", template: "order-it", title: "O", source: { itemIds: ["i2"] } },
+    ] }));
+    expect(text).toContain('game "g2" (timed-round) has no compatible items (needs: multiple-choice/multi-select)');
+    expect(text).toContain('game "g3" (order-it) has no compatible items (needs: ordering)');
+  });
+  it("keeps reporting missing game items", () => {
+    const text = msgs(pkg({ games: [{ id: "g4", template: "matching", title: "M", source: { itemIds: ["ghost"] } }] }));
+    expect(text).toContain('game references missing item "ghost"');
+    expect(text).toContain('game "g4" (matching) has no compatible items (needs: matching)');
+  });
+  it("flags a flashcard in a quiz", () =>
+    expect(validatePackage(pkg({ quizzes: [{ id: "q1", title: "Q", items: ["i1"] }] })))
+      .toEqual([{ file: "quizzes.json", path: "q1", message: 'quiz item "i1" is a flashcard (not quizzable)' }]));
 });
