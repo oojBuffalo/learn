@@ -16,6 +16,18 @@ export type { Manifest, LessonFrontmatter, Quiz, Game } from "./packageSchema.js
 export { activityIdsInBody, directiveId } from "./lessonBody.js";
 export { validatePackage } from "./validatePackage.js";
 export type { LoadedPackage, LoadedLesson, PackageError } from "./validatePackage.js";
+export { shuffle, scramble } from "./random.js";
+export {
+  GAME_COMPAT,
+  GAME_DEFAULTS,
+  MAX_MATCH_DISTRACTORS,
+  gameSettings,
+  resolveGameItems,
+  matchingPairs,
+  unitCount,
+  roundSizeFor,
+} from "./games.js";
+export type { GameSettings, MatchPair } from "./games.js";
 export {
   MATH_OPTIONS,
   KATEX_OPTIONS,
