@@ -28,6 +28,29 @@ const GAME_COMPAT: Record<Game["template"], Item["type"][]> = {
   "order-it": ["ordering"],
 };
 
+/**
+ * Lists each id that appears more than once, once per id.
+ *
+ * Args:
+ *   ids: The ids to scan, in listed order.
+ *
+ * Returns:
+ *   The repeated ids, each once, in the order their second occurrence appears.
+ */
+function repeatedIds(ids: readonly string[]): string[] {
+  const seen = new Set<string>();
+  const reported = new Set<string>();
+  const repeated: string[] = [];
+  for (const id of ids) {
+    if (seen.has(id) && !reported.has(id)) {
+      reported.add(id);
+      repeated.push(id);
+    }
+    seen.add(id);
+  }
+  return repeated;
+}
+
 export function validatePackage(pkg: LoadedPackage): PackageError[] {
   const errs: PackageError[] = [];
   const err = (file: string, path: string, message: string) => errs.push({ file, path, message });
@@ -50,6 +73,9 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
     }
     for (const id of l.frontmatter.activities ?? []) {
       if (!itemIds.has(id)) err(l.file, "activities", `activities references missing item "${id}"`);
+    }
+    for (const id of repeatedIds(l.frontmatter.activities ?? [])) {
+      err(l.file, "activities", `activities lists item "${id}" more than once`);
     }
     for (const id of l.frontmatter.prerequisites ?? []) {
       if (!lessonIds.has(id)) err(l.file, "prerequisites", `prerequisite references missing lesson "${id}"`);
@@ -79,6 +105,7 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
       else if (itemIds.get(id)!.type === "flashcard")
         err("quizzes.json", q.id, `quiz item "${id}" is a flashcard (not quizzable)`);
     }
+    for (const id of repeatedIds(q.items)) err("quizzes.json", q.id, `quiz lists item "${id}" more than once`);
   }
 
   const gameIds = new Set<string>();

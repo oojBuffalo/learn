@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { LessonFrontmatter } from "../src/index.js";
 import type { LoadedPackage } from "../src/index.js";
 import { validatePackage } from "../src/index.js";
 
@@ -80,4 +81,18 @@ describe("validatePackage", () => {
     expect(messages).toMatch(/duplicate unit id "dup"/i);
     expect(messages).toMatch(/lesson "l1" appears in more than one unit position/i);
   });
+
+  const lesson = (frontmatter: LessonFrontmatter, body = 'Hello\n\n::activity{id="i1"}\n') => ({ file: "lessons/01-a.md", order: 0, frontmatter, body });
+  it("rejects an item listed twice in frontmatter activities, once per id", () => {
+    const msg = { file: "lessons/01-a.md", path: "activities", message: 'activities lists item "i2" more than once' };
+    expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1", activities: ["i2", "i2"] })] }))).toEqual([msg]);
+    expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1", activities: ["i2", "i2", "i2"] })] }))).toEqual([msg]);
+  });
+  it("rejects an item listed twice in a quiz", () =>
+    expect(validatePackage(pkg({ quizzes: [{ id: "q1", title: "Q", items: ["i2", "i2"] }] })))
+      .toEqual([{ file: "quizzes.json", path: "q1", message: 'quiz lists item "i2" more than once' }]));
+  it("still accepts a body that embeds the same activity twice", () =>
+    expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1" }, 'A\n\n::activity{id="i1"}\n\nB\n\n::activity{id="i1"}\n')] }))).toEqual([]));
+  it("does not count a frontmatter activity that the body also embeds", () =>
+    expect(validatePackage(pkg({ lessons: [lesson({ id: "l1", title: "L1", activities: ["i1"] })] }))).toEqual([]));
 });
