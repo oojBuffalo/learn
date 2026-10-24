@@ -186,3 +186,5 @@ export type ShortAnswerItem = Extract<Item, { type: "short-answer" }>;
 export type OrderingItem = Extract<Item, { type: "ordering" }>;
 export type MatchingItem = Extract<Item, { type: "matching" }>;
 export type FlashcardItem = Extract<Item, { type: "flashcard" }>;
+/** An item `checkAnswer` can grade: every item type except the self-graded flashcard. */
+export type CheckableItem = Exclude<Item, { type: "flashcard" }>;

@@ -3,7 +3,7 @@ export { idSchema, ID_RE } from "./ids.js";
 export { itemSchema, difficultySchema } from "./items.js";
 export type {
   Item, ItemType, McItem, MsItem, FillBlankItem, ShortAnswerItem,
-  OrderingItem, MatchingItem, FlashcardItem,
+  OrderingItem, MatchingItem, FlashcardItem, CheckableItem,
 } from "./items.js";
 export {
   manifestSchema,
@@ -25,7 +25,7 @@ export {
   stripMath,
 } from "./mathSource.js";
 export type { FillBlankPart, ProseMode, Passage } from "./mathSource.js";
-export { answerSchema, attemptRequestSchema, checkAnswer, fold } from "./checking.js";
+export { answerSchema, attemptRequestSchema, checkAnswer, expectedAnswer, fold } from "./checking.js";
 export type { Answer, CheckResult } from "./checking.js";
 export { schedule } from "./scheduler.js";
 export type { Rating, CardState } from "./scheduler.js";

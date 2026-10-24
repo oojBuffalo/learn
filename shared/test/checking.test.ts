@@ -1,13 +1,38 @@
 import { describe, expect, it } from "vitest";
-import type { Item } from "../src/index.js";
-import { checkAnswer, fold } from "../src/index.js";
+import type { Answer, CheckableItem, Item } from "../src/index.js";
+import { checkAnswer, expectedAnswer, fold } from "../src/index.js";
 
-const mc: Item = {
+const mc: CheckableItem = {
   id: "m1", type: "multiple-choice", prompt: "?",
   options: [
     { id: "a", text: "A", correct: true },
     { id: "b", text: "B", feedback: "Nope — B is a distractor." },
   ],
+};
+const ms: CheckableItem = {
+  id: "s1", type: "multi-select", prompt: "?", partialCredit: true,
+  options: [
+    { id: "a", text: "A", correct: true },
+    { id: "b", text: "B", correct: true },
+    { id: "c", text: "C" },
+  ],
+};
+const fb: CheckableItem = {
+  id: "f1", type: "fill-blank", prompt: "?", template: "{{1}} and {{2}}",
+  blanks: [
+    { slot: 1, accept: ["Paris"] },
+    { slot: 2, accept: ["Lyon"], caseSensitive: true },
+  ],
+};
+const sa: CheckableItem = { id: "a1", type: "short-answer", prompt: "?", accept: ["Café"] };
+const ord: CheckableItem = {
+  id: "o1", type: "ordering", prompt: "?",
+  steps: [{ id: "s1", text: "1" }, { id: "s2", text: "2" }, { id: "s3", text: "3" }],
+};
+const mt: CheckableItem = {
+  id: "x1", type: "matching", prompt: "?",
+  pairs: [{ left: "perro", right: "dog" }, { left: "gato", right: "cat" }],
+  distractors: ["bird"],
 };
 
 describe("fold", () => {
@@ -137,4 +162,38 @@ describe("checkAnswer", () => {
     expect(() => checkAnswer(card, { type: "short-answer", text: "b" })).toThrow(/flashcard/i);
     expect(() => checkAnswer(mc, { type: "short-answer", text: "a" })).toThrow(/mismatch/i);
   });
+
+  it("expectedAnswer equals checkAnswer's expected for every checkable type", () => {
+    const cases: [CheckableItem, Answer, unknown][] = [
+      [mc, { type: "multiple-choice", optionId: "b" }, "a"],
+      [ms, { type: "multi-select", optionIds: ["c"] }, ["a", "b"]],
+      [fb, { type: "fill-blank", answers: {} }, { "1": "Paris", "2": "Lyon" }],
+      [sa, { type: "short-answer", text: "nope" }, "Café"],
+      [ord, { type: "ordering", orderedIds: ["s2", "s1", "s3"] }, ["s1", "s2", "s3"]],
+      [mt, { type: "matching", pairs: [{ left: "perro", right: "cat" }, { left: "gato", right: "dog" }] }, mt.pairs],
+    ];
+    for (const [item, answer, want] of cases) {
+      expect(expectedAnswer(item)).toEqual(want);
+      expect(checkAnswer(item, answer).expected).toEqual(want);
+    }
+  });
+
+  it("multi-select: partial credit rewards a subset of the right options", () =>
+    expect(checkAnswer(ms, { type: "multi-select", optionIds: ["a"] })).toMatchObject({ correct: false, score: 0.5 }));
+
+  it("short-answer exact mode trims but keeps case and accents", () => {
+    const exact: Item = { id: "a3", type: "short-answer", prompt: "?", accept: ["Café"], match: "exact" };
+    expect(checkAnswer(exact, { type: "short-answer", text: " Café " }).correct).toBe(true);
+    expect(checkAnswer(exact, { type: "short-answer", text: "cafe" }).correct).toBe(false);
+    expect(checkAnswer(exact, { type: "short-answer", text: "café" }).correct).toBe(false);
+    expect(checkAnswer(exact, { type: "short-answer", text: "Cafe" }).correct).toBe(false);
+  });
+
+  it("matching: a distractor is a legal choice that scores wrong", () =>
+    expect(checkAnswer(mt, { type: "matching", pairs: [{ left: "perro", right: "dog" }, { left: "gato", right: "bird" }] }))
+      .toMatchObject({ correct: false, score: 0.5 }));
+
+  it("matching: an unknown right is rejected", () =>
+    expect(() => checkAnswer(mt, { type: "matching", pairs: [{ left: "perro", right: "dog" }, { left: "gato", right: "fish" }] }))
+      .toThrow('unknown matching choice "fish"'));
 });
