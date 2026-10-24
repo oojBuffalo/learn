@@ -5,6 +5,7 @@ import { getLesson, setProgress, type LessonPayload } from "../api.js";
 import ActivityView from "../components/ActivityView.js";
 import Icon from "../components/Icon.js";
 import { LessonMarkdown } from "../components/Markdown.js";
+import LessonCompanion from "../components/LessonCompanion.js";
 
 interface Frontmatter {
   summary?: string;
@@ -24,7 +25,7 @@ export default function Lesson() {
     getLesson(packageId, lessonId)
       .then((d) => {
         setData(d);
-        if (d.progress === "not-started") {
+        if (d.progress !== "completed") {
           setProgress(packageId, lessonId, "in-progress").catch(() => {});
         }
       })
@@ -38,7 +39,7 @@ export default function Lesson() {
           <strong>This lesson didn’t load.</strong>
           <p>{error}</p>
           <p>
-            <Link to="/">Back to the library</Link>
+            <Link to="/library">Back to the library</Link>
           </p>
         </div>
       </div>
@@ -55,7 +56,7 @@ export default function Lesson() {
 
   return (
     <div className="page">
-      <Link className="back-link" to="/">
+      <Link className="back-link" to="/library">
         <Icon name="left" size={18} />
         Library
       </Link>
@@ -104,6 +105,7 @@ export default function Lesson() {
           </p>
         )}
       </div>
+      <LessonCompanion packageId={packageId} lessonId={lessonId} />
     </div>
   );
 }

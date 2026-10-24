@@ -157,7 +157,7 @@ export default function Game() {
 
   if (loadError) return <div className="page"><p role="alert">{isStale(loadError)
     ? "This game isn’t in your library any more." : `This game didn’t load. ${message(loadError)}`}</p>
-    {isStale(loadError) ? <Link to="/">Back to the library</Link>
+    {isStale(loadError) ? <Link to="/library">Back to the library</Link>
       : <button className="btn" onClick={() => setLoadKey((value) => value + 1)}>Try again</button>}</div>;
   if (!data) return <p className="loading">Loading…</p>;
   const historyView = historyError ? <p role="alert">History couldn’t be loaded.</p>

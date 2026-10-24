@@ -32,7 +32,7 @@ test("play entry points: failed list loads, Library count links, list filters an
   await expect(page.getByRole("alert")).toContainText("Your quizzes couldn’t be loaded.");
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("heading", { name: "Quizzes", exact: true })).toBeVisible();
-  await page.goto("/");
+  await page.goto("/library");
   await page.getByRole("link", { name: "Quizzes · 1", exact: true }).click();
   await expect(page).toHaveURL(/\/quizzes\?package=learning-how-to-learn$/);
   await expect(page.getByRole("heading", { name: "Quizzes", exact: true })).toBeVisible();
@@ -47,7 +47,7 @@ test("play entry points: failed list loads, Library count links, list filters an
   await page.getByRole("link", { name: "Quick fire" }).click();
   await expect(page.getByRole("link", { name: "Games", exact: true })).toHaveAttribute("aria-current", "page");
   await page.setViewportSize({ width: 375, height: 740 });
-  await page.goto("/");
+  await page.goto("/library");
   await expect(page.locator(".nav .nav-label").first()).toHaveCSS("clip-path", "inset(50%)");
   await expect(page.getByRole("link", { name: "Quizzes", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Games · 3", exact: true })).toBeVisible();   // the sheet foot, all four controls, is laid out
@@ -64,7 +64,7 @@ const historyRows = (before: number, added: number) => Math.min(before + added, 
 
 test("quiz: a failed submit locks the answers and one retry logs one run", async ({ page }) => {
   const before = await runs(page, "quiz", "quiz-basics");
-  await page.goto("/");
+  await page.goto("/library");
   await page.getByRole("link", { name: "Quizzes · 1", exact: true }).click();
   await page.getByRole("link", { name: "Study techniques check" }).click();
   await page.getByRole("button", { name: "Start quiz" }).click();
@@ -224,7 +224,7 @@ test("quiz: a missing or changed quiz says so and offers no retry", async ({ pag
 test("timed round: expiry submits once and drops a late check, even after Play again", async ({ page }) => {
   await page.clock.install();
   const before = await runs(page, "game", "game-speed");
-  await page.goto("/");
+  await page.goto("/library");
   await page.getByRole("link", { name: "Games · 3", exact: true }).click();
   await page.getByRole("link", { name: "Quick fire" }).click();
   let posts = 0; let checks = 0; const bodies: any[] = [];
@@ -289,7 +289,7 @@ test("timed round: expiry submits once and drops a late check, even after Play a
 });
 test("order it: a retried check clears the error, a double click sends one check, and the score is logged", async ({ page }) => {
   const before = await runs(page, "game", "game-order");
-  await page.goto("/");
+  await page.goto("/library");
   await page.getByRole("link", { name: "Games · 3", exact: true }).click();
   await page.getByRole("link", { name: "Put it in order" }).click();
   await page.getByRole("button", { name: "Play", exact: true }).click();
@@ -335,7 +335,7 @@ test("order it: a missing or changed game says so, locks the board and records n
 });
 test("matching: one miss on three pairs scores 75%", async ({ page }) => {
   const before = await runs(page, "game", "game-match");
-  await page.goto("/");
+  await page.goto("/library");
   await page.getByRole("link", { name: "Games · 3", exact: true }).click();
   await page.getByRole("link", { name: "Match the techniques" }).click();
   await page.getByRole("button", { name: "Play", exact: true }).click();
