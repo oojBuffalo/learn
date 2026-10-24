@@ -52,5 +52,35 @@
       { "left": "Interleaving", "right": "Mix topics within one session" }
     ],
     "tags": ["memory"]
+  },
+  {
+    "id": "ms-techniques",
+    "type": "multi-select",
+    "prompt": "Which of these make you practise active recall?",
+    "options": [
+      {
+        "id": "a",
+        "text": "Answering questions without notes",
+        "correct": true
+      },
+      {
+        "id": "b",
+        "text": "Rereading the chapter"
+      },
+      {
+        "id": "c",
+        "text": "Explaining it from memory",
+        "correct": true
+      },
+      {
+        "id": "d",
+        "text": "Highlighting key lines"
+      }
+    ],
+    "partialCredit": true,
+    "explanation": "Both right answers make you pull the idea out of memory; rereading and highlighting only show it to you again.",
+    "tags": [
+      "memory"
+    ]
   }
 ]

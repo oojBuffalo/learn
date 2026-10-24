@@ -1,14 +1,36 @@
 import { Hono } from "hono";
-import { schedule } from "@study/shared";
-import type { CardState, FlashcardItem, Rating } from "@study/shared";
+import { gradeRequestSchema, schedule } from "@study/shared";
+import type { CardState, FlashcardItem } from "@study/shared";
 import type { AppEnv } from "../app.js";
 import type { Db } from "../db.js";
+import { apiError, parseJsonBody } from "../http.js";
 
 interface CardRow { packageId: string; itemId: string; direction: "front" | "back";
   front: string; back: string; examples?: string[]; media?: FlashcardItem["media"];
   isNew: boolean; dueAt: string | null;
   /** Scheduler state, so the player can show what each grade would do. */
   state: CardState | null }
+
+interface CardJoinRow {
+  package_id: string;
+  id: string;
+  data: string;
+  due_at: string | null;
+  has_state: string | null;
+  state_dir: "front" | "back" | null;
+  interval_days: number | null;
+  ease: number | null;
+  reps: number | null;
+  lapses: number | null;
+}
+
+interface CardStateRow {
+  interval_days: number;
+  ease: number;
+  reps: number;
+  lapses: number;
+  due_at: string;
+}
 
 function allCards(db: Db, packageId?: string): CardRow[] {
   const rows = db
@@ -19,15 +41,15 @@ function allCards(db: Db, packageId?: string): CardRow[] {
        LEFT JOIN card_state s ON s.package_id = i.package_id AND s.item_id = i.id
        WHERE i.type = 'flashcard' ${packageId ? "AND i.package_id = ?" : ""}`,
     )
-    .all(...(packageId ? [packageId] : [])) as any[];
+    .all(...(packageId ? [packageId] : [])) as CardJoinRow[];
   // one row per (item, state) join — regroup per item, then expand directions
   const byItem = new Map<string, { pkg: string; item: FlashcardItem; states: Map<string, CardState> }>();
   for (const r of rows) {
     const key = `${r.package_id}/${r.id}`;
     const entry = byItem.get(key) ?? { pkg: r.package_id, item: JSON.parse(r.data), states: new Map() };
     if (r.has_state) {
-      entry.states.set(r.state_dir, {
-        intervalDays: r.interval_days, ease: r.ease, reps: r.reps, lapses: r.lapses, dueAt: r.due_at,
+      entry.states.set(r.state_dir!, {
+        intervalDays: r.interval_days!, ease: r.ease!, reps: r.reps!, lapses: r.lapses!, dueAt: r.due_at!,
       });
     }
     byItem.set(key, entry);
@@ -61,29 +83,32 @@ export function reviewRoutes() {
 
   r.get("/free-study", (c) => {
     const packageId = c.req.query("packageId");
-    if (!packageId) return c.json({ error: { code: "bad_request", message: "packageId required" } }, 400);
+    if (!packageId) return apiError(c, 400, "invalid_request", "packageId required");
     return c.json({ cards: allCards(c.get("db"), packageId).map(({ dueAt, ...rest }) => rest) });
   });
 
   r.post("/grade", async (c) => {
+    const request = await parseJsonBody(c, gradeRequestSchema, "request body is not a valid grade");
+    if (!request.ok) return request.response;
     const db = c.get("db");
-    const { packageId, itemId, direction, rating } = await c.req.json();
-    if (!["again", "hard", "good", "easy"].includes(rating) || !["front", "back"].includes(direction)) {
-      return c.json({ error: { code: "bad_request", message: "bad rating or direction" } }, 400);
+    const { packageId, itemId, direction, rating } = request.data;
+    const row = db
+      .prepare("SELECT data FROM items WHERE package_id = ? AND id = ? AND type = 'flashcard'")
+      .get(packageId, itemId) as { data: string } | undefined;
+    if (!row) return apiError(c, 404, "not_found", "unknown flashcard");
+    const item = JSON.parse(row.data) as FlashcardItem;
+    if (direction === "back" && item.reverse !== true) {
+      return apiError(c, 404, "not_found", "this flashcard has no back→front card");
     }
-    const item = db
-      .prepare("SELECT 1 FROM items WHERE package_id = ? AND id = ? AND type = 'flashcard'")
-      .get(packageId, itemId);
-    if (!item) return c.json({ error: { code: "not_found", message: "unknown flashcard" } }, 404);
 
     const prevRow = db
       .prepare("SELECT interval_days, ease, reps, lapses, due_at FROM card_state WHERE package_id = ? AND item_id = ? AND direction = ?")
-      .get(packageId, itemId, direction) as any;
+      .get(packageId, itemId, direction) as CardStateRow | undefined;
     const prev: CardState | null = prevRow
       ? { intervalDays: prevRow.interval_days, ease: prevRow.ease, reps: prevRow.reps, lapses: prevRow.lapses, dueAt: prevRow.due_at }
       : null;
     const now = new Date();
-    const state = schedule(prev, rating as Rating, now);
+    const state = schedule(prev, rating, now);
     db.transaction(() => {
       db.prepare(
         `INSERT INTO card_state (package_id, item_id, direction, interval_days, ease, reps, lapses, due_at)
