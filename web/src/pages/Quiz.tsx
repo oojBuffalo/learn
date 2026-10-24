@@ -109,7 +109,7 @@ export default function Quiz() {
     setRun({ key: ++runKey.current, order: quizOrder(data.quiz), startedAt: Date.now() });
   }
 
-  if (missing) return <div className="page"><p>This quiz isn’t in your library any more.</p><Link to="/">Back to the library</Link></div>;
+  if (missing) return <div className="page"><p>This quiz isn’t in your library any more.</p><Link to="/library">Back to the library</Link></div>;
   if (error) return <div className="page"><div className="errors" role="alert">
     <strong>This quiz didn’t load.</strong> <p>{error}</p>
     <button className="btn" onClick={() => { setError(null); setData(null); setLoadKey((key) => key + 1); }}>Try again</button>

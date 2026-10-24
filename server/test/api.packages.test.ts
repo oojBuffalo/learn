@@ -1,10 +1,10 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import { openDb, type Db } from "../src/db.js";
-import { GOOD_FILES, PLAY_FILES, makeZip } from "./helpers.js";
+import { GOOD_FILES, PLAY_FILES, V2_FILES, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
@@ -148,4 +148,31 @@ describe("package summaries", () => {
     await importGood();
     expect(await firstPackage()).toMatchObject({ quizzes: [], games: [] });
   });
+});
+
+
+it("started lessons carry updatedAt; not-started lessons don't", async () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  try {
+    await importGood();
+    const lesson = async () => (await (await app.request("/api/packages")).json()).packages[0].lessons[0];
+    const progress = (status: string) => app.request("/api/lessons/demo/intro/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ status }) });
+    expect("updatedAt" in (await lesson())).toBe(false);
+    vi.setSystemTime(new Date("2026-10-01T09:00:00.000Z")); await progress("in-progress");
+    expect(await lesson()).toMatchObject({ id: "intro", status: "in-progress", updatedAt: "2026-10-01T09:00:00.000Z" });
+    vi.setSystemTime(new Date("2026-10-01T10:00:00.000Z")); await progress("in-progress");
+    expect((await lesson()).updatedAt).toBe("2026-10-01T10:00:00.000Z");
+    vi.setSystemTime(new Date("2026-10-01T11:00:00.000Z")); await progress("completed");
+    vi.setSystemTime(new Date("2026-10-01T12:00:00.000Z")); await progress("in-progress");
+    expect(await lesson()).toMatchObject({ status: "completed", updatedAt: "2026-10-01T11:00:00.000Z" });
+  } finally { vi.useRealTimers(); }
+});
+it("progress on a lesson a re-import dropped never appears", async () => {
+  await importGood();
+  await app.request("/api/lessons/demo/intro/progress", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ status: "in-progress" }) });
+  expect((await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(V2_FILES)) })).status).toBe(201);
+  const lessons = (await (await app.request("/api/packages")).json()).packages[0].lessons;
+  expect(lessons).toHaveLength(1); expect(lessons[0]).toMatchObject({ id: "intro2", status: "not-started" });
+  expect("updatedAt" in lessons[0]).toBe(false);
+  expect(db.prepare("SELECT COUNT(*) n FROM lesson_progress").get()).toEqual({ n: 1 });
 });

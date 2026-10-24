@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
+import { countOrphans } from "../src/orphans.js";
 import type { Db } from "../src/db.js";
 import { freshDb, makeZip, PLAY_FILES } from "./helpers.js";
 
@@ -104,5 +105,32 @@ describe("game move checks", () => {
     const res = await check("ghost", { left: "cat", right: "meow" });
     expect(res.status).toBe(404);
     expect((await res.json()).error).toEqual({ code: "not_found", message: "unknown game" });
+  });
+});
+
+
+describe("attempts history agrees with the orphan count", () => {
+  it("visible runs plus orphaned runs are all runs, through a drop, a delete and a restore", async () => {
+    const parityDb = freshDb(); const parityApp = createApp(parityDb);
+    try {
+      const load = async (files: Record<string, string | Buffer>) => expect((await parityApp.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(files)) })).status).toBe(201);
+      await load(PLAY_FILES);
+      for (const body of [
+        { kind: "quiz", packageId: "demo", quizId: "quiz-all", elapsedSeconds: 5, answers: ["mc1", "ms1", "fb1", "sa1", "ord1", "mat1"].map((itemId) => ({ itemId, answer: null })) },
+        { kind: "quiz", packageId: "demo", quizId: "quiz-plain", elapsedSeconds: 5, answers: [{ itemId: "mc1", answer: { type: "multiple-choice", optionId: "a" } }] },
+        { packageId: "demo", itemId: "mc1", answer: { type: "multiple-choice", optionId: "a" } },
+      ]) expect((await parityApp.request("/api/attempts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })).status).toBe(200);
+      const check = async (ids: number[], orphans: number) => {
+        const visible = (await (await parityApp.request("/api/attempts")).json()).attempts;
+        expect(visible.map((row: { id: number }) => row.id)).toEqual(ids);
+        expect(countOrphans(parityDb, "demo").attempts).toBe(orphans);
+        expect(visible.length + orphans).toBe(3);
+      };
+      await check([3, 2, 1], 0);
+      const withoutQuiz = { ...PLAY_FILES, "quizzes.json": JSON.stringify((JSON.parse(PLAY_FILES["quizzes.json"] as string) as { id: string }[]).filter((quiz) => quiz.id !== "quiz-all")) };
+      await load(withoutQuiz); await check([3, 2], 1);
+      await parityApp.request("/api/packages/demo", { method: "DELETE" }); await check([], 3);
+      await load(PLAY_FILES); await check([3, 2, 1], 0);
+    } finally { parityDb.close(); }
   });
 });

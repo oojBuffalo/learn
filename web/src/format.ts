@@ -16,3 +16,9 @@ export function percent(score: number): number {
 export const TEMPLATE_LABEL: Record<Game["template"], string> = {
   matching: "Matching", "timed-round": "Timed round", "order-it": "Order it",
 };
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export function formatDay(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
