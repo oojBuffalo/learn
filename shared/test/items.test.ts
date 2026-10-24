@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { itemSchema } from "../src/index.js";
+import { itemSchema, regexHazard } from "../src/index.js";
 
 const base = { id: "q1", prompt: "Pick one." };
 
@@ -110,6 +110,26 @@ describe("itemSchema", () => {
       accept: ["[unterminated"],
     })).toThrow(/regular expression/i);
   });
+
+  it("rejects a backtracking-prone regular expression at accept.0", () => {
+    const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["(a+)+$"] });
+    expect(r.success).toBe(false);
+    expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: expect.stringMatching(/^a repeated group/) })]);
+  });
+
+  it("reports an uncompilable pattern once, as invalid", () => {
+    const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["[unterminated"] });
+    expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: "must be a valid regular expression" })]);
+  });
+
+  it("reports an uncompilable pattern once even when it also looks hazardous", () => {
+    expect(regexHazard("(a+)+[")).not.toBeNull();
+    const r = itemSchema.safeParse({ ...base, type: "short-answer", match: "regex", accept: ["(a+)+["] });
+    expect(r.error?.issues).toEqual([expect.objectContaining({ path: ["accept", 0], message: "must be a valid regular expression" })]);
+  });
+
+  it("checks hazards only in regex mode", () =>
+    expect(itemSchema.safeParse({ ...base, type: "short-answer", accept: ["(a+)+$"] }).success).toBe(true));
 
   it("rejects duplicate ordering step ids", () => {
     expect(() => itemSchema.parse({
