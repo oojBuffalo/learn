@@ -1,12 +1,16 @@
 import { z } from "zod";
 import { idSchema } from "./ids.js";
 import type { CheckableItem, Item } from "./items.js";
+import { regexHazard } from "./regexSafety.js";
+
+/** The longest typed answer, a short answer or one blank, that a request may carry. */
+export const MAX_ANSWER_TEXT = 200;
 
 export const answerSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("multiple-choice"), optionId: z.string() }).strict(),
   z.object({ type: z.literal("multi-select"), optionIds: z.array(z.string()) }).strict(),
-  z.object({ type: z.literal("fill-blank"), answers: z.record(z.string()) }).strict(),
-  z.object({ type: z.literal("short-answer"), text: z.string() }).strict(),
+  z.object({ type: z.literal("fill-blank"), answers: z.record(z.string().max(MAX_ANSWER_TEXT)) }).strict(),
+  z.object({ type: z.literal("short-answer"), text: z.string().max(MAX_ANSWER_TEXT) }).strict(),
   z.object({ type: z.literal("ordering"), orderedIds: z.array(z.string()) }).strict(),
   z.object({
     type: z.literal("matching"),
@@ -128,6 +132,11 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
     case "short-answer": {
       const a = answer as Extract<Answer, { type: "short-answer" }>;
       const mode = item.match ?? "fold";
+      // Vet every stored pattern before running any, so a hazardous entry throws even
+      // when an earlier entry would have matched.
+      if (mode === "regex" && item.accept.some((acc) => regexHazard(acc) !== null)) {
+        throw new Error("unsafe regular expression");
+      }
       const ok =
         mode === "exact"
           ? item.accept.some((acc) => acc === a.text.trim())
