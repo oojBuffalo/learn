@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import type { Item } from "@study/shared";
 import { LessonMarkdown } from "../src/components/Markdown.js";
 import Media from "../src/components/Media.js";
 import ActivityView from "../src/components/ActivityView.js";
@@ -47,13 +48,13 @@ describe("LessonMarkdown", () => {
 
 describe("ActivityView", () => {
   it("gives each copy of an exercise its own radio group", () => {
-    const item = {
+    const item: Item = {
       id: "mc",
       type: "multiple-choice",
       prompt: "Pick",
       shuffle: false,
       options: [{ id: "a", text: "A", correct: true }, { id: "b", text: "B" }],
-    } as const;
+    };
     const html = renderToStaticMarkup(
       <>
         <ActivityView packageId="p" item={item} />
