@@ -148,3 +148,15 @@ it("refuses a quiz, a roundSize or a matching text that no request could carry",
   if (longLeft.type === "matching") longLeft.pairs[0]!.left = "x".repeat(2001);
   expect(validatePackage(game(6, longLeft))).toEqual([tooLong]);
 });
+
+it("refuses a quiz or game time limit longer than any request can record", () => {
+  const i1: Item = { id: "i1", type: "flashcard", front: "a", back: "b" };   // the lesson body embeds it
+  const mc: Item = { id: "m1", type: "multiple-choice", prompt: "?", options: [{ id: "a", text: "A", correct: true }, { id: "b", text: "B" }] };
+  const quiz = (timeLimitSeconds: number) => pkg({ items: [i1, mc], quizzes: [{ id: "q1", title: "Q", items: ["m1"], timeLimitSeconds }] });
+  expect(validatePackage(quiz(86400))).toEqual([]);
+  expect(validatePackage(quiz(86401))).toEqual([{ file: "quizzes.json", path: "q1", message: "timeLimitSeconds may be at most 86400" }]);
+  const game = (timeLimitSeconds: number) => pkg({ items: [i1, mc],
+    games: [{ id: "g1", template: "timed-round", title: "T", source: { itemIds: ["m1"] }, settings: { timeLimitSeconds } }] });
+  expect(validatePackage(game(86400))).toEqual([]);
+  expect(validatePackage(game(86401))).toEqual([{ file: "games.json", path: "g1", message: "timeLimitSeconds may be at most 86400" }]);
+});

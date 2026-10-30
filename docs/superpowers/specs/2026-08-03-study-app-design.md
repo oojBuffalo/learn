@@ -213,6 +213,7 @@ repeated `::activity` directives in a lesson body stay allowed.
 Items run in listed order; `shuffle` defaults to false. When true, the quiz order
 is shuffled once per run; an item's own `shuffle` still sets its option order. A
 quiz lists at most 200 items and may not list an item twice.
+`timeLimitSeconds` is at most 86400 (one day), the longest time a run can record.
 
 The score is the mean item score over every quiz item. Partial credit counts and
 an unanswered item scores 0. A run passes when its score is at least
@@ -251,7 +252,8 @@ whose source resolves to zero compatible items fails validation at import.
   An `itemIds` source keeps listed order and ignores duplicate ids. Both keep only
   the template's compatible types.
 - A play is one round of `min(roundSize, available units)`; `roundSize` is at most
-  200. Matching pools pairs across resolved matching items; a repeated left keeps
+  200, and `timeLimitSeconds` at most 86400 (one day), the longest time a play can
+  record. Matching pools pairs across resolved matching items; a repeated left keeps
   its first pair. Repeated right texts remain separate tiles.
 - Up to 2 of the dealt items' distractors join the right column. A distractor
   equal to a dealt right is never dealt.
