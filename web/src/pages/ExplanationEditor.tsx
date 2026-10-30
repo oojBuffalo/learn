@@ -8,7 +8,7 @@ import Markdown from "../components/Markdown.js";
 import MarkdownEditor from "../components/MarkdownEditor.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
-import { browserDraftStore, clearDraft, draftKey, useDraft, writeDraft } from "../drafts.js";
+import { browserDraftStore, clearDraft, draftKey, readDraft, useDraft, writeDraft } from "../drafts.js";
 import { formatDay } from "../format.js";
 import { filterSearch } from "../listFilter.js";
 import { message } from "../text.js";
@@ -107,8 +107,18 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);
       if (creating) navigate(`/notes/explain/${explanation.id}`, { replace: true, state: { editorKey } });
     } catch (e) {
-      if (!mounted.current) return;
-      if (!creating && e instanceof ApiError && e.code === "not_found") {
+      const gone = !creating && e instanceof ApiError && e.code === "not_found";
+      if (!mounted.current) {
+        if (gone) {
+          // The editor and its row are both gone: Explain a lesson offers the text, unless another new explanation's text is there.
+          const store = browserDraftStore(); const fresh = readDraft(store, draftKey("explanation", "new"));
+          if (fresh === null || fresh.body === latestBody.current) {
+            writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date()); clearDraft(store, draftKey("explanation", id));
+          }
+        }
+        return;
+      }
+      if (gone) {
         setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
         writeDraft(browserDraftStore(), draftKey("explanation", "new"), latestBody.current, new Date());
         setError("This explanation was removed elsewhere — Save will create it again.");

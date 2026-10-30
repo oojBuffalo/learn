@@ -7,7 +7,7 @@ import MarkdownEditor from "../components/MarkdownEditor.js";
 import Icon from "../components/Icon.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
-import { browserDraftStore, clearDraft, draftKey, useDraft, writeDraft } from "../drafts.js";
+import { browserDraftStore, clearDraft, draftKey, readDraft, useDraft, writeDraft } from "../drafts.js";
 import { headline, message } from "../text.js";
 
 type Fields = { body: string; target: NoteTarget | null };
@@ -101,8 +101,18 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       setId(note.id); setSaved(sent); setOrphaned(note.orphaned);
       if (creating) navigate(`/notes/${note.id}`, { replace: true, state: { editorKey } });
     } catch (e) {
-      if (!mounted.current) return;
-      if (!creating && e instanceof ApiError && e.code === "not_found" && e.message === "unknown note") {
+      const gone = !creating && e instanceof ApiError && e.code === "not_found" && e.message === "unknown note";
+      if (!mounted.current) {
+        if (gone) {
+          // The editor and its note are both gone: New note offers the text, unless another new note's text is there.
+          const store = browserDraftStore(); const fresh = readDraft(store, draftKey("note", "new"));
+          if (fresh === null || fresh.body === latestBody.current) {
+            writeDraft(store, draftKey("note", "new"), latestBody.current, new Date()); clearDraft(store, draftKey("note", id));
+          }
+        }
+        return;
+      }
+      if (gone) {
         setId(null); setSaved({ body: "", target });
         writeDraft(browserDraftStore(), draftKey("note", "new"), latestBody.current, new Date());
         setError("This note was deleted elsewhere — Save will create it again.");

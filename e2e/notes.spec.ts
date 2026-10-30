@@ -208,3 +208,47 @@ test("Leftover progress clears progress, spares writing, and a re-import restore
     }
   }
 });
+
+test("a note deleted while its held save is pending keeps the text for New note", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Doomed note", target: null } })).json()).note.id;
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH") await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Doomed note");
+  await editor.fill("Doomed note, rescued"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Library", exact: true }).click(); await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("study.draft.note.new") ?? "null")?.body ?? null)).toBe("Doomed note, rescued late");
+  expect(await page.evaluate((key) => localStorage.getItem(key), `study.draft.note.${id}`)).toBeNull();
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: "New note", exact: true }).click();
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible(); await page.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(editor).toHaveValue("Doomed note, rescued late");
+});
+
+test("an explanation removed while its held save is pending keeps the text for Explain a lesson", async ({ page, request }) => {
+  const id = (await (await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Removed explanation", confidence: 4 } })).json()).explanation.id;
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/explanations/${id}`, async (route) => {
+    if (route.request().method() !== "PATCH") return route.continue();
+    await held; await route.fulfill({ status: 404, json: { error: { code: "not_found", message: "unknown explanation" } } });
+  });
+  await page.goto(`/notes/explain/${id}`);
+  const editor = page.getByLabel("Your explanation", { exact: true }); await expect(editor).toHaveValue("Removed explanation");
+  await editor.fill("Removed explanation, rescued"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Library", exact: true }).click(); await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("study.draft.explanation.new") ?? "null")?.body ?? null)).toBe("Removed explanation, rescued late");
+  expect(await page.evaluate((key) => localStorage.getItem(key), `study.draft.explanation.${id}`)).toBeNull();
+  await page.goto(`/notes/explain/new?packageId=${PKG}&lessonId=${LESSON}`);
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible(); await page.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(editor).toHaveValue("Removed explanation, rescued late");
+});
