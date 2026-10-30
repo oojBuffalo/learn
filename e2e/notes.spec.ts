@@ -363,3 +363,46 @@ test("a held first explanation save never removes a newer explanation’s draft"
   await expect.poll(() => draftBody(`study.draft.explanation.${id}`)).toBe("First explanation late");
   expect(await draftBody("study.draft.explanation.new")).toBe("Second explanation");
 });
+
+test("a held note save answered 404 never clears a newer editor’s draft of the same note", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Contested note", target: null } })).json()).note.id;
+  const draftBody = (k: string) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null")?.body ?? null, k);
+  let patches = 0; let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH" && ++patches === 1) await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Contested note");
+  await editor.fill("Contested note, first session"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: /Contested note/ }).click();
+  await expect(editor).toHaveValue("Contested note"); await editor.fill("Contested note, second session");
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(() => draftBody("study.draft.note.new")).toBe("Contested note, first session late");
+  expect(await draftBody(`study.draft.note.${id}`)).toBe("Contested note, second session");
+});
+
+test("a held explanation save answered 404 never clears a newer editor’s draft of the same row", async ({ page, request }) => {
+  const id = (await (await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Contested explanation", confidence: 4 } })).json()).explanation.id;
+  const draftBody = (k: string) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null")?.body ?? null, k);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/explanations/${id}`, async (route) => {
+    if (route.request().method() !== "PATCH") return route.continue();
+    await held; await route.fulfill({ status: 404, json: { error: { code: "not_found", message: "unknown explanation" } } });
+  });
+  await page.goto(`/notes/explain/${id}`);
+  const editor = page.getByLabel("Your explanation", { exact: true }); await expect(editor).toHaveValue("Contested explanation");
+  await editor.fill("Contested explanation, first session"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("radio", { name: "Explain-back" }).click();
+  await page.getByRole("link", { name: /Contested explanation/ }).click();
+  await expect(editor).toHaveValue("Contested explanation"); await editor.fill("Contested explanation, second session");
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(() => draftBody("study.draft.explanation.new")).toBe("Contested explanation, first session late");
+  expect(await draftBody(`study.draft.explanation.${id}`)).toBe("Contested explanation, second session");
+});

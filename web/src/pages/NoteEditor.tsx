@@ -116,7 +116,8 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
           // The editor and its note are both gone: New note offers the text, unless another new note's text is there.
           const store = browserDraftStore();
           if (ownsDraft(store, draftKey("note", "new"))) {
-            writeDraft(store, draftKey("note", "new"), latestBody.current, new Date()); clearDraft(store, draftKey("note", id));
+            writeDraft(store, draftKey("note", "new"), latestBody.current, new Date());
+            if (ownsDraft(store, draftKey("note", id))) clearDraft(store, draftKey("note", id));
           }
         }
         return;

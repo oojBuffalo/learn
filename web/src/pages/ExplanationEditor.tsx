@@ -130,7 +130,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
           // The editor and its row are both gone: Explain a lesson offers the text, unless another new explanation's text is there.
           const store = browserDraftStore();
           if (ownsDraft(store, draftKey("explanation", "new"))) {
-            writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date()); clearDraft(store, draftKey("explanation", id));
+            writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date());
+            if (ownsDraft(store, draftKey("explanation", id))) clearDraft(store, draftKey("explanation", id));
           }
         }
         return;
