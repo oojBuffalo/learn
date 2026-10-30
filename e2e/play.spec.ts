@@ -53,6 +53,27 @@ test("play entry points: failed list loads, Library count links, list filters an
   await expect(page.getByRole("link", { name: "Games · 3", exact: true })).toBeVisible();   // the sheet foot, all four controls, is laid out
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
+test("play lists: a package filter shows only that package’s quizzes and games", async ({ page }) => {
+  type Row = { id: string; title: string };
+  type Listed = { id: string; title: string; quizzes: Row[]; games: Row[] };
+  const listed = (await (await page.request.get("/api/packages")).json()) as { packages: Listed[] };
+  const sample = listed.packages.find((p) => p.id === "learning-how-to-learn")!;
+  const copy = (rows: Row[]) => rows.map((row) => ({ ...row, id: `${row.id}-b`, title: `${row.title} B` }));
+  const other = { ...sample, id: "other-package", title: "Other package", quizzes: copy(sample.quizzes), games: copy(sample.games) };
+  // A second package gives the filter something to leave out.
+  await page.route("**/api/packages", (route) => route.fulfill({ json: { packages: [sample, other] } }));
+  const titles = page.locator(".lesson-row-title");
+  const names = (p: Listed, list: "quizzes" | "games") => p[list].map((row) => row.title);
+  for (const list of ["quizzes", "games"] as const) {
+    await page.goto(`/${list}?package=other-package`);
+    await expect(titles).toHaveText(names(other, list));
+    await page.goto(`/${list}?package=learning-how-to-learn`);
+    await expect(titles).toHaveText(names(sample, list));
+    await page.getByRole("link", { name: "All packages" }).click();
+    await expect(page).toHaveURL(new RegExp(`/${list}$`));
+    await expect(titles).toHaveText([...names(sample, list), ...names(other, list)]);
+  }
+});
 
 /** Runs logged so far for one sample quiz or game, read from the API so that other tests' runs do not matter. */
 async function runs(page: Page, kind: "quiz" | "game", refId: string): Promise<number> {
