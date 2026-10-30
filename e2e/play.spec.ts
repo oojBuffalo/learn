@@ -220,6 +220,28 @@ test("quiz: a missing or changed quiz says so and offers no retry", async ({ pag
   await expect.poll(() => page.isClosed()).toBe(true);
   expect(dialogs).toEqual([]);                                             // a stale run can be reloaded without a prompt
 });
+test("quiz: a page load’s late history answer never replaces the history refreshed after a run", async ({ page }) => {
+  const before = await runs(page, "quiz", "quiz-basics");
+  // An older empty history, then an older failure, each arriving after the post-run refresh.
+  const lateAnswers = [{ json: { attempts: [] } }, { status: 500, body: "{}" }];
+  for (const [k, answer] of lateAnswers.entries()) {
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    // The history GET carries a query string, which a "**/api/attempts" glob does not match; a regex does.
+    await page.route(/\/api\/attempts\?/, async (route) => { await held; await route.fulfill(answer); }, { times: 1 });
+    await page.goto("/quizzes/learning-how-to-learn/quiz-basics");
+    await page.getByRole("button", { name: "Start quiz" }).click();
+    await page.getByRole("button", { name: "Submit quiz" }).click();
+    await page.getByRole("button", { name: "Submit anyway" }).click();
+    await expect(page.getByRole("heading", { name: /^0% · Not passed/ })).toBeFocused();
+    await expect(page.locator(".history li")).toHaveCount(historyRows(before, k + 1));
+    const late = page.waitForResponse(/\/api\/attempts\?/);
+    release(); await late;
+    await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0))));
+    await expect(page.locator(".history li")).toHaveCount(historyRows(before, k + 1));
+    await expect(page.getByText(/No attempts yet\.|History couldn’t be loaded\./)).toHaveCount(0);
+  }
+});
 
 test("timed round: expiry submits once and drops a late check, even after Play again", async ({ page }) => {
   await page.clock.install();
