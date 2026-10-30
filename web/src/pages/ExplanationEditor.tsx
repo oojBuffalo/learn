@@ -88,6 +88,14 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     if (value !== saved?.body || confidence !== saved?.confidence) draft.write(value); else draft.clear();
   }
 
+  // An edit-mode mount never loaded the library; create mode after a 404 needs it to offer live lessons.
+  function loadLibrary() {
+    const current = session.current;
+    setLibraryFailed(false);
+    listPackages().then((pkgs) => { if (session.current === current) setPackages(pkgs); },
+      () => { if (session.current === current) setLibraryFailed(true); });
+  }
+
   async function save() {
     if (inFlight.current || !canSave || !saved || confidence === null || !target?.lessonId) return;
     inFlight.current = true; setPending(true); setError(null);
@@ -121,6 +129,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       if (gone) {
         setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
         writeDraft(browserDraftStore(), draftKey("explanation", "new"), latestBody.current, new Date());
+        if (initial.current.explanationId) loadLibrary();
         setError("This explanation was removed elsewhere — Save will create it again.");
       } else setError(`Your explanation wasn’t saved (${message(e)}).`);
     } finally { inFlight.current = false; if (mounted.current) setPending(false); }
@@ -130,7 +139,9 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   if (missing) return <div className="page empty"><p className="empty-title">This explanation doesn’t exist.</p>{back}</div>;
   if (loadError) return <div className="page"><p className="errors" role="alert">{`This explanation didn’t load (${loadError}).`}</p>{back}</div>;
   if (id === null && libraryFailed) return <div className="page"><p className="errors" role="alert">Your library couldn’t be loaded, so there’s no lesson to pick.</p>
-    <button className="btn" onClick={() => { setLibraryFailed(false); setLoadKey((k) => k + 1); }}>Try again</button></div>;
+    <button className="btn" onClick={() => {
+      if (initial.current.explanationId) loadLibrary(); else { setLibraryFailed(false); setLoadKey((k) => k + 1); }
+    }}>Try again</button></div>;
   if (!saved) return <p className="loading">Loading…</p>;
   const previous = target && earlier?.filter((e) => e.id !== id && e.packageId === target.packageId && e.lessonId === target.lessonId);
   const status = pending ? "Saving…" : dirty ? "Unsaved changes" : hasSaved && saved.confidence !== null

@@ -252,3 +252,29 @@ test("an explanation removed while its held save is pending keeps the text for E
   await expect(page.getByText(/Restore unsaved text from/)).toBeVisible(); await page.getByRole("button", { name: "Restore", exact: true }).click();
   await expect(editor).toHaveValue("Removed explanation, rescued late");
 });
+
+test("an explanation removed elsewhere loads the library so it can be saved again", async ({ page, request }) => {
+  const id = (await (await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Purged explanation", confidence: 4 } })).json()).explanation.id;
+  await page.route(`**/api/explanations/${id}`, (route) => route.request().method() === "PATCH"
+    ? route.fulfill({ status: 404, json: { error: { code: "not_found", message: "unknown explanation" } } }) : route.continue());
+  let failLibrary = false;
+  await page.route("**/api/packages", (route) => {
+    if (route.request().method() !== "GET" || !failLibrary) return route.continue();
+    failLibrary = false; return route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } });
+  });
+  await page.goto(`/notes/explain/${id}`);
+  const editor = page.getByLabel("Your explanation", { exact: true }); await expect(editor).toHaveValue("Purged explanation");
+  await editor.fill("Purged explanation, kept"); failLibrary = true;
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveText("Your library couldn’t be loaded, so there’s no lesson to pick.");
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  const lesson = page.getByLabel("Lesson", { exact: true });
+  await expect(lesson).toHaveValue(`${PKG}/${LESSON}`);
+  await expect(lesson.locator("option", { hasText: "Spaced Repetition" })).toHaveCount(1);
+  await expect(lesson.locator("option", { hasText: "no longer in your library" })).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveText("This explanation was removed elsewhere — Save will create it again.");
+  await expect(editor).toHaveValue("Purged explanation, kept");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).not.toHaveURL(new RegExp(`/notes/explain/${id}$`)); await expect(page).toHaveURL(/\/notes\/explain\/\d+$/);
+  await expect(page.getByRole("status")).toHaveText("Saved. Rated 4 · Solid."); await expect(page.getByRole("alert")).toHaveCount(0);
+});
