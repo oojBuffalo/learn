@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import {
-  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, attemptBodySchema,
+  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, MAX_MATCH_PICKS, attemptBodySchema,
   quizSubmissionSchema, gameSubmissionSchema, gamePlaySchema, gameMoveSchema, matchPickSchema,
   attemptsQuerySchema, progressRequestSchema, gradeRequestSchema,
 } from "../src/index.js";
@@ -62,6 +62,7 @@ it("bounds every game play list and matching text at the request boundary", () =
     expect(gamePlaySchema.safeParse({ template, itemIds, answers: [...answers, answers[0]] }).success).toBe(false);
   }
   const lefts = Array.from({ length: 200 }, (_, k) => `left${k}`);
+  expect(MAX_MATCH_PICKS).toBe(2000);
   const picks = Array.from({ length: 2000 }, () => ({ left: "a", right: "b" }));
   expect(gamePlaySchema.safeParse({ template: "matching", lefts, picks }).success).toBe(true);
   expect(gamePlaySchema.safeParse({ template: "matching", lefts: [...lefts, "extra"], picks }).success).toBe(false);

@@ -33,7 +33,7 @@ export type { GameDeal, GameMoveResult, GameResult } from "./games.js";
 export { quizItemIds, isPassing, scoreQuiz } from "./quiz.js";
 export type { QuizItemResult, QuizResult } from "./quiz.js";
 export {
-  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, ratingSchema,
+  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, MAX_MATCH_PICKS, ratingSchema,
   progressRequestSchema, gradeRequestSchema, quizAnswerSchema, quizSubmissionSchema,
   matchPickSchema, gameItemAnswerSchema, gameMoveSchema, gamePlaySchema,
   gameSubmissionSchema, attemptBodySchema, attemptsQuerySchema,

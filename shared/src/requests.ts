@@ -9,6 +9,8 @@ export const MAX_ELAPSED_SECONDS = 86400;
 export const MAX_PLAY_ITEMS = 200;
 /** The longest matching left or right carried by one pick. */
 export const MAX_MATCH_TEXT = 2000;
+/** The most matching picks carried by one play; the web client ends a play when it reaches them. */
+export const MAX_MATCH_PICKS = 2000;
 
 /** A flashcard's self-assessed recall rating. */
 export const ratingSchema = z.enum(["again", "hard", "good", "easy"]);
@@ -45,7 +47,7 @@ export const gamePlaySchema = z.discriminatedUnion("template", [
   z.object({
     template: z.literal("matching"),
     lefts: z.array(z.string().max(MAX_MATCH_TEXT)).min(1).max(MAX_PLAY_ITEMS),
-    picks: z.array(matchPickSchema).max(2000),
+    picks: z.array(matchPickSchema).max(MAX_MATCH_PICKS),
   }).strict(),
   z.object({
     template: z.literal("timed-round"),

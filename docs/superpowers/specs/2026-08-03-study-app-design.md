@@ -259,6 +259,7 @@ whose source resolves to zero compatible items fails validation at import.
   the mean question score, including multi-select partial credit and ordering
   positions; unanswered questions score 0.
 - Time is recorded and shown, never scored. Expiry ends the round and logs it.
+  A matching play also ends, and is logged, at 2000 picks, the most one play carries.
   Each play is one `attempts` row of kind `game`, with `ref_id` = the game id;
   stored elapsed time is capped at the game's limit when it has one.
 - The server checks every move and replays the submitted play to compute its
