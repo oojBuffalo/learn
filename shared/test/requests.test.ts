@@ -79,3 +79,19 @@ it("rejects unknown fields on nested quiz answers and both move shapes", () => {
   expect(gameMoveSchema.safeParse({ itemId: "i", answer: ex.answer, typo: true }).success).toBe(false);
   expect(gameMoveSchema.safeParse({ left: "a", right: "b", typo: true }).success).toBe(false);
 });
+it("rejects a malformed option or step id inside an answer on every branch", () => {
+  const bad = [
+    { type: "multiple-choice", optionId: "" }, { type: "multiple-choice", optionId: "x".repeat(65) },
+    { type: "multi-select", optionIds: ["", "z"] }, { type: "multi-select", optionIds: ["a b"] },
+    { type: "ordering", orderedIds: ["s1", "-s2"] },
+  ];
+  for (const answer of bad) {
+    expect(attemptBodySchema.safeParse({ ...ex, answer }).success).toBe(false);
+    expect(quizSubmissionSchema.safeParse({ ...quiz, answers: [{ itemId: "i", answer }] }).success).toBe(false);
+    expect(gameMoveSchema.safeParse({ itemId: "i", answer }).success).toBe(false);
+    expect(gamePlaySchema.safeParse({ template: "timed-round", itemIds: ["i"], answers: [{ itemId: "i", answer }] }).success).toBe(false);
+  }
+  const good = { type: "multi-select", optionIds: ["a", "opt_2", "x".repeat(64)] };
+  expect(gameMoveSchema.safeParse({ itemId: "i", answer: good }).success).toBe(true);
+  expect(attemptBodySchema.safeParse({ ...ex, answer: { type: "ordering", orderedIds: ["s1", "s-2"] } }).success).toBe(true);
+});

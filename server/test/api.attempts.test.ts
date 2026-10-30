@@ -165,6 +165,27 @@ describe("game submissions", () => {
   });
 });
 
+describe("option and step ids inside answers", () => {
+  it("400s a malformed option or step id on every body before any lookup, writing nothing", async () => {
+    const blankFirst = { type: "multi-select", optionIds: ["", "z"] };   // "" once hid the unknown "z" from the checker
+    const cases: unknown[] = [
+      { packageId: "demo", itemId: "ms1", answer: blankFirst },
+      { packageId: "demo", itemId: "mc1", answer: { type: "multiple-choice", optionId: "x".repeat(65) } },
+      quizBody({ ms1: blankFirst }),
+      quizBody({ ord1: { type: "ordering", orderedIds: ["s1", "s2", "-s3"] } }),
+      { ...quizBody({ ms1: blankFirst }), quizId: "ghost" },
+      gameBody("g-speed", speedPlay([{ itemId: "ms1", answer: blankFirst }])),
+      gameBody("ghost", speedPlay([{ itemId: "mc1", answer: { type: "multiple-choice", optionId: "" } }])),
+    ];
+    for (const b of cases) {
+      const res = await attempt(b);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.code).toBe("invalid_request");
+    }
+    expect(attemptCount()).toBe(0);
+  });
+});
+
 describe("attempt history", () => {
   const history = async (query = "") => {
     const res = await app.request(`/api/attempts${query}`);
