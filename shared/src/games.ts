@@ -1,5 +1,9 @@
 import type { CheckableItem, Item } from "./items.js";
 import type { Game } from "./packageSchema.js";
+import { checkAnswer } from "./checking.js";
+import type { CheckResult } from "./checking.js";
+import { shuffle } from "./random.js";
+import type { GameMove, GamePlay } from "./requests.js";
 
 /** The item types each game template can play. A source item of any other type is dropped. */
 export const GAME_COMPAT: Record<Game["template"], Item["type"][]> = {
@@ -156,4 +160,154 @@ export function unitCount(game: Game, pool: readonly CheckableItem[]): number {
  */
 export function roundSizeFor(game: Game, pool: readonly CheckableItem[]): number {
   return Math.min(gameSettings(game).roundSize, unitCount(game, pool));
+}
+
+/** The dealt matching tiles or item ids for one round. */
+export type GameDeal =
+  | { template: "matching"; lefts: string[]; rights: string[] }
+  | { template: "timed-round" | "order-it"; itemIds: string[] };
+
+/**
+ * Deals a random round from a resolved game pool without mutating it.
+ *
+ * Args:
+ *   game: The game whose template and effective round size apply.
+ *   pool: Its resolved compatible items, in package/source order.
+ *   random: An injectable random source returning values in [0, 1).
+ * Returns:
+ *   Distinct playable units and, for matching, shuffled right-hand tiles.
+ * Raises:
+ *   None.
+ */
+export function dealGame(game: Game, pool: readonly CheckableItem[], random: () => number = Math.random): GameDeal {
+  const n = roundSizeFor(game, pool);
+  if (game.template !== "matching") {
+    return { template: game.template, itemIds: shuffle(pool, random).slice(0, n).map((i) => i.id) };
+  }
+  const dealt = shuffle(matchingPairs(pool), random).slice(0, n);
+  const sourceIds = new Set(dealt.map((pair) => pair.itemId));
+  const dealtRights = new Set(dealt.map((pair) => pair.right));
+  const candidates = new Set<string>();
+  for (const item of pool) {
+    if (item.type !== "matching" || !sourceIds.has(item.id)) continue;
+    for (const text of item.distractors ?? []) if (!dealtRights.has(text)) candidates.add(text);
+  }
+  const distractors = shuffle([...candidates], random).slice(0, MAX_MATCH_DISTRACTORS);
+  return {
+    template: "matching",
+    lefts: dealt.map((pair) => pair.left),
+    rights: shuffle([...dealt.map((pair) => pair.right), ...distractors], random),
+  };
+}
+
+/** A complete item verdict, or a matching verdict that reveals no answer key. */
+export type GameMoveResult = CheckResult | { correct: boolean };
+
+/**
+ * Checks one move against a game's full resolved pool, without writing state.
+ *
+ * Args:
+ *   game: The game whose template selects the move shape.
+ *   pool: Its resolved compatible items.
+ *   move: A matching text pick or an item answer.
+ * Returns:
+ *   A matching correctness flag or the item's CheckResult.
+ * Raises:
+ *   Error: The move has the wrong shape, the matching left/right or item is
+ *     outside the pool, or checkAnswer rejects the answer.
+ */
+export function checkGameMove(game: Game, pool: readonly CheckableItem[], move: GameMove): GameMoveResult {
+  if (game.template === "matching") {
+    if (!("left" in move)) throw new Error("matching games take { left, right } picks");
+    const pair = matchingPairs(pool).find((p) => p.left === move.left);
+    if (!pair) throw new Error(`unknown matching left "${move.left}"`);
+    const allowed = pool.some((item) => item.type === "matching" &&
+      (item.pairs.some((p) => p.right === move.right) || item.distractors?.includes(move.right)));
+    if (!allowed) throw new Error(`unknown matching choice "${move.right}"`);
+    return { correct: pair.right === move.right };
+  }
+  if (!("itemId" in move)) throw new Error(`${game.template} games take { itemId, answer } moves`);
+  const item = pool.find((i) => i.id === move.itemId);
+  if (!item) throw new Error(`item "${move.itemId}" is not in this game`);
+  return checkAnswer(item, move.answer);
+}
+
+/** The server-computed score and summary of one completed or interrupted game. */
+export interface GameResult {
+  template: Game["template"];
+  score: number;
+  correctCount: number;
+  total: number;
+  mistakes: number;
+  completed: boolean;
+  timedOut: boolean;
+  elapsedSeconds: number;
+}
+
+/**
+ * Replays a game's moves and scores a valid dealt round, counting unanswered units as zero.
+ *
+ * Args:
+ *   game: The validated game whose settings and template apply.
+ *   pool: Its resolved compatible items.
+ *   play: The dealt units and ordered moves submitted by the learner.
+ *   elapsedSeconds: The request-validated elapsed time.
+ * Returns:
+ *   The score, progress counts and elapsed time clamped to the game's limit.
+ * Raises:
+ *   Error: The play template differs, its deal cannot come from this pool,
+ *     a move repeats or names an undealt unit, or checkGameMove rejects it.
+ */
+export function scoreGame(game: Game, pool: readonly CheckableItem[], play: GamePlay, elapsedSeconds: number): GameResult {
+  if (play.template !== game.template) {
+    throw new Error(`play template "${play.template}" does not match game template "${game.template}"`);
+  }
+  const total = roundSizeFor(game, pool);
+  const units = play.template === "matching" ? play.lefts : play.itemIds;
+  const available = new Set(play.template === "matching" ? matchingPairs(pool).map((p) => p.left) : pool.map((i) => i.id));
+  if (units.length !== total || new Set(units).size !== total || units.some((id) => !available.has(id))) {
+    throw new Error(`the deal must hold ${total} distinct units of this game`);
+  }
+  const dealt = new Set(units);
+  const answered = new Set<string>();
+  let correctCount = 0;
+  let mistakes = 0;
+  let points = 0;
+  if (play.template === "matching") {
+    for (const pick of play.picks) {
+      if (!dealt.has(pick.left) || answered.has(pick.left)) {
+        throw new Error(`pick for an undealt or already matched left "${pick.left}"`);
+      }
+      if (checkGameMove(game, pool, pick).correct) {
+        answered.add(pick.left);
+        correctCount++;
+      } else {
+        mistakes++;
+      }
+    }
+    points = correctCount / (total + mistakes);
+  } else {
+    for (const answer of play.answers) {
+      if (!dealt.has(answer.itemId) || answered.has(answer.itemId)) {
+        throw new Error(`answer for an undealt or already answered item "${answer.itemId}"`);
+      }
+      const result = checkGameMove(game, pool, answer) as CheckResult;
+      answered.add(answer.itemId);
+      points += result.score;
+      if (result.correct) correctCount++;
+      else mistakes++;
+    }
+    points /= total;
+  }
+  const limit = gameSettings(game).timeLimitSeconds;
+  return {
+    template: game.template,
+    score: points,
+    correctCount,
+    total,
+    mistakes,
+    completed: answered.size === total,
+    timedOut: limit !== null && elapsedSeconds >= limit,
+    elapsedSeconds: limit === null ? elapsedSeconds : Math.min(elapsedSeconds, limit),
+  };
 }

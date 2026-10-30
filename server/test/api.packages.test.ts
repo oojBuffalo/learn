@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { openDb, type Db } from "../src/db.js";
-import { GOOD_FILES, makeZip } from "./helpers.js";
+import { GOOD_FILES, PLAY_FILES, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
@@ -108,5 +108,44 @@ describe("package routes", () => {
     expect((await app.request("/api/packages/demo", { method: "DELETE" })).status).toBe(204);
     expect(db.prepare("SELECT COUNT(*) n FROM lessons").get()).toMatchObject({ n: 0 });
     expect(db.prepare("SELECT COUNT(*) n FROM card_state").get()).toMatchObject({ n: 1 });
+  });
+});
+
+describe("package summaries", () => {
+  const firstPackage = async () => (await (await app.request("/api/packages")).json()).packages[0];
+  const importPlay = () => app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(PLAY_FILES)) });
+
+  it("lists quizzes and games in package order with their settings", async () => {
+    await importPlay();
+    const pkg = await firstPackage();
+    expect(pkg.quizzes).toEqual([
+      { id: "quiz-all", title: "All types", description: "Every checkable type", itemCount: 6,
+        timeLimitSeconds: 60, passThreshold: 0.5, runs: 0, best: null },
+      { id: "quiz-plain", title: "Plain", itemCount: 1, timeLimitSeconds: null, passThreshold: null, runs: 0, best: null },
+    ]);
+    expect(pkg.games).toEqual([
+      { id: "g-match", title: "Match", template: "matching", timeLimitSeconds: null, runs: 0, best: null },
+      { id: "g-small", title: "Small", template: "matching", timeLimitSeconds: null, runs: 0, best: null },
+      { id: "g-speed", title: "Speed", template: "timed-round", timeLimitSeconds: 60, runs: 0, best: null },
+      { id: "g-order", title: "Order", template: "order-it", timeLimitSeconds: null, runs: 0, best: null },
+    ]);
+  });
+  it("counts runs and keeps the best score per quiz and game", async () => {
+    await importPlay();
+    const run = db.prepare("INSERT INTO attempts (package_id, kind, ref_id, item_id, answer, correct, score, at) " +
+      "VALUES (?, ?, ?, NULL, '{}', NULL, ?, '2026-10-22T00:00:00.000Z')");
+    run.run("demo", "quiz", "quiz-all", 0.5);
+    run.run("demo", "quiz", "quiz-all", 1);
+    run.run("demo", "game", "g-small", 0.75);
+    run.run("demo", "quiz", "quiz-gone", 1);   // orphan: never listed
+    run.run("other", "quiz", "quiz-plain", 1); // another package
+    const pkg = await firstPackage();
+    expect(pkg.quizzes.map((q: any) => [q.id, q.runs, q.best])).toEqual([["quiz-all", 2, 1], ["quiz-plain", 0, null]]);
+    expect(pkg.games.map((g: any) => [g.id, g.runs, g.best]))
+      .toEqual([["g-match", 0, null], ["g-small", 1, 0.75], ["g-speed", 0, null], ["g-order", 0, null]]);
+  });
+  it("gives a package without quizzes or games empty arrays", async () => {
+    await importGood();
+    expect(await firstPackage()).toMatchObject({ quizzes: [], games: [] });
   });
 });

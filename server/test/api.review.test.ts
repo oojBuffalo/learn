@@ -89,3 +89,46 @@ describe("review", () => {
     expect(res.status).toBe(404); // mc1 is not a flashcard
   });
 });
+
+describe("grade hardening", () => {
+  const raw = (body: string) =>
+    app.request("/api/review/grade", { method: "POST", headers: { "content-type": "application/json" }, body });
+  const writes = () => ({
+    state: (db.prepare("SELECT COUNT(*) n FROM card_state").get() as { n: number }).n,
+    log: (db.prepare("SELECT COUNT(*) n FROM review_log").get() as { n: number }).n,
+  });
+  const ok = { packageId: "demo", itemId: "card1", direction: "front", rating: "good" };
+
+  it("400s malformed, null and mistyped grades without writing", async () => {
+    for (const body of ["{not json", "null", JSON.stringify({ ...ok, itemId: 5 }),
+      JSON.stringify({ ...ok, itemId: "x".repeat(65) }), JSON.stringify({ ...ok, extra: true })]) {
+      const res = await raw(body);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.code).toBe("invalid_request");
+    }
+    expect(writes()).toEqual({ state: 0, log: 0 });
+  });
+
+  it("404s a back grade on a one-sided card and writes nothing", async () => {
+    const items = [...JSON.parse(GOOD_FILES["items.json"] as string),
+      { id: "card2", type: "flashcard", front: "gato", back: "cat" }];
+    await app.request("/api/packages/import", {
+      method: "POST", body: new Uint8Array(makeZip({ ...GOOD_FILES, "items.json": JSON.stringify(items) })) });
+    const res = await raw(JSON.stringify({ ...ok, itemId: "card2", direction: "back" }));
+    expect(res.status).toBe(404);
+    expect((await res.json()).error).toEqual({ code: "not_found", message: "this flashcard has no back→front card" });
+    expect(writes()).toEqual({ state: 0, log: 0 });
+    expect((await raw(JSON.stringify({ ...ok, itemId: "card2" }))).status).toBe(200);
+  });
+
+  it("still grades the back of a reverse card", async () => {
+    expect((await grade("back", "good")).status).toBe(200);
+    expect(db.prepare("SELECT item_id, direction FROM card_state").all()).toEqual([{ item_id: "card1", direction: "back" }]);
+  });
+
+  it("400s free study without a packageId as invalid_request", async () => {
+    const res = await app.request("/api/review/free-study");
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toEqual({ code: "invalid_request", message: "packageId required" });
+  });
+});

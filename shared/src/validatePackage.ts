@@ -2,6 +2,7 @@ import type { Game, LessonFrontmatter, Manifest, Quiz } from "./packageSchema.js
 import type { Item } from "./items.js";
 import { GAME_COMPAT, resolveGameItems } from "./games.js";
 import { activityIdsInBody } from "./lessonBody.js";
+import { MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT } from "./requests.js";
 
 export interface LoadedLesson {
   frontmatter: LessonFrontmatter;
@@ -95,6 +96,10 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
   for (const q of pkg.quizzes) {
     if (quizIds.has(q.id)) err("quizzes.json", q.id, `duplicate quiz id "${q.id}"`);
     quizIds.add(q.id);
+    if (new Set(q.items).size > MAX_PLAY_ITEMS)
+      err("quizzes.json", q.id, `quiz lists more than ${MAX_PLAY_ITEMS} items`);
+    if (q.timeLimitSeconds !== undefined && q.timeLimitSeconds > MAX_ELAPSED_SECONDS)
+      err("quizzes.json", q.id, `timeLimitSeconds may be at most ${MAX_ELAPSED_SECONDS}`);
     for (const id of q.items) {
       if (!itemIds.has(id)) err("quizzes.json", q.id, `quiz references missing item "${id}"`);
       else if (itemIds.get(id)!.type === "flashcard")
@@ -107,6 +112,10 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
   for (const g of pkg.games) {
     if (gameIds.has(g.id)) err("games.json", g.id, `duplicate game id "${g.id}"`);
     gameIds.add(g.id);
+    if (g.settings?.roundSize !== undefined && g.settings.roundSize > MAX_PLAY_ITEMS)
+      err("games.json", g.id, `roundSize may be at most ${MAX_PLAY_ITEMS}`);
+    if (g.settings?.timeLimitSeconds !== undefined && g.settings.timeLimitSeconds > MAX_ELAPSED_SECONDS)
+      err("games.json", g.id, `timeLimitSeconds may be at most ${MAX_ELAPSED_SECONDS}`);
     if ("itemIds" in g.source) {
       for (const id of g.source.itemIds) {
         if (!itemIds.has(id)) err("games.json", g.id, `game references missing item "${id}"`);
@@ -122,6 +131,10 @@ export function validatePackage(pkg: LoadedPackage): PackageError[] {
   }
 
   for (const item of pkg.items) {
+    if (item.type === "matching" && [
+      ...item.pairs.flatMap((pair) => [pair.left, pair.right]), ...(item.distractors ?? []),
+    ].some((text) => text.length > MAX_MATCH_TEXT))
+      err("items.json", item.id, `matching text may be at most ${MAX_MATCH_TEXT} characters`);
     for (const m of item.media ?? []) {
       if (!assetPaths.has(m.src)) err("items.json", item.id, `media references missing asset "${m.src}"`);
     }
