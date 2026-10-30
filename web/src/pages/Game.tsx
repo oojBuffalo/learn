@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { dealGame, MAX_ELAPSED_SECONDS, roundSizeFor } from "@study/shared";
 import type { AttemptRecord, GameDeal, GameMove, GameMoveResult, GamePlay, GameResult, GameSubmission } from "@study/shared";
 import { checkMove, getGame, isStale, listAttempts, submitGame } from "../api.js";
+import { recordMove } from "../gamePlay.js";
 import type { GamePayload } from "../api.js";
 import Clock from "../components/Clock.js";
 import History from "../components/History.js";
@@ -139,8 +140,7 @@ export default function Game() {
     try {
       const verdict = await checkMove(packageId, gameId, move);
       if (ended.current || run.current !== startedIn) return null;
-      if (play.current.template === "matching" && "left" in move) play.current.picks.push(move);
-      else if (play.current.template !== "matching" && "itemId" in move) play.current.answers.push(move);
+      if (recordMove(play.current, move)) finish();   // a full play must end while it is still savable
       return verdict;
     } catch (error) {
       if (ended.current || run.current !== startedIn) return null;

@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import {
-  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, attemptBodySchema,
+  MAX_ELAPSED_SECONDS, MAX_PLAY_ITEMS, MAX_MATCH_TEXT, MAX_MATCH_PICKS, attemptBodySchema,
   quizSubmissionSchema, gameSubmissionSchema, gamePlaySchema, gameMoveSchema, matchPickSchema,
   attemptsQuerySchema, progressRequestSchema, gradeRequestSchema,
 } from "../src/index.js";
@@ -62,6 +62,7 @@ it("bounds every game play list and matching text at the request boundary", () =
     expect(gamePlaySchema.safeParse({ template, itemIds, answers: [...answers, answers[0]] }).success).toBe(false);
   }
   const lefts = Array.from({ length: 200 }, (_, k) => `left${k}`);
+  expect(MAX_MATCH_PICKS).toBe(2000);
   const picks = Array.from({ length: 2000 }, () => ({ left: "a", right: "b" }));
   expect(gamePlaySchema.safeParse({ template: "matching", lefts, picks }).success).toBe(true);
   expect(gamePlaySchema.safeParse({ template: "matching", lefts: [...lefts, "extra"], picks }).success).toBe(false);
@@ -78,4 +79,20 @@ it("rejects unknown fields on nested quiz answers and both move shapes", () => {
   expect(quizSubmissionSchema.safeParse({ ...quiz, answers: [{ itemId: "i", answer: null, typo: true }] }).success).toBe(false);
   expect(gameMoveSchema.safeParse({ itemId: "i", answer: ex.answer, typo: true }).success).toBe(false);
   expect(gameMoveSchema.safeParse({ left: "a", right: "b", typo: true }).success).toBe(false);
+});
+it("rejects a malformed option or step id inside an answer on every branch", () => {
+  const bad = [
+    { type: "multiple-choice", optionId: "" }, { type: "multiple-choice", optionId: "x".repeat(65) },
+    { type: "multi-select", optionIds: ["", "z"] }, { type: "multi-select", optionIds: ["a b"] },
+    { type: "ordering", orderedIds: ["s1", "-s2"] },
+  ];
+  for (const answer of bad) {
+    expect(attemptBodySchema.safeParse({ ...ex, answer }).success).toBe(false);
+    expect(quizSubmissionSchema.safeParse({ ...quiz, answers: [{ itemId: "i", answer }] }).success).toBe(false);
+    expect(gameMoveSchema.safeParse({ itemId: "i", answer }).success).toBe(false);
+    expect(gamePlaySchema.safeParse({ template: "timed-round", itemIds: ["i"], answers: [{ itemId: "i", answer }] }).success).toBe(false);
+  }
+  const good = { type: "multi-select", optionIds: ["a", "opt_2", "x".repeat(64)] };
+  expect(gameMoveSchema.safeParse({ itemId: "i", answer: good }).success).toBe(true);
+  expect(attemptBodySchema.safeParse({ ...ex, answer: { type: "ordering", orderedIds: ["s1", "s-2"] } }).success).toBe(true);
 });

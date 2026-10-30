@@ -21,6 +21,7 @@ export default function Quiz() {
   const [loadKey, setLoadKey] = useState(0);
   const [history, setHistory] = useState<AttemptRecord[] | null>(null);
   const [historyError, setHistoryError] = useState(false);
+  const [historyKey, setHistoryKey] = useState(0);
   const [run, setRun] = useState<{ key: number; order: string[]; startedAt: number } | null>(null);
   const runKey = useRef(0);
   const [drafts, setDrafts] = useState<Record<string, Answer | null>>({});
@@ -48,11 +49,16 @@ export default function Quiz() {
       if (e instanceof ApiError && e.code === "not_found") setMissing(true);
       else setError(message(e));
     });
+    return () => { cancelled = true; };
+  }, [packageId, quizId, loadKey]);
+  // One effect per history request: a refresh cancels the request before it, so an older answer never lands last.
+  useEffect(() => {
+    let cancelled = false;
     listAttempts({ packageId, kind: "quiz", refId: quizId, limit: 20 }).then((next) => {
       if (!cancelled) { setHistory(next); setHistoryError(false); }
     }).catch(() => { if (!cancelled) setHistoryError(true); });
     return () => { cancelled = true; };
-  }, [packageId, quizId, loadKey]);
+  }, [packageId, quizId, loadKey, historyKey]);
 
   const leavingRun = run !== null && result === null && !stale;
   useEffect(() => {
@@ -72,9 +78,7 @@ export default function Quiz() {
       const next = await submitQuiz(frozen.current);
       if (!mounted.current) return;
       setResult(next);
-      listAttempts({ packageId, kind: "quiz", refId: quizId, limit: 20 }).then((attempts) => {
-        if (mounted.current) { setHistory(attempts); setHistoryError(false); }
-      }).catch(() => { if (mounted.current) setHistoryError(true); });
+      setHistoryKey((key) => key + 1);
     } catch (e) {
       if (!mounted.current) return;
       if (isStale(e)) setStale(true);

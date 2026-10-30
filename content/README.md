@@ -113,6 +113,7 @@ It also refuses content exceeding the request limits:
 
 - `quiz lists more than 200 items`
 - `roundSize may be at most 200`
+- `timeLimitSeconds may be at most 86400` (a quiz's limit or a game's `settings.timeLimitSeconds`)
 - `matching text may be at most 2000 characters` (each left, right or distractor)
 
 For short-answer `match: "regex"`, a pattern is at most 200 characters and uses no

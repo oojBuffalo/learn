@@ -101,6 +101,17 @@ describe("game move checks", () => {
     }
     expect((await check("ghost", { left: "cat" })).status).toBe(400);
   });
+  it("400s a move with a malformed option or step id before looking up the game", async () => {
+    for (const [gameId, move] of [
+      ["g-speed", { itemId: "ms1", answer: { type: "multi-select", optionIds: ["", "z"] } }],
+      ["g-speed", { itemId: "mc1", answer: { type: "multiple-choice", optionId: "x".repeat(65) } }],
+      ["ghost", { itemId: "ord1", answer: { type: "ordering", orderedIds: ["s1", "s 2"] } }],
+    ] as const) {
+      const res = await check(gameId, move);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.code).toBe("invalid_request");
+    }
+  });
   it("404s an unknown game", async () => {
     const res = await check("ghost", { left: "cat", right: "meow" });
     expect(res.status).toBe(404);

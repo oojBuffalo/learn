@@ -53,6 +53,27 @@ test("play entry points: failed list loads, Library count links, list filters an
   await expect(page.getByRole("link", { name: "Games · 3", exact: true })).toBeVisible();   // the sheet foot, all four controls, is laid out
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
 });
+test("play lists: a package filter shows only that package’s quizzes and games", async ({ page }) => {
+  type Row = { id: string; title: string };
+  type Listed = { id: string; title: string; quizzes: Row[]; games: Row[] };
+  const listed = (await (await page.request.get("/api/packages")).json()) as { packages: Listed[] };
+  const sample = listed.packages.find((p) => p.id === "learning-how-to-learn")!;
+  const copy = (rows: Row[]) => rows.map((row) => ({ ...row, id: `${row.id}-b`, title: `${row.title} B` }));
+  const other = { ...sample, id: "other-package", title: "Other package", quizzes: copy(sample.quizzes), games: copy(sample.games) };
+  // A second package gives the filter something to leave out.
+  await page.route("**/api/packages", (route) => route.fulfill({ json: { packages: [sample, other] } }));
+  const titles = page.locator(".lesson-row-title");
+  const names = (p: Listed, list: "quizzes" | "games") => p[list].map((row) => row.title);
+  for (const list of ["quizzes", "games"] as const) {
+    await page.goto(`/${list}?package=other-package`);
+    await expect(titles).toHaveText(names(other, list));
+    await page.goto(`/${list}?package=learning-how-to-learn`);
+    await expect(titles).toHaveText(names(sample, list));
+    await page.getByRole("link", { name: "All packages" }).click();
+    await expect(page).toHaveURL(new RegExp(`/${list}$`));
+    await expect(titles).toHaveText([...names(sample, list), ...names(other, list)]);
+  }
+});
 
 /** Runs logged so far for one sample quiz or game, read from the API so that other tests' runs do not matter. */
 async function runs(page: Page, kind: "quiz" | "game", refId: string): Promise<number> {
@@ -219,6 +240,28 @@ test("quiz: a missing or changed quiz says so and offers no retry", async ({ pag
   await page.close({ runBeforeUnload: true });
   await expect.poll(() => page.isClosed()).toBe(true);
   expect(dialogs).toEqual([]);                                             // a stale run can be reloaded without a prompt
+});
+test("quiz: a page load’s late history answer never replaces the history refreshed after a run", async ({ page }) => {
+  const before = await runs(page, "quiz", "quiz-basics");
+  // An older empty history, then an older failure, each arriving after the post-run refresh.
+  const lateAnswers = [{ json: { attempts: [] } }, { status: 500, body: "{}" }];
+  for (const [k, answer] of lateAnswers.entries()) {
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    // The history GET carries a query string, which a "**/api/attempts" glob does not match; a regex does.
+    await page.route(/\/api\/attempts\?/, async (route) => { await held; await route.fulfill(answer); }, { times: 1 });
+    await page.goto("/quizzes/learning-how-to-learn/quiz-basics");
+    await page.getByRole("button", { name: "Start quiz" }).click();
+    await page.getByRole("button", { name: "Submit quiz" }).click();
+    await page.getByRole("button", { name: "Submit anyway" }).click();
+    await expect(page.getByRole("heading", { name: /^0% · Not passed/ })).toBeFocused();
+    await expect(page.locator(".history li")).toHaveCount(historyRows(before, k + 1));
+    const late = page.waitForResponse(/\/api\/attempts\?/);
+    release(); await late;
+    await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0))));
+    await expect(page.locator(".history li")).toHaveCount(historyRows(before, k + 1));
+    await expect(page.getByText(/No attempts yet\.|History couldn’t be loaded\./)).toHaveCount(0);
+  }
 });
 
 test("timed round: expiry submits once and drops a late check, even after Play again", async ({ page }) => {
