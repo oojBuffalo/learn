@@ -150,7 +150,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   if (loadError) return <div className="page"><p className="errors" role="alert">{`This explanation didn’t load (${loadError}).`}</p>{back}</div>;
   if (id === null && libraryFailed) return <div className="page"><p className="errors" role="alert">Your library couldn’t be loaded, so there’s no lesson to pick.</p>
     <button className="btn" onClick={() => {
-      if (initial.current.explanationId) loadLibrary(); else { setLibraryFailed(false); setLoadKey((k) => k + 1); }
+      // A full reload resets every field, so the editor stays hidden (Loading…) until it finishes.
+      if (initial.current.explanationId) loadLibrary(); else { setSaved(null); setLibraryFailed(false); setLoadKey((k) => k + 1); }
     }}>Try again</button></div>;
   if (!saved) return <p className="loading">Loading…</p>;
   const previous = target && earlier?.filter((e) => e.id !== id && e.packageId === target.packageId && e.lessonId === target.lessonId);

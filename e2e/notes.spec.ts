@@ -406,3 +406,23 @@ test("a held explanation save answered 404 never clears a newer editor’s draft
   await expect.poll(() => draftBody("study.draft.explanation.new")).toBe("Contested explanation, first session late");
   expect(await draftBody(`study.draft.explanation.${id}`)).toBe("Contested explanation, second session");
 });
+
+test("explain-back keeps its editor hidden while a failed library load is retried", async ({ page }) => {
+  let gets = 0; let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/packages", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    gets += 1;
+    if (gets === 1) return route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } });
+    if (gets === 2) await held;
+    return route.continue();
+  });
+  await page.goto(`/notes/explain/new?packageId=${PKG}&lessonId=${LESSON}`);
+  await expect(page.getByRole("alert")).toHaveText("Your library couldn’t be loaded, so there’s no lesson to pick.");
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect.poll(() => gets).toBe(2);
+  await expect(page.locator("p.loading")).toHaveText("Loading…");
+  await expect(page.getByLabel("Your explanation", { exact: true })).toHaveCount(0);
+  release();
+  await expect(page.getByLabel("Lesson", { exact: true })).toHaveValue(`${PKG}/${LESSON}`);
+  await expect(page.getByLabel("Your explanation", { exact: true })).toHaveValue("");
+});
