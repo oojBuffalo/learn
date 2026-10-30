@@ -10,6 +10,10 @@ it("quizOrder keeps listed order unless the quiz shuffles", () => {
   expect(quizOrder(quiz)).toEqual(["a", "b", "c"]);
   expect(quizOrder({ ...quiz, shuffle: true }, seeded(1)).sort()).toEqual(["a", "b", "c"]);
 });
+it("quizOrder applies the given random only when the quiz shuffles", () => {
+  expect(quizOrder({ ...quiz, shuffle: true }, seeded(1))).toEqual(["b", "c", "a"]);   // seeded(1) moves every id
+  expect(quizOrder({ ...quiz, shuffle: false }, seeded(1))).toEqual(["a", "b", "c"]);
+});
 it("answeredCount counts only this quiz's non-null drafts", () => {
   expect(answeredCount(["a", "b", "c"], { a: A, b: null, z: A })).toBe(1);
 });
