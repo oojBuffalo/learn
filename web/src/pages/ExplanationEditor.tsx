@@ -9,6 +9,7 @@ import MarkdownEditor from "../components/MarkdownEditor.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
 import { browserDraftStore, clearDraft, draftKey, readDraft, useDraft, writeDraft } from "../drafts.js";
+import type { DraftStore } from "../drafts.js";
 import { formatDay } from "../format.js";
 import { filterSearch } from "../listFilter.js";
 import { message } from "../text.js";
@@ -88,6 +89,12 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     if (value !== saved?.body || confidence !== saved?.confidence) draft.write(value); else draft.clear();
   }
 
+  // A newer editor of the same key may have stored its own text since this save started; a late settle leaves that draft alone.
+  function ownsDraft(store: DraftStore, key: string): boolean {
+    const stored = readDraft(store, key);
+    return stored === null || stored.body === latestBody.current;
+  }
+
   // An edit-mode mount never loaded the library; create mode after a 404 needs it to offer live lessons.
   function loadLibrary() {
     const current = session.current;
@@ -108,9 +115,11 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       const explanation = creating ? await createExplanation({ body: sent.body, confidence: sent.confidence,
         packageId: sent.target.packageId, lessonId: sent.target.lessonId! }) : await updateExplanation(id, patch);
       const store = browserDraftStore();
-      if (creating) clearDraft(store, draftKey("explanation", "new"));
+      if (creating && ownsDraft(store, draftKey("explanation", "new"))) clearDraft(store, draftKey("explanation", "new"));
       const key = draftKey("explanation", explanation.id);
-      if (latestBody.current === sent.body) clearDraft(store, key); else writeDraft(store, key, latestBody.current, new Date());
+      if (ownsDraft(store, key)) {
+        if (latestBody.current === sent.body) clearDraft(store, key); else writeDraft(store, key, latestBody.current, new Date());
+      }
       if (!mounted.current) return;
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);
       if (creating) navigate(`/notes/explain/${explanation.id}`, { replace: true, state: { editorKey } });
@@ -119,8 +128,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       if (!mounted.current) {
         if (gone) {
           // The editor and its row are both gone: Explain a lesson offers the text, unless another new explanation's text is there.
-          const store = browserDraftStore(); const fresh = readDraft(store, draftKey("explanation", "new"));
-          if (fresh === null || fresh.body === latestBody.current) {
+          const store = browserDraftStore();
+          if (ownsDraft(store, draftKey("explanation", "new"))) {
             writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date()); clearDraft(store, draftKey("explanation", id));
           }
         }

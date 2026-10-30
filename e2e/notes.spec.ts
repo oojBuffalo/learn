@@ -278,3 +278,88 @@ test("an explanation removed elsewhere loads the library so it can be saved agai
   await expect(page).not.toHaveURL(new RegExp(`/notes/explain/${id}$`)); await expect(page).toHaveURL(/\/notes\/explain\/\d+$/);
   await expect(page.getByRole("status")).toHaveText("Saved. Rated 4 · Solid."); await expect(page.getByRole("alert")).toHaveCount(0);
 });
+
+test("a held note save never replaces a newer editor’s draft of the same note", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Shared note", target: null } })).json()).note.id;
+  const key = `study.draft.note.${id}`;
+  // Counts every storage call on this note's draft key, so the test can wait for the late save to settle.
+  await page.addInitScript((watched) => {
+    const w = window as unknown as { touches: number }; w.touches = 0;
+    const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+    for (const name of ["getItem", "setItem", "removeItem"]) {
+      const original = proto[name]!;
+      proto[name] = function (this: Storage, ...args: unknown[]) { if (args[0] === watched) w.touches += 1; return original.apply(this, args); };
+    }
+  }, key);
+  const touches = () => page.evaluate(() => (window as unknown as { touches: number }).touches);
+  const draftBody = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
+  let patches = 0; let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH" && ++patches === 1) await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Shared note");
+  await editor.fill("Shared note, first session"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: /Shared note/ }).click();
+  await expect(editor).toHaveValue("Shared note"); await expect(page.getByText(/Restore unsaved text from/)).toBeVisible();
+  await editor.fill("Shared note, second session"); expect(await draftBody()).toBe("Shared note, second session");
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(200);
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect(await draftBody()).toBe("Shared note, second session");
+  await nav.getByRole("link", { name: "Library", exact: true }).click(); await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: /Shared note/ }).click();
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible(); await page.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(editor).toHaveValue("Shared note, second session");
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+});
+
+test("a held first note save never removes a newer new note’s draft", async ({ page, request }) => {
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/notes", async (route) => {
+    if (route.request().method() === "POST") await held; await route.continue();
+  });
+  const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/api/notes");
+  const draftBody = (k: string) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null")?.body ?? null, k);
+  await page.goto("/notes/new");
+  const editor = page.getByLabel("Note", { exact: true });
+  await editor.fill("First new note"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: "New note", exact: true }).click();
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible();
+  await editor.fill("Second new note"); expect(await draftBody("study.draft.note.new")).toBe("Second new note");
+  release(); const id = (await (await created).json()).note.id;
+  await expect.poll(() => draftBody(`study.draft.note.${id}`)).toBe("First new note late");
+  expect(await draftBody("study.draft.note.new")).toBe("Second new note");
+  await nav.getByRole("link", { name: "Library", exact: true }).click(); await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: "New note", exact: true }).click();
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible(); await page.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(editor).toHaveValue("Second new note");
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+});
+
+test("a held first explanation save never removes a newer explanation’s draft", async ({ page }) => {
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/explanations", async (route) => {
+    if (route.request().method() === "POST") await held; await route.continue();
+  });
+  const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/api/explanations");
+  const draftBody = (k: string) => page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? "null")?.body ?? null, k);
+  await page.goto(`/notes/explain/new?packageId=${PKG}&lessonId=${LESSON}`);
+  const editor = page.getByLabel("Your explanation", { exact: true });
+  await editor.fill("First explanation"); await page.getByLabel("4 · Solid", { exact: true }).check();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("radio", { name: "Explain-back" }).click();
+  await expect(page).toHaveURL(/\/notes\?tab=explanations$/); await page.getByRole("link", { name: "Explain a lesson", exact: true }).click();
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible();
+  await editor.fill("Second explanation"); expect(await draftBody("study.draft.explanation.new")).toBe("Second explanation");
+  release(); const id = (await (await created).json()).explanation.id;
+  await expect.poll(() => draftBody(`study.draft.explanation.${id}`)).toBe("First explanation late");
+  expect(await draftBody("study.draft.explanation.new")).toBe("Second explanation");
+});

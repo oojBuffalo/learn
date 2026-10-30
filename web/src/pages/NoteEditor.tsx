@@ -8,6 +8,7 @@ import Icon from "../components/Icon.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
 import { browserDraftStore, clearDraft, draftKey, readDraft, useDraft, writeDraft } from "../drafts.js";
+import type { DraftStore } from "../drafts.js";
 import { headline, message } from "../text.js";
 
 type Fields = { body: string; target: NoteTarget | null };
@@ -82,6 +83,12 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     else draft.clear();
   }
 
+  // A newer editor of the same key may have stored its own text since this save started; a late settle leaves that draft alone.
+  function ownsDraft(store: DraftStore, key: string): boolean {
+    const stored = readDraft(store, key);
+    return stored === null || stored.body === latestBody.current;
+  }
+
   async function save() {
     if (inFlight.current || !canSave || !saved) return;
     inFlight.current = true; setPending(true); setError(null);
@@ -93,10 +100,12 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       if (encodeTarget(sent.target) !== encodeTarget(saved.target)) patch.target = sent.target;
       const note = creating ? await createNote(sent) : await updateNote(id, patch);
       const store = browserDraftStore();
-      if (creating) clearDraft(store, draftKey("note", "new"));
+      if (creating && ownsDraft(store, draftKey("note", "new"))) clearDraft(store, draftKey("note", "new"));
       const key = draftKey("note", note.id);
-      if (latestBody.current === sent.body) clearDraft(store, key);
-      else writeDraft(store, key, latestBody.current, new Date());
+      if (ownsDraft(store, key)) {
+        if (latestBody.current === sent.body) clearDraft(store, key);
+        else writeDraft(store, key, latestBody.current, new Date());
+      }
       if (!mounted.current) return;
       setId(note.id); setSaved(sent); setOrphaned(note.orphaned);
       if (creating) navigate(`/notes/${note.id}`, { replace: true, state: { editorKey } });
@@ -105,8 +114,8 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       if (!mounted.current) {
         if (gone) {
           // The editor and its note are both gone: New note offers the text, unless another new note's text is there.
-          const store = browserDraftStore(); const fresh = readDraft(store, draftKey("note", "new"));
-          if (fresh === null || fresh.body === latestBody.current) {
+          const store = browserDraftStore();
+          if (ownsDraft(store, draftKey("note", "new"))) {
             writeDraft(store, draftKey("note", "new"), latestBody.current, new Date()); clearDraft(store, draftKey("note", id));
           }
         }
