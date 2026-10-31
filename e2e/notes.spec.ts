@@ -317,6 +317,39 @@ test("a held note save never replaces a newer editor’s draft of the same note"
   expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
 });
 
+test("a held note delete never clears a newer editor’s draft of the same note", async ({ page }) => {
+  const id = (await (await page.request.post("/api/notes", { data: { body: "Doomed note", target: null } })).json()).note.id;
+  const key = `study.draft.note.${id}`;
+  await page.addInitScript((watched) => {
+    const w = window as unknown as { touches: number }; w.touches = 0;
+    const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+    for (const name of ["getItem", "setItem", "removeItem"]) {
+      const original = proto[name]!;
+      proto[name] = function (this: Storage, ...args: unknown[]) { if (args[0] === watched) w.touches += 1; return original.apply(this, args); };
+    }
+  }, key);
+  const touches = () => page.evaluate(() => (window as unknown as { touches: number }).touches);
+  const draftBody = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "DELETE") await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Doomed note");
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await nav.getByRole("link", { name: "Notes", exact: true }).click(); await page.getByRole("link", { name: /Doomed note/ }).click();
+  await expect(editor).toHaveValue("Doomed note");
+  await editor.fill("Newer writing in a second editor"); expect(await draftBody()).toBe("Newer writing in a second editor");
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "DELETE");
+  release(); expect((await answered).status()).toBe(204);
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect(await draftBody()).toBe("Newer writing in a second editor");
+  await expect(editor).toHaveValue("Newer writing in a second editor");
+});
+
 test("a held first note save never removes a newer new note’s draft", async ({ page, request }) => {
   let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
   await page.route("**/api/notes", async (route) => {
