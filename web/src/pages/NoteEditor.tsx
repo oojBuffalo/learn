@@ -156,12 +156,10 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     try {
       try { await deleteNote(id); }
       catch (e) { if (!(e instanceof ApiError && e.code === "not_found")) throw e; }
-      if (mounted.current) { draft.clear(); navigate("/notes"); }
-      else {
-        // A newer editor of this note may have stored its own text before this late delete settled.
-        const store = browserDraftStore();
-        if (ownsDraft(store, draftKey("note", id))) clearDraft(store, draftKey("note", id));
-      }
+      // Another editor of this note, here or in another tab, may have stored newer text before the delete settled.
+      const store = browserDraftStore(); const key = draftKey("note", id);
+      if (ownsDraft(store, key) || readDraft(store, key)?.body === draft.offer?.body) clearDraft(store, key);
+      if (mounted.current) navigate("/notes");
     } catch (e) {
       if (mounted.current) { setConfirming(false); setError(`This note wasn’t deleted (${message(e)}).`); }
     } finally { inFlight.current = false; if (mounted.current) setPending(false); }

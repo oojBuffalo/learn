@@ -350,6 +350,41 @@ test("a held note delete never clears a newer editor’s draft of the same note"
   await expect(editor).toHaveValue("Newer writing in a second editor");
 });
 
+test("a held note delete in a mounted editor spares another tab’s newer draft", async ({ page }) => {
+  const id = (await (await page.request.post("/api/notes", { data: { body: "Shared doomed note", target: null } })).json()).note.id;
+  const key = `study.draft.note.${id}`;
+  const draftBody = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "DELETE") await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  await expect(page.getByLabel("Note", { exact: true })).toHaveValue("Shared doomed note");
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+  const other = await page.context().newPage();
+  await other.goto(`/notes/${id}`);
+  const otherEditor = other.getByLabel("Note", { exact: true }); await expect(otherEditor).toHaveValue("Shared doomed note");
+  await otherEditor.fill("Newer tab writing"); expect(await draftBody()).toBe("Newer tab writing");
+  release();
+  await expect(page).toHaveURL(/\/notes$/);
+  expect(await draftBody()).toBe("Newer tab writing");
+  await other.close();
+});
+
+test("a note delete clears an unanswered restore offer’s draft", async ({ page }) => {
+  const id = (await (await page.request.post("/api/notes", { data: { body: "Saved body", target: null } })).json()).note.id;
+  const key = `study.draft.note.${id}`;
+  await page.goto("/notes");
+  await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Older draft", at: new Date().toISOString() })), key);
+  await page.goto(`/notes/${id}`);
+  await expect(page.getByText(/Restore unsaved text from/)).toBeVisible();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page).toHaveURL(/\/notes$/);
+  expect(await page.evaluate((k) => localStorage.getItem(k), key)).toBeNull();
+});
+
 test("a held first note save never removes a newer new note’s draft", async ({ page, request }) => {
   let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
   await page.route("**/api/notes", async (route) => {
