@@ -454,3 +454,30 @@ for (const kind of ["note", "explanation"] as const) {
     expect(await draftBody(`study.draft.${kind}.new`)).toBe("Unrelated new writing");
   });
 }
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a successful ${kind} save dismisses an old restore offer and keeps newer typing`, async ({ page, request }) => {
+    const explanation = kind === "explanation";
+    const api = explanation ? "explanations" : "notes";
+    const data = explanation ? { body: "Saved writing", packageId: PKG, lessonId: LESSON, confidence: 4 } : { body: "Saved writing", target: null };
+    const id = (await (await request.post(`/api/${api}`, { data })).json())[kind].id;
+    const key = `study.draft.${kind}.${id}`;
+    await page.goto("/notes");
+    await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Outdated draft", at: new Date().toISOString() })), key);
+    await page.goto(explanation ? `/notes/explain/${id}` : `/notes/${id}`);
+    await expect(page.getByRole("button", { name: "Restore", exact: true })).toBeVisible();
+    const editor = page.getByLabel(explanation ? "Your explanation" : "Note", { exact: true });
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${api}/${id}`, async (route) => {
+      if (route.request().method() === "PATCH") await held; await route.continue();
+    });
+    await editor.fill("Replacement text"); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await editor.fill("Replacement text with newer typing");
+    const answered = page.waitForResponse((r) => r.request().method() === "PATCH"); release();
+    expect((await answered).status()).toBe(200);
+    await expect(page.getByRole("button", { name: "Restore", exact: true })).toHaveCount(0);
+    await expect(editor).toHaveValue("Replacement text with newer typing");
+    await expect(page.getByRole("status")).toHaveText("Unsaved changes");
+    expect(await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).body, key)).toBe("Replacement text with newer typing");
+  });
+}

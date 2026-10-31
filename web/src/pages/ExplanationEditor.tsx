@@ -123,6 +123,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         if (latestBody.current === sent.body) clearDraft(store, key); else writeDraft(store, key, latestBody.current, new Date());
       }
       if (!mounted.current) return;
+      draft.dismiss();
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);
       if (creating) navigate(`/notes/explain/${explanation.id}`, { replace: true, state: { editorKey } });
     } catch (e) {

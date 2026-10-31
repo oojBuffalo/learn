@@ -109,6 +109,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
         else writeDraft(store, key, latestBody.current, new Date());
       }
       if (!mounted.current) return;
+      draft.dismiss();
       setId(note.id); setSaved(sent); setOrphaned(note.orphaned);
       if (creating) navigate(`/notes/${note.id}`, { replace: true, state: { editorKey } });
     } catch (e) {
