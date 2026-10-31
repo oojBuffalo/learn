@@ -126,10 +126,17 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
         return;
       }
       if (gone) {
-        setRecoveryId(id); setId(null); setSaved({ body: "", target });
-        // Keep recovery edits on the old key so another new draft stays intact.
+        setId(null); setSaved({ body: "", target });
         const store = browserDraftStore();
-        if (ownsDraft(store, draftKey("note", id))) writeDraft(store, draftKey("note", id), latestBody.current, new Date());
+        if (ownsDraft(store, draftKey("note", "new"))) {
+          writeDraft(store, draftKey("note", "new"), latestBody.current, new Date());
+          if (ownsDraft(store, draftKey("note", id))) clearDraft(store, draftKey("note", id));
+          setRecoveryId(null);
+        } else {
+          // Keep recovery edits on the old key so another new draft stays intact.
+          setRecoveryId(id);
+          if (ownsDraft(store, draftKey("note", id))) writeDraft(store, draftKey("note", id), latestBody.current, new Date());
+        }
         setError("This note was deleted elsewhere — Save will create it again.");
       } else setError(`Your note wasn’t saved (${message(e)}).`);
     } finally {

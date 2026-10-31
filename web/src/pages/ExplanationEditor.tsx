@@ -140,10 +140,17 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         return;
       }
       if (gone) {
-        setRecoveryId(id); setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
-        // Keep recovery edits on the old key so another new draft stays intact.
+        setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
         const store = browserDraftStore();
-        if (ownsDraft(store, draftKey("explanation", id))) writeDraft(store, draftKey("explanation", id), latestBody.current, new Date());
+        if (ownsDraft(store, draftKey("explanation", "new"))) {
+          writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date());
+          if (ownsDraft(store, draftKey("explanation", id))) clearDraft(store, draftKey("explanation", id));
+          setRecoveryId(null);
+        } else {
+          // Keep recovery edits on the old key so another new draft stays intact.
+          setRecoveryId(id);
+          if (ownsDraft(store, draftKey("explanation", id))) writeDraft(store, draftKey("explanation", id), latestBody.current, new Date());
+        }
         if (initial.current.explanationId) loadLibrary();
         setError("This explanation was removed elsewhere — Save will create it again.");
       } else setError(`Your explanation wasn’t saved (${message(e)}).`);
