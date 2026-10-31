@@ -481,3 +481,22 @@ for (const kind of ["note", "explanation"] as const) {
     expect(await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!).body, key)).toBe("Replacement text with newer typing");
   });
 }
+
+test("Leftover progress reports a failed first load and retries the report", async ({ page }) => {
+  let gets = 0;
+  await page.route("**/api/maintenance/orphans", (route) => {
+    gets += 1;
+    return gets === 1 ? route.fulfill({ status: 500, json: { error: { code: "internal", message: "report unavailable" } } })
+      : route.fulfill({ json: { packages: [{ packageId: "removed-package", packageTitle: null, inLibrary: false,
+        counts: { cardState: 1, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 } }] } });
+  });
+  await page.goto("/library");
+  const panel = page.locator(".leftover");
+  await expect(panel.getByRole("heading", { name: "Leftover progress", exact: true })).toBeVisible();
+  await expect(panel.getByRole("alert")).toHaveText("Leftover progress couldn’t be loaded (report unavailable).");
+  await panel.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(panel.getByText("removed-package", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("alert")).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Try again", exact: true })).toHaveCount(0);
+  expect(gets).toBe(2);
+});

@@ -5,12 +5,12 @@ import { ApiError, getOrphans, purgeOrphans } from "../api.js";
 import { describeCounts, message, plural, purgeTotal } from "../text.js";
 import { filterSearch } from "../listFilter.js";
 
-export function LeftoverProgressView({ groups, confirming, includeWriting, pending, error, status, onAsk, onCancel, onToggleWriting, onPurge }: {
+export function LeftoverProgressView({ groups, confirming, includeWriting, pending, error, status, onAsk, onCancel, onToggleWriting, onPurge, onRetry }: {
   groups: OrphanGroup[]; confirming: string | null; includeWriting: boolean; pending: boolean;
   error: string | null; status: string | null; onAsk: (packageId: string) => void; onCancel: () => void;
-  onToggleWriting: (value: boolean) => void; onPurge: (group: OrphanGroup) => void;
+  onToggleWriting: (value: boolean) => void; onPurge: (group: OrphanGroup) => void; onRetry?: () => void;
 }) {
-  if (groups.length === 0 && status === null) return null;
+  if (groups.length === 0 && status === null && error === null) return null;
   return <section className="sheet leftover"><div className="sheet-head"><h2>Leftover progress</h2>
     <p className="note">Progress from content that’s no longer in your library. It’s hidden everywhere else and comes back if you re-import the same lessons and cards.</p></div>
     {groups.map((group) => <div className="leftover-row" key={group.packageId}>
@@ -30,6 +30,7 @@ export function LeftoverProgressView({ groups, confirming, includeWriting, pendi
         </span>}
     </div>)}
     {error && <p className="errors" role="alert">{error}</p>}
+    {onRetry && <button className="btn" onClick={onRetry}>Try again</button>}
     {status && <p className="meta" role="status">{status}</p>}
   </section>;
 }
@@ -40,12 +41,18 @@ export default function LeftoverProgress({ refreshKey }: { refreshKey: number })
   const [includeWriting, setIncludeWriting] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const session = useRef(0);
   const inFlight = useRef(false);
   async function load() {
     const current = ++session.current;
-    try { const next = await getOrphans(); if (session.current === current) setGroups(next); } catch { /* A later library refresh retries the report. */ }
+    try {
+      const next = await getOrphans();
+      if (session.current === current) { setGroups(next); setLoadError(null); }
+    } catch (caught) {
+      if (session.current === current) setLoadError(`Leftover progress couldn’t be loaded (${message(caught)}).`);
+    }
   }
   useEffect(() => {
     setStatus(null); setError(null); setConfirming(null);
@@ -71,7 +78,7 @@ export default function LeftoverProgress({ refreshKey }: { refreshKey: number })
       } else setError(message(caught));
     } finally { inFlight.current = false; setPending(false); }
   }
-  return <LeftoverProgressView groups={groups} confirming={confirming} includeWriting={includeWriting} pending={pending} error={error} status={status}
+  return <LeftoverProgressView groups={groups} confirming={confirming} includeWriting={includeWriting} pending={pending} error={loadError ?? error} status={status}
     onAsk={(id) => { setConfirming(id); setIncludeWriting(false); setError(null); }} onCancel={() => setConfirming(null)}
-    onToggleWriting={setIncludeWriting} onPurge={(group) => void purge(group)} />;
+    onRetry={loadError ? () => void load() : undefined} onToggleWriting={setIncludeWriting} onPurge={(group) => void purge(group)} />;
 }
