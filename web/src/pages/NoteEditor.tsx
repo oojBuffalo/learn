@@ -27,6 +27,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     ? decodeTarget(`${params.get("packageId")}/${params.get("lessonId") ?? ""}`) : null });
   const invalidId = initial.current.noteId !== undefined && !/^[1-9][0-9]*$/.test(initial.current.noteId);
   const [id, setId] = useState<number | null>(() => initial.current.noteId && !invalidId ? Number(initial.current.noteId) : null);
+  const [recoveryId, setRecoveryId] = useState<number | null>(null);
   const [body, setBody] = useState("");
   const latestBody = useRef("");
   const [target, setTarget] = useState<NoteTarget | null>(initial.current.prefill);
@@ -43,7 +44,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  const draft = useDraft(draftKey("note", id ?? "new"), saved?.body ?? null);
+  const draft = useDraft(draftKey("note", id ?? recoveryId ?? "new"), saved?.body ?? null);
   const dirty = saved !== null && (body !== saved.body || encodeTarget(target) !== encodeTarget(saved.target));
   const canSave = dirty && body.trim().length > 0 && body.length <= BODY_MAX && !pending;
 
@@ -100,6 +101,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       if (encodeTarget(sent.target) !== encodeTarget(saved.target)) patch.target = sent.target;
       const note = creating ? await createNote(sent) : await updateNote(id, patch);
       const store = browserDraftStore();
+      if (creating && recoveryId !== null && ownsDraft(store, draftKey("note", recoveryId))) clearDraft(store, draftKey("note", recoveryId));
       if (creating && ownsDraft(store, draftKey("note", "new"))) clearDraft(store, draftKey("note", "new"));
       const key = draftKey("note", note.id);
       if (ownsDraft(store, key)) {
@@ -123,8 +125,10 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
         return;
       }
       if (gone) {
-        setId(null); setSaved({ body: "", target });
-        writeDraft(browserDraftStore(), draftKey("note", "new"), latestBody.current, new Date());
+        setRecoveryId(id); setId(null); setSaved({ body: "", target });
+        // Keep recovery edits on the old key so another new draft stays intact.
+        const store = browserDraftStore();
+        if (ownsDraft(store, draftKey("note", id))) writeDraft(store, draftKey("note", id), latestBody.current, new Date());
         setError("This note was deleted elsewhere — Save will create it again.");
       } else setError(`Your note wasn’t saved (${message(e)}).`);
     } finally {

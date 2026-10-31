@@ -25,6 +25,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     ? decodeTarget(`${params.get("packageId")}/${params.get("lessonId") ?? ""}`) : null });
   const invalidId = initial.current.explanationId !== undefined && !/^[1-9][0-9]*$/.test(initial.current.explanationId);
   const [id, setId] = useState<number | null>(() => initial.current.explanationId && !invalidId ? Number(initial.current.explanationId) : null);
+  const [recoveryId, setRecoveryId] = useState<number | null>(null);
   const [body, setBody] = useState("");
   const latestBody = useRef("");
   const [confidence, setConfidence] = useState<Confidence | null>(null);
@@ -44,7 +45,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  const draft = useDraft(draftKey("explanation", id ?? "new"), saved?.body ?? null);
+  const draft = useDraft(draftKey("explanation", id ?? recoveryId ?? "new"), saved?.body ?? null);
   const dirty = saved !== null && (body !== saved.body || confidence !== saved.confidence || encodeTarget(target) !== encodeTarget(saved.target));
   const hint = !target?.lessonId ? "Pick a lesson to save." : !body.trim() ? "Write your explanation to save."
     : body.length > BODY_MAX ? "Shorten it to 100,000 characters to save." : confidence === null ? "Rate your confidence to save." : null;
@@ -115,6 +116,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       const explanation = creating ? await createExplanation({ body: sent.body, confidence: sent.confidence,
         packageId: sent.target.packageId, lessonId: sent.target.lessonId! }) : await updateExplanation(id, patch);
       const store = browserDraftStore();
+      if (creating && recoveryId !== null && ownsDraft(store, draftKey("explanation", recoveryId))) clearDraft(store, draftKey("explanation", recoveryId));
       if (creating && ownsDraft(store, draftKey("explanation", "new"))) clearDraft(store, draftKey("explanation", "new"));
       const key = draftKey("explanation", explanation.id);
       if (ownsDraft(store, key)) {
@@ -137,8 +139,10 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         return;
       }
       if (gone) {
-        setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
-        writeDraft(browserDraftStore(), draftKey("explanation", "new"), latestBody.current, new Date());
+        setRecoveryId(id); setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
+        // Keep recovery edits on the old key so another new draft stays intact.
+        const store = browserDraftStore();
+        if (ownsDraft(store, draftKey("explanation", id))) writeDraft(store, draftKey("explanation", id), latestBody.current, new Date());
         if (initial.current.explanationId) loadLibrary();
         setError("This explanation was removed elsewhere — Save will create it again.");
       } else setError(`Your explanation wasn’t saved (${message(e)}).`);

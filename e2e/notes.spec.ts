@@ -426,3 +426,31 @@ test("explain-back keeps its editor hidden while a failed library load is retrie
   await expect(page.getByLabel("Lesson", { exact: true })).toHaveValue(`${PKG}/${LESSON}`);
   await expect(page.getByLabel("Your explanation", { exact: true })).toHaveValue("");
 });
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a mounted ${kind} recovery preserves an unrelated new draft until recreation`, async ({ page, request }) => {
+    const explanation = kind === "explanation";
+    const api = explanation ? "explanations" : "notes";
+    const base = explanation ? "/notes/explain" : "/notes";
+    const data = explanation ? { body: "Original writing", packageId: PKG, lessonId: LESSON, confidence: 4 } : { body: "Original writing", target: null };
+    const id = (await (await request.post(`/api/${api}`, { data })).json())[kind].id;
+    await page.goto(`${base}/${id}`);
+    const editor = page.getByLabel(explanation ? "Your explanation" : "Note", { exact: true });
+    await expect(editor).toHaveValue("Original writing");
+    await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ body: "Unrelated new writing", at: new Date().toISOString() })), `study.draft.${kind}.new`);
+    const draftBody = (key: string) => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
+    await page.route(`**/api/${api}/${id}`, (route) => route.request().method() === "PATCH"
+      ? route.fulfill({ status: 404, json: { error: { code: "not_found", message: explanation ? "unknown explanation" : "unknown note" } } }) : route.continue());
+    await editor.fill("Recovered writing"); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByRole("alert")).toHaveText(explanation ? "This explanation was removed elsewhere — Save will create it again." : "This note was deleted elsewhere — Save will create it again.");
+    expect(await draftBody(`study.draft.${kind}.new`)).toBe("Unrelated new writing");
+    await editor.fill("Recovered writing, edited again");
+    expect(await draftBody(`study.draft.${kind}.${id}`)).toBe("Recovered writing, edited again");
+    expect(await draftBody(`study.draft.${kind}.new`)).toBe("Unrelated new writing");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page).not.toHaveURL(new RegExp(`${base}/${id}$`));
+    await expect(page).toHaveURL(new RegExp(`${base}/\\d+$`));
+    expect(await draftBody(`study.draft.${kind}.${id}`)).toBeNull();
+    expect(await draftBody(`study.draft.${kind}.new`)).toBe("Unrelated new writing");
+  });
+}
