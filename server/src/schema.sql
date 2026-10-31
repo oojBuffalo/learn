@@ -80,3 +80,25 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
   PRIMARY KEY (package_id, lesson_id)
 );
 CREATE INDEX IF NOT EXISTS attempts_history ON attempts(package_id, kind, ref_id);
+
+-- user state (Stage 3): no FK to content, like the tables above
+CREATE TABLE IF NOT EXISTS notes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  package_id TEXT,
+  lesson_id TEXT,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  CHECK (lesson_id IS NULL OR package_id IS NOT NULL)
+);
+CREATE INDEX IF NOT EXISTS notes_target ON notes(package_id, lesson_id);
+CREATE TABLE IF NOT EXISTS explanations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  package_id TEXT NOT NULL,
+  lesson_id TEXT NOT NULL,
+  body TEXT NOT NULL,
+  confidence INTEGER NOT NULL CHECK (confidence IN (1, 2, 3, 4, 5)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS explanations_lesson ON explanations(package_id, lesson_id, id);

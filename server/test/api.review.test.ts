@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { openDb, type Db } from "../src/db.js";
-import { GOOD_FILES, makeZip } from "./helpers.js";
+import { GOOD_FILES, V2_FILES, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
@@ -131,4 +131,24 @@ describe("grade hardening", () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error).toEqual({ code: "invalid_request", message: "packageId required" });
   });
+});
+
+
+it("orphaned card state never reaches the due queue or free study", async () => {
+  await grade("front", "good"); await grade("back", "good");
+  expect((await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(V2_FILES)) })).status).toBe(201);
+  const due = await (await app.request("/api/review/due")).json();
+  expect(due.cards.map((card: { itemId: string; direction: string; isNew: boolean }) => [card.itemId, card.direction, card.isNew])).toEqual([["card2", "front", true]]);
+  const free = await (await app.request("/api/review/free-study?packageId=demo")).json();
+  expect(free.cards.map((card: { itemId: string; direction: string }) => [card.itemId, card.direction])).toEqual([["card2", "front"]]);
+  expect(db.prepare("SELECT COUNT(*) n FROM card_state").get()).toEqual({ n: 2 });
+});
+it("a deleted package leaves nothing due, and re-import brings its state back", async () => {
+  await grade("front", "good"); await app.request("/api/packages/demo", { method: "DELETE" });
+  expect((await (await app.request("/api/review/due")).json()).cards).toEqual([]);
+  expect((await (await app.request("/api/review/free-study?packageId=demo")).json()).cards).toEqual([]);
+  await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(GOOD_FILES)) });
+  expect((await (await app.request("/api/review/due")).json()).cards.map((card: { direction: string }) => card.direction)).toEqual(["back"]);
+  const free = (await (await app.request("/api/review/free-study?packageId=demo")).json()).cards;
+  expect(free.find((card: { direction: string }) => card.direction === "front").state).toMatchObject({ intervalDays: 1, reps: 1 });
 });

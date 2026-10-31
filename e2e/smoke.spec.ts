@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("sample package: lesson → exercise → flashcard review", async ({ page }) => {
   // A failed first load says so and can be retried, rather than loading forever.
   await page.route("**/api/packages", (route) => route.fulfill({ status: 500, body: "{}" }), { times: 1 });
-  await page.goto("/");
+  await page.goto("/library");
   await expect(page.getByRole("alert")).toContainText("couldn’t be loaded");
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("heading", { name: "Learning How to Learn" })).toBeVisible();
@@ -79,8 +79,26 @@ test("sample package: lesson → exercise → flashcard review", async ({ page }
   expect(grades).toBe(4);
 
   // export produces a real zip
-  await page.goto("/");
+  await page.goto("/library");
   const download = page.waitForEvent("download");
   await page.getByRole("link", { name: "Export" }).click();
   expect((await download).suggestedFilename()).toBe("learning-how-to-learn.zip");
+});
+
+// e2e/smoke.spec.ts — test 2. Uses active-recall, never Spaced Repetition, and never completes a lesson.
+test("reopening an unfinished lesson moves its last-opened time", async ({ page, request }) => {
+  const PKG = "learning-how-to-learn", LESSON = "active-recall";
+  const opened = async () => ((await (await request.get("/api/packages")).json()).packages
+    .find((p: { id: string }) => p.id === PKG).lessons
+    .find((l: { id: string }) => l.id === LESSON));
+  expect((await request.post(`/api/lessons/${PKG}/${LESSON}/progress`, { data: { status: "in-progress" } })).status()).toBe(200);
+  const before = (await opened()).updatedAt as string;
+  expect(before).toBeTruthy();
+  const write = page.waitForResponse((r) => r.url().endsWith(`/api/lessons/${PKG}/${LESSON}/progress`)
+    && r.request().method() === "POST" && r.request().postDataJSON().status === "in-progress", { timeout: 5_000 });
+  await page.goto(`/lesson/${PKG}/${LESSON}`);
+  expect((await write).status()).toBe(200);
+  const after = await opened();
+  expect(after.status).toBe("in-progress");
+  expect(after.updatedAt > before).toBe(true);
 });

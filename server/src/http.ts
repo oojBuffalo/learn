@@ -22,8 +22,8 @@ export type Parsed<T> = { ok: true; data: T } | { ok: false; response: Response 
  */
 export function apiError(
   c: Context,
-  status: 400 | 404 | 422,
-  code: "invalid_request" | "not_found" | "not_checkable",
+  status: 400 | 404 | 409 | 422,
+  code: "invalid_request" | "not_found" | "not_checkable" | "orphans_changed",
   message: string,
 ): Response {
   return c.json({ error: { code, message } }, status);

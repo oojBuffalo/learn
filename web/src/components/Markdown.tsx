@@ -26,15 +26,15 @@ const components = {
 };
 
 /** Package assets are served by the API; everything else goes through the default guard. */
-const assetUrls = (packageId: string) => (url: string) =>
-  url.startsWith("assets/") ? `/api/packages/${packageId}/${url}` : defaultUrlTransform(url);
+const assetUrls = (packageId?: string) => (url: string) =>
+  packageId && url.startsWith("assets/") ? `/api/packages/${packageId}/${url}` : defaultUrlTransform(url);
 
 export default function Markdown({
   packageId,
   className = "prose",
   children,
 }: {
-  packageId: string;
+  packageId?: string;
   className?: string;
   children: string;
 }) {
