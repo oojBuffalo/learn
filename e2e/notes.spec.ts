@@ -667,6 +667,36 @@ for (const kind of ["note", "explanation"] as const) {
   });
 }
 
+for (const kind of ["note", "explanation"] as const) {
+  test(`Discard or a revert in one ${kind} tab spares another tab’s newer draft`, async ({ page }) => {
+    const explanation = kind === "explanation";
+    const api = explanation ? "explanations" : "notes";
+    const data = explanation ? { body: "Saved writing", packageId: PKG, lessonId: LESSON, confidence: 4 } : { body: "Saved writing", target: null };
+    const id = (await (await page.request.post(`/api/${api}`, { data })).json())[kind].id;
+    const key = `study.draft.${kind}.${id}`;
+    const url = explanation ? `/notes/explain/${id}` : `/notes/${id}`;
+    const label = explanation ? "Your explanation" : "Note";
+    const draftBody = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
+    await page.goto("/notes");
+    await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Older draft", at: new Date().toISOString() })), key);
+    await page.goto(url);
+    await expect(page.getByText(/Restore unsaved text from/)).toBeVisible();
+    const other = await page.context().newPage();
+    await other.goto(url);
+    const otherEditor = other.getByLabel(label, { exact: true }); await expect(otherEditor).toHaveValue("Saved writing");
+    await otherEditor.fill("Newer tab writing"); expect(await draftBody()).toBe("Newer tab writing");
+    await page.getByRole("button", { name: "Discard", exact: true }).click();
+    await expect(page.getByText(/Restore unsaved text from/)).toHaveCount(0);
+    expect(await draftBody()).toBe("Newer tab writing");
+    const editor = page.getByLabel(label, { exact: true });
+    await editor.fill("This tab’s own writing");
+    await otherEditor.fill("Newer tab writing, again");
+    await editor.fill("Saved writing");
+    expect(await draftBody()).toBe("Newer tab writing, again");
+    await other.close();
+  });
+}
+
 test("Leftover progress reports a held cleanup that finishes after a Library refresh", async ({ page }) => {
   const counts = { cardState: 1, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 };
   let reports = 0; let purged = false;

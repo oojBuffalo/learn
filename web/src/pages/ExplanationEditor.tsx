@@ -45,7 +45,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  const draft = useDraft(draftKey("explanation", id ?? recoveryId ?? "new"), saved?.body ?? null);
+  const slot = draftKey("explanation", id ?? recoveryId ?? "new");
+  const draft = useDraft(slot, saved?.body ?? null);
   const dirty = saved !== null && (body !== saved.body || confidence !== saved.confidence || encodeTarget(target) !== encodeTarget(saved.target));
   const hint = !target?.lessonId ? "Pick a lesson to save." : !body.trim() ? "Write your explanation to save."
     : body.length > BODY_MAX ? "Shorten it to 100,000 characters to save." : confidence === null ? "Rate your confidence to save." : null;
@@ -86,12 +87,15 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   }, [dirty]);
 
   function edit(value: string) {
+    const last = latestBody.current;
     latestBody.current = value; setBody(value);
-    if (value !== saved?.body || confidence !== saved?.confidence) draft.write(value); else draft.clear();
+    if (value !== saved?.body || confidence !== saved?.confidence) draft.write(value);
+    else if (ownsSlot(last)) draft.clear(); else draft.dismiss();
   }
 
-  // Discard drops the offered draft; text typed since the offer stays as the current draft.
+  // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
+    if (!ownsSlot()) { draft.dismiss(); return; }
     draft.clear();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
@@ -100,6 +104,12 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   function ownsDraft(store: DraftStore, key: string): boolean {
     const stored = readDraft(store, key);
     return stored === null || stored.body === latestBody.current;
+  }
+
+  // This editor's slot holds nothing, its own last text or the offer it showed; anything else is newer text from another editor of the row.
+  function ownsSlot(last = latestBody.current): boolean {
+    const stored = readDraft(browserDraftStore(), slot);
+    return stored === null || stored.body === last || stored.body === draft.offer?.body;
   }
 
   // An edit-mode mount never loaded the library; create mode after a 404 needs it to offer live lessons.

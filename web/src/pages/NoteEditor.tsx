@@ -44,7 +44,8 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  const draft = useDraft(draftKey("note", id ?? recoveryId ?? "new"), saved?.body ?? null);
+  const slot = draftKey("note", id ?? recoveryId ?? "new");
+  const draft = useDraft(slot, saved?.body ?? null);
   const dirty = saved !== null && (body !== saved.body || encodeTarget(target) !== encodeTarget(saved.target));
   const canSave = dirty && body.trim().length > 0 && body.length <= BODY_MAX && !pending;
 
@@ -79,13 +80,15 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   }, [dirty]);
 
   function edit(value: string) {
+    const last = latestBody.current;
     latestBody.current = value; setBody(value);
     if (value !== saved?.body || encodeTarget(target) !== encodeTarget(saved?.target ?? null)) draft.write(value);
-    else draft.clear();
+    else if (ownsSlot(last)) draft.clear(); else draft.dismiss();
   }
 
-  // Discard drops the offered draft; text typed since the offer stays as the current draft.
+  // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
+    if (!ownsSlot()) { draft.dismiss(); return; }
     draft.clear();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
@@ -94,6 +97,12 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   function ownsDraft(store: DraftStore, key: string): boolean {
     const stored = readDraft(store, key);
     return stored === null || stored.body === latestBody.current;
+  }
+
+  // This editor's slot holds nothing, its own last text or the offer it showed; anything else is newer text from another editor of the row.
+  function ownsSlot(last = latestBody.current): boolean {
+    const stored = readDraft(browserDraftStore(), slot);
+    return stored === null || stored.body === last || stored.body === draft.offer?.body;
   }
 
   async function save() {
@@ -157,8 +166,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       try { await deleteNote(id); }
       catch (e) { if (!(e instanceof ApiError && e.code === "not_found")) throw e; }
       // Another editor of this note, here or in another tab, may have stored newer text before the delete settled.
-      const store = browserDraftStore(); const key = draftKey("note", id);
-      if (ownsDraft(store, key) || readDraft(store, key)?.body === draft.offer?.body) clearDraft(store, key);
+      if (ownsSlot()) clearDraft(browserDraftStore(), slot);
       if (mounted.current) navigate("/notes");
     } catch (e) {
       if (mounted.current) { setConfirming(false); setError(`This note wasn’t deleted (${message(e)}).`); }
