@@ -90,6 +90,12 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     if (value !== saved?.body || confidence !== saved?.confidence) draft.write(value); else draft.clear();
   }
 
+  // Discard drops the offered draft; text typed since the offer stays as the current draft.
+  function discard() {
+    draft.clear();
+    if (latestBody.current !== saved?.body) draft.write(latestBody.current);
+  }
+
   // A newer editor of the same key may have stored its own text since this save started; a late settle leaves that draft alone.
   function ownsDraft(store: DraftStore, key: string): boolean {
     const stored = readDraft(store, key);
@@ -181,7 +187,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     <p className="note">Explain it in your own words, as if to a friend — no peeking.</p>
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
       <button className="btn" onClick={() => { edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
-      <button className="btn btn-quiet" onClick={draft.clear}>Discard</button></p>}
+      <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
     <MarkdownEditor label="Your explanation" value={body} onChange={edit} packageId={target?.packageId} onSave={() => void save()} />
     <ConfidencePicker value={confidence} onChange={setConfidence} />
     {hint && <p className="note" id={hintId}>{hint}</p>}

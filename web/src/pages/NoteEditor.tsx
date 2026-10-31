@@ -84,6 +84,12 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     else draft.clear();
   }
 
+  // Discard drops the offered draft; text typed since the offer stays as the current draft.
+  function discard() {
+    draft.clear();
+    if (latestBody.current !== saved?.body) draft.write(latestBody.current);
+  }
+
   // A newer editor of the same key may have stored its own text since this save started; a late settle leaves that draft alone.
   function ownsDraft(store: DraftStore, key: string): boolean {
     const stored = readDraft(store, key);
@@ -168,7 +174,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       onChange={(value) => { setTarget(value); draft.write(latestBody.current); }} />
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
       <button className="btn" onClick={() => { edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
-      <button className="btn btn-quiet" onClick={draft.clear}>Discard</button></p>}
+      <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
     <MarkdownEditor label="Note" value={body} packageId={target?.packageId} onChange={edit} onSave={() => void save()} />
     <div className="actions"><button className="btn btn-primary" disabled={!canSave} onClick={() => void save()}>Save</button>
       {id !== null && !confirming && <button className="btn btn-danger push" disabled={pending} onClick={() => setConfirming(true)}>Delete</button>}

@@ -565,3 +565,36 @@ test("Leftover progress keeps a pending cleanup result when report retry is clic
   await expect(panel.getByRole("alert")).toHaveCount(0);
   expect(retryWasDisabled).toBe(true); expect(reports).toBe(3);
 });
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`Discard on an old ${kind} restore offer clears it but keeps newer typing`, async ({ page }) => {
+    const explanation = kind === "explanation";
+    const key = `study.draft.${kind}.new`;
+    const draftBody = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
+    const seed = () => page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Older draft", at: new Date().toISOString() })), key);
+    const editor = page.getByLabel(explanation ? "Your explanation" : "Note", { exact: true });
+    const offer = page.getByText(/Restore unsaved text from/);
+    const open = async () => {
+      const nav = page.getByRole("navigation", { name: "Main" });
+      await nav.getByRole("link", { name: "Notes", exact: true }).click();
+      if (explanation) await page.getByRole("radio", { name: "Explain-back" }).click();
+      await page.getByRole("link", { name: explanation ? "Explain a lesson" : "New note", exact: true }).click();
+    };
+    await page.goto("/notes"); await seed(); await open();
+    await expect(offer).toBeVisible();
+    await page.getByRole("button", { name: "Discard", exact: true }).click();
+    await expect(offer).toHaveCount(0);
+    expect(await draftBody()).toBeNull();
+    await seed(); await open();
+    await expect(offer).toBeVisible();
+    await editor.fill("Newer writing");
+    await page.getByRole("button", { name: "Discard", exact: true }).click();
+    await expect(offer).toHaveCount(0);
+    await expect(editor).toHaveValue("Newer writing");
+    expect(await draftBody()).toBe("Newer writing");
+    await open();
+    await expect(offer).toBeVisible();
+    await page.getByRole("button", { name: "Restore", exact: true }).click();
+    await expect(editor).toHaveValue("Newer writing");
+  });
+}
