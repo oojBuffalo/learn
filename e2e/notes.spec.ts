@@ -598,3 +598,30 @@ for (const kind of ["note", "explanation"] as const) {
     await expect(editor).toHaveValue("Newer writing");
   });
 }
+
+test("Leftover progress reports a held cleanup that finishes after a Library refresh", async ({ page }) => {
+  const counts = { cardState: 1, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 };
+  let reports = 0; let purged = false;
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/maintenance/orphans", (route) => {
+    reports += 1;
+    return route.fulfill({ json: { packages: purged ? [] : [{ packageId: "removed-package", packageTitle: null, inLibrary: false, counts }] } });
+  });
+  await page.route("**/api/maintenance/orphans/purge", async (route) => { await held; purged = true; await route.fulfill({ json: { purged: counts } }); });
+  // An unrelated package delete refreshes the report; it is answered here so the package stays for later tests.
+  await page.route(`**/api/packages/${PKG}`, (route) => route.request().method() === "DELETE" ? route.fulfill({ status: 204 }) : route.continue());
+  await page.goto("/library");
+  const panel = page.locator(".leftover");
+  await panel.getByRole("button", { name: "Clear…", exact: true }).click();
+  await panel.getByRole("button", { name: "Delete for good", exact: true }).click();
+  const sheet = page.locator("article.sheet").filter({ has: page.locator(`a[href="/api/packages/${PKG}/export"]`) });
+  await sheet.getByRole("button", { name: "Delete", exact: true }).click();
+  await sheet.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect.poll(() => reports).toBe(2);
+  await expect(panel.getByText("removed-package", { exact: true })).toBeVisible();
+  release();
+  await expect(panel.getByRole("status")).toHaveText("Removed 1 record.");
+  await expect(panel.locator(".leftover-row")).toHaveCount(0);
+  await expect(panel.getByRole("alert")).toHaveCount(0);
+  expect(reports).toBe(3);
+});

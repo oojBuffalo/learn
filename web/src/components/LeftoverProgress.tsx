@@ -43,7 +43,7 @@ export default function LeftoverProgress({ refreshKey }: { refreshKey: number })
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const session = useRef(0);
+  const mounted = useRef(false);
   const report = useRef(0);
   const inFlight = useRef(false);
   async function load() {
@@ -55,24 +55,25 @@ export default function LeftoverProgress({ refreshKey }: { refreshKey: number })
       if (report.current === current) setLoadError(`Leftover progress couldn’t be loaded (${message(caught)}).`);
     }
   }
+  // A cleanup that settles after a Library refresh still reports its result; only leaving the page drops it.
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     setStatus(null); setError(null); setConfirming(null);
     void load();
-    return () => { session.current++; report.current++; };
+    return () => { report.current++; };
   }, [refreshKey]);
   async function purge(group: OrphanGroup) {
     if (inFlight.current) return;
     inFlight.current = true;
     setPending(true); setError(null);
-    const current = session.current;
     try {
       const purged = await purgeOrphans({ packageId: group.packageId, includeWriting, expected: group.counts });
-      if (session.current !== current) return;
+      if (!mounted.current) return;
       setConfirming(null);
       setStatus(`Removed ${plural(Object.values(purged).reduce((sum, count) => sum + count, 0), "record")}.`);
       await load();
     } catch (caught) {
-      if (session.current !== current) return;
+      if (!mounted.current) return;
       if (caught instanceof ApiError && caught.code === "orphans_changed") {
         setError("That changed while you were looking — check the new counts and confirm again.");
         await load();
