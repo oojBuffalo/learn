@@ -531,3 +531,37 @@ for (const kind of ["note", "explanation"] as const) {
     await expect(editor).toHaveValue("Recovered writing, edited again");
   });
 }
+
+test("Leftover progress keeps a pending cleanup result when report retry is clicked", async ({ page }) => {
+  const counts = { cardState: 1, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 };
+  let reports = 0; let purges = 0; let purged = false;
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/maintenance/orphans", (route) => {
+    reports += 1;
+    if (reports > 1 && !purged) return route.fulfill({ status: 500, json: { error: { code: "internal", message: "report unavailable" } } });
+    return route.fulfill({ json: { packages: purged ? [] : [{ packageId: "removed-package", packageTitle: null, inLibrary: false, counts }] } });
+  });
+  await page.route("**/api/maintenance/orphans/purge", async (route) => {
+    purges += 1;
+    if (purges === 1) return route.fulfill({ status: 409, json: { error: { code: "orphans_changed", message: "changed" } } });
+    await held; purged = true; await route.fulfill({ json: { purged: counts } });
+  });
+  await page.goto("/library");
+  const panel = page.locator(".leftover");
+  await panel.getByRole("button", { name: "Clear…", exact: true }).click();
+  const cleanup = panel.getByRole("button", { name: "Delete for good", exact: true });
+  await cleanup.click();
+  await expect(panel.getByRole("alert")).toHaveText("Leftover progress couldn’t be loaded (report unavailable).");
+  await expect(cleanup).toBeEnabled(); await cleanup.click();
+  await expect.poll(() => purges).toBe(2); await expect(cleanup).toBeDisabled();
+  const retry = panel.getByRole("button", { name: "Try again", exact: true });
+  const retryWasDisabled = await retry.isDisabled();
+  const retried = retryWasDisabled ? null : page.waitForResponse((r) => new URL(r.url()).pathname === "/api/maintenance/orphans");
+  await retry.evaluate((button: HTMLButtonElement) => button.click());
+  if (retried) await retried;
+  release();
+  await expect(panel.getByRole("status")).toHaveText("Removed 1 record.");
+  await expect(panel.locator(".leftover-row")).toHaveCount(0);
+  await expect(panel.getByRole("alert")).toHaveCount(0);
+  expect(retryWasDisabled).toBe(true); expect(reports).toBe(3);
+});

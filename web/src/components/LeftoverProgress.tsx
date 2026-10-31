@@ -30,7 +30,7 @@ export function LeftoverProgressView({ groups, confirming, includeWriting, pendi
         </span>}
     </div>)}
     {error && <p className="errors" role="alert">{error}</p>}
-    {onRetry && <button className="btn" onClick={onRetry}>Try again</button>}
+    {onRetry && <button className="btn" disabled={pending} onClick={onRetry}>Try again</button>}
     {status && <p className="meta" role="status">{status}</p>}
   </section>;
 }
@@ -44,20 +44,21 @@ export default function LeftoverProgress({ refreshKey }: { refreshKey: number })
   const [loadError, setLoadError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const session = useRef(0);
+  const report = useRef(0);
   const inFlight = useRef(false);
   async function load() {
-    const current = ++session.current;
+    const current = ++report.current;
     try {
       const next = await getOrphans();
-      if (session.current === current) { setGroups(next); setLoadError(null); }
+      if (report.current === current) { setGroups(next); setLoadError(null); }
     } catch (caught) {
-      if (session.current === current) setLoadError(`Leftover progress couldn’t be loaded (${message(caught)}).`);
+      if (report.current === current) setLoadError(`Leftover progress couldn’t be loaded (${message(caught)}).`);
     }
   }
   useEffect(() => {
     setStatus(null); setError(null); setConfirming(null);
     void load();
-    return () => { session.current++; };
+    return () => { session.current++; report.current++; };
   }, [refreshKey]);
   async function purge(group: OrphanGroup) {
     if (inFlight.current) return;
