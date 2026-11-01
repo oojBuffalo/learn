@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS attempts (
   kind TEXT NOT NULL CHECK (kind IN ('exercise','quiz','game')),
   ref_id TEXT,                      -- quiz/game id when kind != 'exercise'
   item_id TEXT,
-  answer TEXT,                      -- Answer JSON
+  answer TEXT,                      -- exercise: Answer JSON; quiz/game: run record JSON (server/src/attemptLog.ts)
   correct INTEGER,
   score REAL,
   at TEXT NOT NULL
@@ -79,3 +79,4 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
   updated_at TEXT NOT NULL,
   PRIMARY KEY (package_id, lesson_id)
 );
+CREATE INDEX IF NOT EXISTS attempts_history ON attempts(package_id, kind, ref_id);

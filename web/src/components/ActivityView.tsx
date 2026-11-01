@@ -1,16 +1,17 @@
-import { Fragment, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Answer, CheckResult, Item } from "@study/shared";
-import { fillBlankParts, stripMath } from "@study/shared";
+import type { Answer, CheckableItem, CheckResult, Item } from "@study/shared";
+import { fillBlankParts, MAX_ANSWER_TEXT, scramble, shuffle, stripMath } from "@study/shared";
 import { submitAnswer } from "../api.js";
 import Icon from "./Icon.js";
 import Markdown, { InlineMarkdown } from "./Markdown.js";
 import Media from "./Media.js";
+import { optionsDraft, fillBlankDraft, shortAnswerDraft, orderingDraft, matchingDraft } from "./answerRules.js";
 
-type Task = Exclude<Item, { type: "flashcard" }>;
+export type Task = CheckableItem;
 
 /** Kickers name the work being asked for, not the internal item type. */
-const TYPE_LABEL: Record<Item["type"], string> = {
+export const TYPE_LABEL: Record<Item["type"], string> = {
   "multiple-choice": "Choose one",
   "multi-select": "Choose all that apply",
   "fill-blank": "Fill in the blanks",
@@ -50,9 +51,7 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
 
   return (
     <section className="work">
-      <p className="work-kicker">{TYPE_LABEL[item.type]}</p>
-      <Markdown packageId={packageId}>{item.prompt}</Markdown>
-      <Media packageId={packageId} media={item.media} />
+      <ItemPrompt packageId={packageId} item={item} />
 
       <div className="work-body">
         <AnswerForm item={item} disabled={!!result || pending} onSubmit={submit} />
@@ -77,39 +76,14 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
       </div>
 
       {result && (
-        <div className="result">
-          <p className={result.correct ? "verdict" : "verdict verdict-no"}>
-            {result.correct ? (
-              <span className="mark-text">✓ Correct</span>
-            ) : (
-              `✗ Not quite${result.score > 0 ? ` (score ${Math.round(result.score * 100)}%)` : ""}`
-            )}
-          </p>
-          {!result.correct && result.feedback && (
-            <p className="note">
-              <InlineMarkdown>{result.feedback}</InlineMarkdown>
-            </p>
-          )}
-          {!result.correct && (
-            <p className="expected">
-              Answer:{" "}
-              <b>
-                <ExpectedAnswer item={item} expected={result.expected} />
-              </b>
-            </p>
-          )}
-          {item.explanation && (
-            <div className="explain">
-              <Markdown packageId={packageId}>{item.explanation}</Markdown>
-            </div>
-          )}
+        <Verdict packageId={packageId} item={item} result={result}>
           <div className="actions">
             <button className="btn" onClick={() => setResult(null)}>
               <Icon name="retry" size={18} />
               Try again
             </button>
           </div>
-        </div>
+        </Verdict>
       )}
 
       {error && (
@@ -118,6 +92,38 @@ export default function ActivityView({ packageId, item }: { packageId: string; i
         </p>
       )}
     </section>
+  );
+}
+
+export function ItemPrompt({ packageId, item, kicker }: { packageId: string; item: Task; kicker?: string }) {
+  return <>
+    <p className="work-kicker">{kicker ?? TYPE_LABEL[item.type]}</p>
+    <Markdown packageId={packageId}>{item.prompt}</Markdown>
+    <Media packageId={packageId} media={item.media} />
+  </>;
+}
+
+export function Verdict({ packageId, item, result, answered = true, children }: {
+  packageId: string; item: Task; result: CheckResult; answered?: boolean; children?: ReactNode;
+}) {
+  return (
+    <div className="result">
+      <p className={result.correct ? "verdict" : "verdict verdict-no"}>
+        {!answered ? "— Not answered" : result.correct ? (
+          <span className="mark-text">✓ Correct</span>
+        ) : `✗ Not quite${result.score > 0 ? ` (score ${Math.round(result.score * 100)}%)` : ""}`}
+      </p>
+      {!result.correct && result.feedback && (
+        <p className="note"><InlineMarkdown>{result.feedback}</InlineMarkdown></p>
+      )}
+      {!result.correct && (
+        <p className="expected">Answer:{" "}<b><ExpectedAnswer item={item} expected={result.expected} /></b></p>
+      )}
+      {item.explanation && (
+        <div className="explain"><Markdown packageId={packageId}>{item.explanation}</Markdown></div>
+      )}
+      {children}
+    </div>
   );
 }
 
@@ -201,38 +207,31 @@ function FlashcardReveal({ item, packageId }: { item: Extract<Item, { type: "fla
   );
 }
 
-function AnswerForm({
+export function AnswerForm({
   item,
   disabled,
   onSubmit,
+  onChange,
 }: {
   item: Task;
   disabled: boolean;
-  onSubmit: (a: Answer) => void;
+  onSubmit?: (a: Answer) => void;
+  onChange?: (draft: Answer | null) => void;
 }) {
   switch (item.type) {
     case "multiple-choice":
-      return <Options item={item} multi={false} disabled={disabled} onSubmit={onSubmit} />;
+      return <Options item={item} multi={false} disabled={disabled} onSubmit={onSubmit} onChange={onChange} />;
     case "multi-select":
-      return <Options item={item} multi={true} disabled={disabled} onSubmit={onSubmit} />;
+      return <Options item={item} multi={true} disabled={disabled} onSubmit={onSubmit} onChange={onChange} />;
     case "fill-blank":
-      return <FillBlank item={item} disabled={disabled} onSubmit={onSubmit} />;
+      return <FillBlank item={item} disabled={disabled} onSubmit={onSubmit} onChange={onChange} />;
     case "short-answer":
-      return <ShortAnswer item={item} disabled={disabled} onSubmit={onSubmit} />;
+      return <ShortAnswer item={item} disabled={disabled} onSubmit={onSubmit} onChange={onChange} />;
     case "ordering":
-      return <Ordering item={item} disabled={disabled} onSubmit={onSubmit} />;
+      return <Ordering item={item} disabled={disabled} onSubmit={onSubmit} onChange={onChange} />;
     case "matching":
-      return <Matching item={item} disabled={disabled} onSubmit={onSubmit} />;
+      return <Matching item={item} disabled={disabled} onSubmit={onSubmit} onChange={onChange} />;
   }
-}
-
-function shuffled<T>(arr: T[]): T[] {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
 }
 
 function Options({
@@ -240,19 +239,24 @@ function Options({
   multi,
   disabled,
   onSubmit,
+  onChange,
 }: {
   item: Extract<Item, { type: "multiple-choice" | "multi-select" }>;
   multi: boolean;
   disabled: boolean;
-  onSubmit: (a: Answer) => void;
+  onSubmit?: (a: Answer) => void;
+  onChange?: (draft: Answer | null) => void;
 }) {
   const [picked, setPicked] = useState<string[]>([]);
-  const [options] = useState(() => (item.shuffle !== false ? shuffled(item.options) : item.options));
+  const [options] = useState(() => (item.shuffle !== false ? shuffle(item.options) : item.options));
   // Per instance, not per item: a lesson may embed the same exercise twice, and a
   // shared native radio group would let one copy clear the other's selection.
   const group = useId();
-  const toggle = (id: string) =>
-    setPicked(multi ? (picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id]) : [id]);
+  const toggle = (id: string) => {
+    const next = multi ? (picked.includes(id) ? picked.filter((p) => p !== id) : [...picked, id]) : [id];
+    setPicked(next);
+    onChange?.(optionsDraft(multi, next));
+  };
 
   return (
     <>
@@ -272,7 +276,7 @@ function Options({
           </label>
         ))}
       </div>
-      {!disabled && (
+      {onSubmit && !disabled && (
         <div className="actions">
           <button
             className="btn btn-primary"
@@ -297,10 +301,12 @@ function FillBlank({
   item,
   disabled,
   onSubmit,
+  onChange,
 }: {
   item: Extract<Item, { type: "fill-blank" }>;
   disabled: boolean;
-  onSubmit: (a: Answer) => void;
+  onSubmit?: (a: Answer) => void;
+  onChange?: (draft: Answer | null) => void;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const parts = fillBlankParts(item.template);
@@ -317,7 +323,12 @@ function FillBlank({
                 aria-label={`Blank ${part.slot}`}
                 disabled={disabled}
                 value={answers[part.slot] ?? ""}
-                onChange={(e) => setAnswers({ ...answers, [part.slot]: e.target.value })}
+                maxLength={MAX_ANSWER_TEXT}
+                onChange={(e) => {
+                  const next = { ...answers, [part.slot]: e.target.value };
+                  setAnswers(next);
+                  onChange?.(fillBlankDraft(next));
+                }}
               />
             );
           }
@@ -333,7 +344,7 @@ function FillBlank({
           );
         })}
       </p>
-      {!disabled && (
+      {onSubmit && !disabled && (
         <div className="actions">
           <button className="btn btn-primary" onClick={() => onSubmit({ type: "fill-blank", answers })}>
             Check
@@ -348,10 +359,12 @@ function ShortAnswer({
   item,
   disabled,
   onSubmit,
+  onChange,
 }: {
   item: Extract<Item, { type: "short-answer" }>;
   disabled: boolean;
-  onSubmit: (a: Answer) => void;
+  onSubmit?: (a: Answer) => void;
+  onChange?: (draft: Answer | null) => void;
 }) {
   const [text, setText] = useState("");
   return (
@@ -362,10 +375,14 @@ function ShortAnswer({
         placeholder="Type your answer"
         value={text}
         disabled={disabled}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && text && onSubmit({ type: "short-answer", text })}
+        maxLength={MAX_ANSWER_TEXT}
+        onChange={(e) => {
+          setText(e.target.value);
+          onChange?.(shortAnswerDraft(e.target.value));
+        }}
+        onKeyDown={(e) => e.key === "Enter" && !disabled && text && onSubmit?.({ type: "short-answer", text })}
       />
-      {!disabled && (
+      {onSubmit && !disabled && (
         <button
           className="btn btn-primary"
           disabled={!text}
@@ -382,18 +399,34 @@ function Ordering({
   item,
   disabled,
   onSubmit,
+  onChange,
 }: {
   item: Extract<Item, { type: "ordering" }>;
   disabled: boolean;
-  onSubmit: (a: Answer) => void;
+  onSubmit?: (a: Answer) => void;
+  onChange?: (draft: Answer | null) => void;
 }) {
-  const [steps, setSteps] = useState(() => shuffled(item.steps));
+  const [steps, setSteps] = useState(() => scramble(item.steps, Math.random));
+  const touched = useRef(false);
+  const buttons = useRef<Record<string, HTMLButtonElement | null>>({});
+  const focusAfterMove = useRef<{ id: string; direction: "up" | "down" } | null>(null);
+  useEffect(() => {
+    const target = focusAfterMove.current;
+    if (!target) return;
+    const button = buttons.current[`${target.id}:${target.direction}`];
+    const fallback = buttons.current[`${target.id}:${target.direction === "up" ? "down" : "up"}`];
+    (button?.disabled ? fallback : button)?.focus();
+    focusAfterMove.current = null;
+  }, [steps]);
   const move = (i: number, d: -1 | 1) => {
     const next = [...steps];
     const j = i + d;
     if (j < 0 || j >= next.length) return;
+    focusAfterMove.current = { id: steps[i]!.id, direction: d === -1 ? "up" : "down" };
     [next[i], next[j]] = [next[j]!, next[i]!];
     setSteps(next);
+    touched.current = true;
+    onChange?.(orderingDraft(next.map((step) => step.id), touched.current));
   };
 
   return (
@@ -407,6 +440,7 @@ function Ordering({
             </span>
             <button
               className="btn btn-quiet btn-icon"
+              ref={(button) => { buttons.current[`${s.id}:up`] = button; }}
               disabled={disabled || i === 0}
               onClick={() => move(i, -1)}
             >
@@ -414,6 +448,7 @@ function Ordering({
             </button>
             <button
               className="btn btn-quiet btn-icon"
+              ref={(button) => { buttons.current[`${s.id}:down`] = button; }}
               disabled={disabled || i === steps.length - 1}
               onClick={() => move(i, 1)}
             >
@@ -422,7 +457,7 @@ function Ordering({
           </div>
         ))}
       </div>
-      {!disabled && (
+      {onSubmit && !disabled && (
         <div className="actions">
           <button
             className="btn btn-primary"
@@ -440,13 +475,15 @@ function Matching({
   item,
   disabled,
   onSubmit,
+  onChange,
 }: {
   item: Extract<Item, { type: "matching" }>;
   disabled: boolean;
-  onSubmit: (a: Answer) => void;
+  onSubmit?: (a: Answer) => void;
+  onChange?: (draft: Answer | null) => void;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
-  const [rights] = useState(() => shuffled([...new Set([...item.pairs.map((p) => p.right), ...(item.distractors ?? [])])]));
+  const [rights] = useState(() => shuffle([...new Set([...item.pairs.map((p) => p.right), ...(item.distractors ?? [])])]));
 
   return (
     <>
@@ -459,8 +496,12 @@ function Matching({
             <select
               className="field field-grow"
               disabled={disabled}
-              value={choices[p.left] ?? ""}
-              onChange={(e) => setChoices({ ...choices, [p.left]: e.target.value })}
+              value={Object.hasOwn(choices, p.left) ? choices[p.left] : ""}
+              onChange={(e) => {
+                const next = { ...choices, [p.left]: e.target.value };
+                setChoices(next);
+                onChange?.(matchingDraft(item.pairs.map((pair) => pair.left), next));
+              }}
             >
               <option value="" disabled>
                 choose…
@@ -474,7 +515,7 @@ function Matching({
           </label>
         ))}
       </div>
-      {!disabled && (
+      {onSubmit && !disabled && (
         <div className="actions">
           <button
             className="btn btn-primary"

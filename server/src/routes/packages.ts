@@ -1,7 +1,31 @@
 import { Hono } from "hono";
+import { gameSettings, quizItemIds } from "@study/shared";
+import type { Game, LessonFrontmatter, Manifest } from "@study/shared";
 import type { AppEnv } from "../app.js";
 import { importPackage } from "../importer.js";
 import { exportPackage } from "../exporter.js";
+import { listGames, listQuizzes } from "../content.js";
+import { attemptStats } from "../attemptLog.js";
+
+interface QuizSummary {
+  id: string;
+  title: string;
+  description?: string;
+  itemCount: number;
+  timeLimitSeconds: number | null;
+  passThreshold: number | null;
+  runs: number;
+  best: number | null;
+}
+
+interface GameSummary {
+  id: string;
+  title: string;
+  template: Game["template"];
+  timeLimitSeconds: number | null;
+  runs: number;
+  best: number | null;
+}
 
 const MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
@@ -13,8 +37,8 @@ export function packageRoutes() {
 
   r.get("/", (c) => {
     const db = c.get("db");
-    const packages = (db.prepare("SELECT id, manifest FROM packages ORDER BY id").all() as any[]).map((p) => {
-      const m = JSON.parse(p.manifest);
+    const packages = (db.prepare("SELECT id, manifest FROM packages ORDER BY id").all() as { id: string; manifest: string }[]).map((p) => {
+      const m = JSON.parse(p.manifest) as Manifest;
       const lessons = (db
         .prepare(
           `SELECT l.id, l.frontmatter, COALESCE(lp.status, 'not-started') AS status
@@ -22,13 +46,23 @@ export function packageRoutes() {
              ON lp.package_id = l.package_id AND lp.lesson_id = l.id
            WHERE l.package_id = ? ORDER BY l.ord`,
         )
-        .all(p.id) as any[]).map((l) => {
-          const fm = JSON.parse(l.frontmatter);
+        .all(p.id) as { id: string; frontmatter: string; status: string }[]).map((l) => {
+          const fm = JSON.parse(l.frontmatter) as LessonFrontmatter;
           return { id: l.id, title: fm.title, summary: fm.summary, status: l.status };
         });
+      const stats = attemptStats(db, p.id);
+      const quizzes: QuizSummary[] = listQuizzes(db, p.id).map((q) => ({
+        id: q.id, title: q.title, description: q.description, itemCount: quizItemIds(q).length,
+        timeLimitSeconds: q.timeLimitSeconds ?? null, passThreshold: q.passThreshold ?? null,
+        ...(stats.get(`quiz:${q.id}`) ?? { runs: 0, best: null }),
+      }));
+      const games: GameSummary[] = listGames(db, p.id).map((g) => ({
+        id: g.id, title: g.title, template: g.template, timeLimitSeconds: gameSettings(g).timeLimitSeconds,
+        ...(stats.get(`game:${g.id}`) ?? { runs: 0, best: null }),
+      }));
       return {
         id: p.id, title: m.title, description: m.description, version: m.version,
-        tags: m.tags, lessonCount: lessons.length, lessons,
+        tags: m.tags, lessonCount: lessons.length, lessons, quizzes, games,
       };
     });
     return c.json({ packages });

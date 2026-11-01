@@ -48,6 +48,11 @@ describe("checkAnswer", () => {
     expect(wrong).toMatchObject({ correct: false, score: 0, expected: "a", feedback: "Nope — B is a distractor." });
   });
 
+  it("refuses an empty option id instead of letting it hide an unknown one", () => {
+    expect(() => checkAnswer(ms, { type: "multi-select", optionIds: ["", "z"] })).toThrow();
+    expect(() => checkAnswer(mc, { type: "multiple-choice", optionId: "" })).toThrow();
+  });
+
   it("multi-select: exact set required unless partialCredit", () => {
     const ms: Item = {
       id: "s1", type: "multi-select", prompt: "?", partialCredit: true,

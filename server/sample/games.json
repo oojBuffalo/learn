@@ -1,4 +1,5 @@
 [
   { "id": "game-match", "template": "matching", "title": "Match the techniques", "source": { "itemIds": ["match-terms"] } },
-  { "id": "game-speed", "template": "timed-round", "title": "Quick fire", "source": { "tags": ["memory"] }, "settings": { "timeLimitSeconds": 60 } }
+  { "id": "game-speed", "template": "timed-round", "title": "Quick fire", "source": { "tags": ["memory"] }, "settings": { "timeLimitSeconds": 60 } },
+  { "id": "game-order", "template": "order-it", "title": "Put it in order", "source": { "itemIds": ["ord-study-loop"] } }
 ]

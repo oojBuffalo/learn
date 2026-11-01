@@ -7,11 +7,11 @@ import { regexHazard } from "./regexSafety.js";
 export const MAX_ANSWER_TEXT = 200;
 
 export const answerSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("multiple-choice"), optionId: z.string() }).strict(),
-  z.object({ type: z.literal("multi-select"), optionIds: z.array(z.string()) }).strict(),
+  z.object({ type: z.literal("multiple-choice"), optionId: idSchema }).strict(),
+  z.object({ type: z.literal("multi-select"), optionIds: z.array(idSchema) }).strict(),
   z.object({ type: z.literal("fill-blank"), answers: z.record(z.string().max(MAX_ANSWER_TEXT)) }).strict(),
   z.object({ type: z.literal("short-answer"), text: z.string().max(MAX_ANSWER_TEXT) }).strict(),
-  z.object({ type: z.literal("ordering"), orderedIds: z.array(z.string()) }).strict(),
+  z.object({ type: z.literal("ordering"), orderedIds: z.array(idSchema) }).strict(),
   z.object({
     type: z.literal("matching"),
     pairs: z.array(z.object({ left: z.string(), right: z.string() }).strict()),
@@ -100,7 +100,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
       }
       const validIds = new Set(item.options.map((o) => o.id));
       const unknownId = a.optionIds.find((id) => !validIds.has(id));
-      if (unknownId) throw new Error(`unknown option id "${unknownId}"`);
+      if (unknownId !== undefined) throw new Error(`unknown option id "${unknownId}"`);
       const correctIds = new Set(item.options.filter((o) => o.correct).map((o) => o.id));
       const chosen = new Set(a.optionIds);
       const right = [...chosen].filter((id) => correctIds.has(id)).length;

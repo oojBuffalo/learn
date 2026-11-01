@@ -149,3 +149,38 @@ describe("attempts", () => {
     expect(db.prepare("SELECT COUNT(*) n FROM attempts").get()).toMatchObject({ n: 0 });
   });
 });
+
+describe("request bodies", () => {
+  const raw = (path: string, body: string) =>
+    app.request(path, { method: "POST", headers: { "content-type": "application/json" }, body });
+  const count = (table: string) => (db.prepare(`SELECT COUNT(*) n FROM ${table}`).get() as { n: number }).n;
+
+  it("400s malformed, null and invalid progress bodies without writing", async () => {
+    const cases: [string, string][] = [
+      ["{not json", "request body must be valid JSON"],
+      ["null", "request body is not a valid progress update"],
+      [JSON.stringify({ status: "done" }), "request body is not a valid progress update"],
+      [JSON.stringify({ status: "completed", extra: 1 }), "request body is not a valid progress update"],
+    ];
+    for (const [body, message] of cases) {
+      const res = await raw("/api/lessons/demo/intro/progress", body);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toEqual({ code: "invalid_request", message });
+    }
+    expect(count("lesson_progress")).toBe(0);
+  });
+
+  it("reads the progress body before looking up the lesson", async () => {
+    expect((await raw("/api/lessons/demo/ghost/progress", JSON.stringify({ status: "done" }))).status).toBe(400);
+    expect((await raw("/api/lessons/demo/ghost/progress", JSON.stringify({ status: "completed" }))).status).toBe(404);
+  });
+
+  it("400s malformed and null attempt bodies without writing", async () => {
+    const bad = await raw("/api/attempts", "{not json");
+    expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toEqual({ code: "invalid_request", message: "request body must be valid JSON" });
+    const nul = await raw("/api/attempts", "null");
+    expect((await nul.json()).error).toEqual({ code: "invalid_request", message: "request body is not a valid attempt" });
+    expect(count("attempts")).toBe(0);
+  });
+});

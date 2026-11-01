@@ -1,35 +1,58 @@
 import { Hono } from "hono";
-import { attemptRequestSchema, checkAnswer } from "@study/shared";
+import { attemptBodySchema, attemptsQuerySchema, checkAnswer, scoreGame, scoreQuiz } from "@study/shared";
 import type { AppEnv } from "../app.js";
+import { apiError, parseJsonBody, parseQuery } from "../http.js";
+import { getGame, getItem, getQuiz } from "../content.js";
+import { insertExerciseAttempt, insertGameAttempt, insertQuizAttempt, listAttempts } from "../attemptLog.js";
 
 export function attemptRoutes() {
   const r = new Hono<AppEnv>();
 
+  r.get("/", (c) => {
+    const query = parseQuery(c, attemptsQuerySchema, "query is not a valid attempts filter");
+    if (!query.ok) return query.response;
+    return c.json({ attempts: listAttempts(c.get("db"), query.data) });
+  });
+
   r.post("/", async (c) => {
     const db = c.get("db");
-    let payload: unknown;
-    try {
-      payload = await c.req.json();
-    } catch {
-      return c.json({ error: { code: "invalid_request", message: "request body must be valid JSON" } }, 400);
+    const request = await parseJsonBody(c, attemptBodySchema, "request body is not a valid attempt");
+    if (!request.ok) return request.response;
+    const body = request.data;
+    if ("quizId" in body) {
+      const found = getQuiz(db, body.packageId, body.quizId);
+      if (!found) return apiError(c, 404, "not_found", "unknown quiz");
+      let result;
+      try {
+        result = scoreQuiz(found.quiz, found.items, body.answers, body.elapsedSeconds);
+      } catch (e) {
+        return apiError(c, 422, "not_checkable", (e as Error).message);
+      }
+      insertQuizAttempt(db, body, result);
+      return c.json(result);
     }
-    const request = attemptRequestSchema.safeParse(payload);
-    if (!request.success) {
-      return c.json({ error: { code: "invalid_request", message: "request body is not a valid attempt" } }, 400);
+    if ("gameId" in body) {
+      const found = getGame(db, body.packageId, body.gameId);
+      if (!found) return apiError(c, 404, "not_found", "unknown game");
+      let result;
+      try {
+        result = scoreGame(found.game, found.pool, body.play, body.elapsedSeconds);
+      } catch (e) {
+        return apiError(c, 422, "not_checkable", (e as Error).message);
+      }
+      insertGameAttempt(db, body, result);
+      return c.json(result);
     }
-    const { packageId, itemId, answer } = request.data;
-    const row = db.prepare("SELECT data FROM items WHERE package_id = ? AND id = ?").get(packageId, itemId) as any;
-    if (!row) return c.json({ error: { code: "not_found", message: "unknown item" } }, 404);
-    const item = JSON.parse(row.data);
+    const { packageId, itemId, answer } = body;
+    const item = getItem(db, packageId, itemId);
+    if (!item) return apiError(c, 404, "not_found", "unknown item");
     let result;
     try {
       result = checkAnswer(item, answer);
     } catch (e) {
-      return c.json({ error: { code: "not_checkable", message: (e as Error).message } }, 422);
+      return apiError(c, 422, "not_checkable", (e as Error).message);
     }
-    db.prepare(
-      "INSERT INTO attempts (package_id, kind, item_id, answer, correct, score, at) VALUES (?, 'exercise', ?, ?, ?, ?, ?)",
-    ).run(packageId, itemId, JSON.stringify(answer), result.correct ? 1 : 0, result.score, new Date().toISOString());
+    insertExerciseAttempt(db, packageId, itemId, answer, result);
     return c.json(result);
   });
 

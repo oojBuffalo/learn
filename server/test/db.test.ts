@@ -82,3 +82,20 @@ describe("openDb", () => {
     migrated.close();
   });
 });
+
+it("adds the attempts history index to a Stage 1 database, idempotently", () => {
+  const dir = mkdtempSync(join(tmpdir(), "study-"));
+  const legacy = new Database(join(dir, "study.db"));
+  legacy.exec(`CREATE TABLE attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, package_id TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK (kind IN ('exercise','quiz','game')), ref_id TEXT, item_id TEXT,
+      answer TEXT, correct INTEGER, score REAL, at TEXT NOT NULL);
+    INSERT INTO attempts (package_id, kind, item_id, answer, correct, score, at)
+      VALUES ('demo', 'exercise', 'mc1', '{}', 1, 1, '2026-08-06T00:00:00.000Z');`);
+  legacy.close();
+  const db = openDb(dir);
+  const cols = (db.prepare("PRAGMA index_info(attempts_history)").all() as { name: string }[]).map((c) => c.name);
+  expect(cols).toEqual(["package_id", "kind", "ref_id"]);
+  expect(db.prepare("SELECT COUNT(*) n FROM attempts").get()).toEqual({ n: 1 });
+  db.close();
+  openDb(dir).close();
+});

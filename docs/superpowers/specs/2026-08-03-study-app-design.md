@@ -1,7 +1,7 @@
 # Study App — Design
 
 **Date:** 2026-08-03
-**Status:** Approved; Stage 1 implemented
+**Status:** Approved; Stages 1–2 implemented
 
 ## Overview
 
@@ -181,6 +181,20 @@ Type-level constraints enforced at validation: multiple-choice has exactly one
 `correct: true` option; multi-select has at least one; fill-blank `blanks` slots must
 match the `{{n}}` placeholders in `template`.
 
+A short-answer `match: "regex"` pattern is at most 200 characters and may not use
+backreferences. A group followed by `*`, `+` or `{n,}` may not contain, at any
+depth, `*`, `+`, `{n,}`, `{n,m}` with m > 1, `?`, `{0,1}` or an alternation. A group
+followed by `{n}` with n > 1 or `{n,m}` with m > 1 may not contain `*`, `+`, `{n,}`
+or an alternation. Lazy forms count the same. This guards nested repetition;
+it is not a full backtracking analysis: overlapping repeats in sequence and
+ranged repeats inside bounded repeats may still pass. Stored patterns are checked
+before any regex accept entry runs.
+
+Typed answers (short-answer text and each fill-blank value) are capped at 200
+characters. A matching item's pair texts and distractors are at most 2000
+characters each. Lesson frontmatter `activities` may not list the same item twice;
+repeated `::activity` directives in a lesson body stay allowed.
+
 ### 2.5 Quizzes — `quizzes.json`
 
 ```ts
@@ -195,6 +209,18 @@ match the `{{n}}` placeholders in `template`.
   meta?: Record<string, unknown>
 }
 ```
+
+Items run in listed order; `shuffle` defaults to false. When true, the quiz order
+is shuffled once per run; an item's own `shuffle` still sets its option order. A
+quiz lists at most 200 items and may not list an item twice.
+`timeLimitSeconds` is at most 86400 (one day), the longest time a run can record.
+
+The score is the mean item score over every quiz item. Partial credit counts and
+an unanswered item scores 0. A run passes when its score is at least
+`passThreshold` (with floating-point tolerance); without a threshold it has no pass
+or fail. `timeLimitSeconds` counts down from Start. At expiry the answers lock,
+the quiz submits as it stands and the stored time is capped at the limit. Each
+run is one `attempts` row of kind `quiz`.
 
 ### 2.6 Games — `games.json`
 
@@ -215,6 +241,31 @@ match the `{{n}}` placeholders in `template`.
 Template/content compatibility: `matching` consumes matching items; `timed-round`
 consumes multiple-choice/multi-select; `order-it` consumes ordering items. A game
 whose source resolves to zero compatible items fails validation at import.
+
+| template | `roundSize` counts | default `roundSize` | default `timeLimitSeconds` |
+|---|---|---|---|
+| `matching` | pairs | 6 | none (stopwatch) |
+| `timed-round` | questions | 10 | 60 |
+| `order-it` | ordering items | 3 | none (stopwatch) |
+
+- A `tags` source takes every item carrying any listed tag, in items.json order.
+  An `itemIds` source keeps listed order and ignores duplicate ids. Both keep only
+  the template's compatible types.
+- A play is one round of `min(roundSize, available units)`; `roundSize` is at most
+  200, and `timeLimitSeconds` at most 86400 (one day), the longest time a play can
+  record. Matching pools pairs across resolved matching items; a repeated left keeps
+  its first pair. Repeated right texts remain separate tiles.
+- Up to 2 of the dealt items' distractors join the right column. A distractor
+  equal to a dealt right is never dealt.
+- Matching scores matched ÷ (dealt pairs + misses). Timed-round and order-it score
+  the mean question score, including multi-select partial credit and ordering
+  positions; unanswered questions score 0.
+- Time is recorded and shown, never scored. Expiry ends the round and logs it.
+  A matching play also ends, and is logged, at 2000 picks, the most one play carries.
+  Each play is one `attempts` row of kind `game`, with `ref_id` = the game id;
+  stored elapsed time is capped at the game's limit when it has one.
+- The server checks every move and replays the submitted play to compute its
+  recorded score. The client deals rounds; no server game session is created.
 
 ### 2.7 Validation & compatibility rules
 
@@ -282,10 +333,22 @@ REST JSON API (all under `/api`):
 
 - `GET /packages`, `POST /packages/import`, `GET /packages/:id/export`,
   `DELETE /packages/:id`
-- `GET /lessons/:id`, `POST /lessons/:id/progress`
+- `GET /lessons/:packageId/:lessonId`, `POST /lessons/:packageId/:lessonId/progress`
 - `GET /review/due`, `POST /review/grade`, `GET /review/free-study?packageId=…`
   (free study reads cards without touching schedule state)
-- `POST /attempts` (exercise answers, quiz submissions, game scores), `GET /attempts`
+- `POST /review/grade` with `direction: "back"` on a card without `reverse: true`
+  returns 404 and writes nothing.
+- `GET /quizzes/:packageId/:quizId` (quiz + whole items),
+  `GET /games/:packageId/:gameId` (game, effective settings, resolved pool),
+  `POST /games/:packageId/:gameId/check` (one move; writes nothing)
+- `POST /attempts`: `{packageId, itemId, answer}` (exercise) |
+  `{kind:"quiz", packageId, quizId, answers:[{itemId, answer:null|Answer}], elapsedSeconds}` |
+  `{kind:"game", packageId, gameId, play, elapsedSeconds}`;
+  `GET /attempts?packageId&kind&refId&limit` (refId needs kind quiz|game; limit
+  1–200, default 50; newest first; rows for removed content are hidden)
+- `GET /packages` also lists each package's quizzes and games with `runs` and `best`.
+- Errors: 400 `invalid_request`, 404 `not_found`, 422 `not_checkable` /
+  `invalid_package`; a rejected request writes nothing.
 - `GET/POST/PATCH/DELETE /notes`
 - `GET/POST/PATCH /explanations`
 
@@ -319,8 +382,8 @@ free study), **Quiz**, **Games**, **Notes** (incl. explain-back).
 
 1. **Foundation** — `shared/` schemas, server + DB, import/export, Library, Lesson
    player with inline exercises, flashcards with the due queue + free study. Ships
-   with a bundled sample package so the app is usable on day one.
-2. **Quizzes + games** — quiz runner with history; the three game templates.
+   with a bundled sample package so the app is usable on day one. *(done)*
+2. **Quizzes + games** — quiz runner with history; the three game templates. *(done)*
 3. **Notes + explain-back + Home polish** — notes editor, explanations with revisit
    prompts, dashboard.
 

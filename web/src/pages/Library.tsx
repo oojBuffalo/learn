@@ -181,6 +181,8 @@ export default function Library() {
             ))}
 
             <div className="sheet-foot">
+              {p.quizzes.length > 0 && <Link className="link-btn" to={`/quizzes?package=${p.id}`}><Icon name="quiz" size={18} />Quizzes · {p.quizzes.length}</Link>}
+              {p.games.length > 0 && <Link className="link-btn" to={`/games?package=${p.id}`}><Icon name="game" size={18} />Games · {p.games.length}</Link>}
               <a className="link-btn" href={exportUrl(p.id)} download>
                 <Icon name="download" size={18} />
                 Export

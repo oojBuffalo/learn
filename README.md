@@ -3,8 +3,8 @@
 Local-first study platform: lessons with inline exercises, spaced-repetition
 flashcards, quizzes and games (Stage 2), all driven by a portable package format.
 
-Stage 1 (foundation) is complete. The next planned objective is Stage 2: the quiz
-runner and the three game-template players described in the design document.
+Stages 1–2 are complete: foundation, the quiz runner and the three game-template
+players. Stage 3 (notes, explain-back and Home) is next.
 
 ## Run
 
@@ -34,7 +34,27 @@ A package is a zip: `manifest.json` + `lessons/*.md` (+ optional `items.json`,
 `quizzes.json`, `games.json`, `assets/`). See `server/sample/` for a working
 example and `docs/superpowers/specs/2026-08-03-study-app-design.md` for the full format.
 
+## API
+
+All routes are under `/api`:
+
+- `GET /packages` — package, lesson, quiz and game summaries, including runs and best scores.
+- `POST /packages/import` — import a validated package zip.
+- `GET /packages/:id/export` — export package content.
+- `DELETE /packages/:id` — delete content while keeping progress.
+- `GET /packages/:id/assets/…` — serve a package asset.
+- `GET /lessons/:packageId/:lessonId` — lesson, items and progress.
+- `POST /lessons/:packageId/:lessonId/progress` — update lesson progress.
+- `GET /review/due` — due flashcards.
+- `POST /review/grade` — grade a flashcard direction; a back grade needs a reverse card.
+- `GET /review/free-study?packageId=…` — flashcards without schedule writes.
+- `GET /quizzes/:packageId/:quizId` — quiz and whole items.
+- `GET /games/:packageId/:gameId` — game, effective settings and resolved items.
+- `POST /games/:packageId/:gameId/check` — check one move without writing.
+- `POST /attempts` — check and log an exercise, quiz run or game play.
+- `GET /attempts?packageId&kind&refId&limit` — newest summaries, with removed content hidden.
+
 ## Tests
 
     npm test        # unit + integration
-    npm run e2e     # Playwright smoke (builds web first)
+    npm run e2e     # Playwright smoke + play specs (builds web first)
