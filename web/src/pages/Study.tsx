@@ -6,6 +6,7 @@ import { getDueCards, getFreeStudy, gradeCard, listPackages, type Card } from ".
 import { useDue } from "../App.js";
 import Markdown, { InlineMarkdown } from "../components/Markdown.js";
 import Media from "../components/Media.js";
+import { message } from "../text.js";
 
 const RATINGS: Rating[] = ["again", "hard", "good", "easy"];
 const RATING_LABEL: Record<Rating, string> = {
@@ -22,8 +23,6 @@ function formatInterval(days: number): string {
   if (days < 365) return `${Math.round(days / 30)}mo`;
   return `${(days / 365).toFixed(1)}y`;
 }
-
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export default function Study() {
   const [mode, setMode] = useState<"due" | "free">("due");
@@ -230,7 +229,7 @@ export default function Study() {
             {mode === "due" ? "Cards come back as their intervals expire." : "Free study leaves the schedule alone."}
           </p>
           <Link className="btn" to="/">
-            Back to library
+            Back home
           </Link>
         </div>
       )}

@@ -6,6 +6,9 @@ import { attemptRoutes } from "./routes/attempts.js";
 import { reviewRoutes } from "./routes/review.js";
 import { quizRoutes } from "./routes/quizzes.js";
 import { gameRoutes } from "./routes/games.js";
+import { maintenanceRoutes } from "./routes/maintenance.js";
+import { noteRoutes } from "./routes/notes.js";
+import { explanationRoutes } from "./routes/explanations.js";
 
 export type AppEnv = { Variables: { db: Db } };
 
@@ -25,5 +28,8 @@ export function createApp(db: Db): Hono<AppEnv> {
   app.route("/api/review", reviewRoutes());
   app.route("/api/quizzes", quizRoutes());
   app.route("/api/games", gameRoutes());
+  app.route("/api/maintenance", maintenanceRoutes());
+  app.route("/api/notes", noteRoutes());
+  app.route("/api/explanations", explanationRoutes());
   return app;
 }

@@ -55,3 +55,14 @@ export type { Answer, CheckResult } from "./checking.js";
 export { MAX_PATTERN_LENGTH, regexHazard } from "./regexSafety.js";
 export { schedule } from "./scheduler.js";
 export type { Rating, CardState } from "./scheduler.js";
+export {
+  BODY_MAX, CONFIDENCE_LEVELS, LOW_CONFIDENCE_MAX, noteTargetSchema,
+  noteCreateSchema, notePatchSchema, confidenceSchema, explanationCreateSchema,
+  explanationPatchSchema, isLowConfidence,
+} from "./notes.js";
+export type {
+  Confidence, NoteTarget, NoteCreate, NotePatch, ExplanationCreate,
+  ExplanationPatch, NoteTargetView, Note, Explanation,
+} from "./notes.js";
+export { ORPHAN_KINDS, WRITING_KINDS, purgedKinds, orphanCountsSchema, purgeOrphansRequestSchema } from "./maintenance.js";
+export type { OrphanKind, OrphanCounts, PurgeOrphansRequest, OrphanGroup } from "./maintenance.js";

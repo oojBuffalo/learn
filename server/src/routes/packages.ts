@@ -41,14 +41,14 @@ export function packageRoutes() {
       const m = JSON.parse(p.manifest) as Manifest;
       const lessons = (db
         .prepare(
-          `SELECT l.id, l.frontmatter, COALESCE(lp.status, 'not-started') AS status
+          `SELECT l.id, l.frontmatter, COALESCE(lp.status, 'not-started') AS status, lp.updated_at
            FROM lessons l LEFT JOIN lesson_progress lp
              ON lp.package_id = l.package_id AND lp.lesson_id = l.id
            WHERE l.package_id = ? ORDER BY l.ord`,
         )
-        .all(p.id) as { id: string; frontmatter: string; status: string }[]).map((l) => {
+        .all(p.id) as { id: string; frontmatter: string; status: string; updated_at: string | null }[]).map((l) => {
           const fm = JSON.parse(l.frontmatter) as LessonFrontmatter;
-          return { id: l.id, title: fm.title, summary: fm.summary, status: l.status };
+          return { id: l.id, title: fm.title, summary: fm.summary, status: l.status, updatedAt: l.updated_at ?? undefined };
         });
       const stats = attemptStats(db, p.id);
       const quizzes: QuizSummary[] = listQuizzes(db, p.id).map((q) => ({

@@ -5,15 +5,13 @@ import {
 } from "../api.js";
 import { useDue } from "../App.js";
 import Icon from "../components/Icon.js";
+import LeftoverProgress from "../components/LeftoverProgress.js";
+import { message, plural } from "../text.js";
 
 const STATUS_LABEL: Record<string, string> = {
   "in-progress": "in progress",
   completed: "done",
 };
-
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 function summarise(packages: PackageSummary[]): string {
   if (packages.length === 0) return "Nothing imported yet";
@@ -27,6 +25,7 @@ export default function Library() {
   const [importing, setImporting] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [leftoverKey, setLeftoverKey] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const { refreshDue } = useDue();
 
@@ -46,6 +45,7 @@ export default function Library() {
       await importPackageZip(file);
       await refresh();
       refreshDue();
+      setLeftoverKey((key) => key + 1);
     } catch (e) {
       if (e instanceof ApiError && e.details) {
         setErrors(e.details.map((d) => `${d.file}${d.path ? ` (${d.path})` : ""}: ${d.message}`));
@@ -61,6 +61,7 @@ export default function Library() {
       await deletePackage(id);
       await refresh();
       refreshDue();
+      setLeftoverKey((key) => key + 1);
     } catch (e) {
       setErrors([message(e)]);
     }
@@ -189,7 +190,7 @@ export default function Library() {
               </a>
               {confirming === p.id ? (
                 <span className="confirm">
-                  Delete it? Your progress is kept.
+                  Delete it? Your progress and notes are kept.
                   <button className="btn btn-quiet" onClick={() => setConfirming(null)}>
                     Cancel
                   </button>
@@ -206,6 +207,7 @@ export default function Library() {
             </div>
           </article>
         ))}
+        <LeftoverProgress refreshKey={leftoverKey} />
       </div>
     </div>
   );

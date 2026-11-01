@@ -1,3 +1,4 @@
+import AdmZip from "adm-zip";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,7 +7,7 @@ import { openDb } from "../src/db.js";
 import { importPackage } from "../src/importer.js";
 import { exportPackage, loadPackageFromDb } from "../src/exporter.js";
 import { readPackageZip } from "../src/zip.js";
-import { GOOD_FILES, makeZip } from "./helpers.js";
+import { GOOD_FILES, makeZip, seedUserState } from "./helpers.js";
 
 // Local extension of GOOD_FILES (not a mutation — other suites assert against GOOD_FILES
 // as-is) that adds a quiz and a game so the round-trip proves quizzes/games survive too.
@@ -78,4 +79,16 @@ describe("export round-trip", () => {
 
     expect(loadPackageFromDb(db, "demo")!.items.map((item) => item.id)).toEqual(["card1", "mc1"]);
   });
+});
+
+
+it("exports the same package when notes and explanations exist", () => {
+  const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+  expect(importPackage(db, makeZip(FILES))).toMatchObject({ ok: true });
+  const before = exportPackage(db, "demo")!; seedUserState(db);
+  const after = exportPackage(db, "demo")!;
+  const names = (zip: Buffer) => new AdmZip(zip).getEntries().map((entry) => entry.entryName).sort();
+  expect(names(after)).toEqual(names(before));
+  expect(readPackageZip(after).pkg).toEqual(readPackageZip(before).pkg);
+  db.close();
 });

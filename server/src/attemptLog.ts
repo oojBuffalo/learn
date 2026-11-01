@@ -1,5 +1,6 @@
 import type { Answer, AttemptRecord, AttemptsQuery, CheckResult, Game, GamePlay, GameResult, GameSubmission, QuizAnswer, QuizResult, QuizSubmission } from "@study/shared";
 import type { Db } from "./db.js";
+import { LIVE } from "./orphans.js";
 
 /** The versioned payload retained for one quiz attempt. */
 export interface QuizRunRecord {
@@ -40,10 +41,6 @@ export interface AttemptRow {
   at: string;
 }
 
-const VISIBLE_ATTEMPT = `((a.kind = 'exercise' AND EXISTS (SELECT 1 FROM items i WHERE i.package_id = a.package_id AND i.id = a.item_id))
-  OR (a.kind = 'quiz' AND EXISTS (SELECT 1 FROM quizzes q WHERE q.package_id = a.package_id AND q.id = a.ref_id))
-  OR (a.kind = 'game' AND EXISTS (SELECT 1 FROM games g WHERE g.package_id = a.package_id AND g.id = a.ref_id)))`;
-
 /**
  * Maps a stored result to a summary, excluding submitted answers and answer keys.
  * Args:
@@ -83,7 +80,7 @@ export function toAttemptRecord(row: AttemptRow): AttemptRecord {
  *   Error: The database read or stored-record decoding fails.
  */
 export function listAttempts(db: Db, query: AttemptsQuery): AttemptRecord[] {
-  const conditions = [VISIBLE_ATTEMPT];
+  const conditions = [LIVE.attempts("a")];
   const params: (string | number)[] = [];
   if (query.packageId !== undefined) { conditions.push("a.package_id = ?"); params.push(query.packageId); }
   if (query.kind !== undefined) { conditions.push("a.kind = ?"); params.push(query.kind); }

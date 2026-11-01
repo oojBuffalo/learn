@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, isStale, getQuiz, getGame, checkMove, submitQuiz, submitGame, listAttempts } from "../src/api.js";
+import { ApiError, isStale, getQuiz, getGame, checkMove, submitQuiz, submitGame, listAttempts, listExplanations, updateNote, createNote, setProgress, deleteNote, purgeOrphans } from "../src/api.js";
 import type { GameSubmission, QuizSubmission } from "@study/shared";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -31,4 +31,27 @@ it("lists attempt summaries, omitting unset filters", async () => {
   vi.stubGlobal("fetch", fetch);
   expect(await listAttempts({ packageId: "demo", kind: "quiz", refId: undefined, limit: 20 })).toEqual(attempts);
   expect(fetch).toHaveBeenLastCalledWith("/api/attempts?packageId=demo&kind=quiz&limit=20", undefined);
+});
+it("asks for revisit prompts only when told to", async () => {
+  const fetch = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ explanations: [] }))); vi.stubGlobal("fetch", fetch);
+  await listExplanations(); await listExplanations({ revisit: false }); await listExplanations({ revisit: true });
+  expect(fetch.mock.calls.map((c) => c[0])).toEqual(["/api/explanations", "/api/explanations", "/api/explanations?revisit=1"]);
+});
+it("sends a note update as PATCH JSON", async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ note: {} }))); vi.stubGlobal("fetch", fetch);
+  await updateNote(3, { body: "x" }); expect(fetch).toHaveBeenCalledWith("/api/notes/3", { method: "PATCH", headers: { "content-type": "application/json" }, body: '{"body":"x"}' });
+});
+it("still POSTs when no method is given", async () => {
+  const fetch = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ note: {} }))); vi.stubGlobal("fetch", fetch);
+  await createNote({ body: "x", target: null }); await setProgress("p", "l", "completed");
+  expect(fetch.mock.calls.map((c) => c[1].method)).toEqual(["POST", "POST"]);
+});
+it("resolves a 204 delete to undefined", async () => {
+  const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 })); vi.stubGlobal("fetch", fetch);
+  await expect(deleteNote(3)).resolves.toBeUndefined(); expect(fetch).toHaveBeenCalledWith("/api/notes/3", { method: "DELETE" });
+});
+it("surfaces a stale purge as orphans_changed", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(JSON.stringify({ error: { code: "orphans_changed", message: "m" } }), { status: 409 })));
+  const req = { packageId: "p", includeWriting: false, expected: { cardState: 0, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 } };
+  await expect(purgeOrphans(req)).rejects.toBeInstanceOf(ApiError); await expect(purgeOrphans(req)).rejects.toMatchObject({ code: "orphans_changed" });
 });

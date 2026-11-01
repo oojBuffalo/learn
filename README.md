@@ -1,10 +1,10 @@
 # Study App
 
-Local-first study platform: lessons with inline exercises, spaced-repetition
-flashcards, quizzes and games (Stage 2), all driven by a portable package format.
+Local-first study platform, driven by a portable package format.
 
-Stages 1–2 are complete: foundation, the quiz runner and the three game-template
-players. Stage 3 (notes, explain-back and Home) is next.
+Stages 1–3 are complete: lessons with inline exercises, spaced-repetition
+flashcards, quizzes and games, notes and explain-back, and a Home dashboard at `/`
+(the Library is at `/library`).
 
 ## Run
 
@@ -25,8 +25,11 @@ Create a consistent live backup instead:
 Existing installs that created `server/data/study.db` are detected and continue to
 use that database until moved deliberately.
 
-Deleting a package keeps your progress; re-importing a package updates content
-in place.
+Deleting a package keeps its progress, notes and explanations, hidden until you
+re-import it. Library → Leftover progress permanently deletes orphaned progress;
+notes and explanations are deleted only when you opt in. Re-importing a package
+updates content in place. Notes and explanations are never part of a package
+export; `npm run backup -w server -- <dest>` includes them.
 
 ## Packages
 
@@ -38,10 +41,10 @@ example and `docs/superpowers/specs/2026-08-03-study-app-design.md` for the full
 
 All routes are under `/api`:
 
-- `GET /packages` — package, lesson, quiz and game summaries, including runs and best scores.
+- `GET /packages` — package, lesson, quiz and game summaries, including runs, best scores and started lessons' last-opened times.
 - `POST /packages/import` — import a validated package zip.
 - `GET /packages/:id/export` — export package content.
-- `DELETE /packages/:id` — delete content while keeping progress.
+- `DELETE /packages/:id` — delete content while keeping progress, notes and explanations.
 - `GET /packages/:id/assets/…` — serve a package asset.
 - `GET /lessons/:packageId/:lessonId` — lesson, items and progress.
 - `POST /lessons/:packageId/:lessonId/progress` — update lesson progress.
@@ -53,8 +56,16 @@ All routes are under `/api`:
 - `POST /games/:packageId/:gameId/check` — check one move without writing.
 - `POST /attempts` — check and log an exercise, quiz run or game play.
 - `GET /attempts?packageId&kind&refId&limit` — newest summaries, with removed content hidden.
+- `GET /notes` — all notes, including removed-content notes flagged as orphaned.
+- `POST /notes` — create a standalone, package or lesson note.
+- `GET/PATCH/DELETE /notes/:id` — read, edit or delete a note.
+- `GET /explanations` — all explanations; `?revisit=1` returns revisit prompts only.
+- `POST /explanations` — explain a lesson with a 1–5 confidence rating.
+- `GET/PATCH /explanations/:id` — read or edit an explanation; no individual delete route.
+- `GET /maintenance/orphans` — per-package counts of retained state on removed content.
+- `POST /maintenance/orphans/purge` — purge confirmed orphan counts; writing requires opt-in and changed counts return 409 with no deletion.
 
 ## Tests
 
     npm test        # unit + integration
-    npm run e2e     # Playwright smoke + play specs (builds web first)
+    npm run e2e     # Playwright smoke + play + notes specs (builds web first)

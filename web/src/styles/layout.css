@@ -98,6 +98,7 @@
 }
 
 @media (max-width: 39.99rem) {
+  .nav-item { padding: var(--s2); }
   .nav-label {
     position: absolute;
     width: 1px;
@@ -109,6 +110,12 @@
     white-space: nowrap;
     border: 0;
   }
+}
+
+@media (max-width: 59.99rem) {
+  .rail { min-width: 0; }
+  .nav { overflow-x: auto; scrollbar-width: none; }
+  .nav-item { flex: none; }
 }
 
 .content {

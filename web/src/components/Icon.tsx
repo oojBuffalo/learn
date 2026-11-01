@@ -1,6 +1,8 @@
 /** Inline stroke icons — one family, 1.75 stroke, currentColor, decorative by default. */
 
 const PATHS = {
+  home: "M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6h-6v6H5.5A1.5 1.5 0 0 1 4 19z",
+  note: "M6 3.5h8.5L19 8v12.5H6zM14 3.5V8h5M9 12.5h7M9 16h5",
   quiz: "M9 4H6v17h12V4h-3M9 3h6v4H9zM8 13l3 3 5-6",
   game: "M7 7h10a3 3 0 0 1 3 2.5l1 8a2 2 0 0 1-3.4 1.6L15 16H9l-2.6 3.1A2 2 0 0 1 3 17.5l1-8A3 3 0 0 1 7 7ZM7 10v4m-2-2h4m7-1h.01m2 2h.01",
   library: "M12 7c-1.7-1.3-3.8-2-6-2H4v12h2c2.2 0 4.3.7 6 2m0-12c1.7-1.3 3.8-2 6-2h2v12h-2c-2.2 0-4.3.7-6 2m0-12v12",

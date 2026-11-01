@@ -33,7 +33,7 @@ describe("openDb", () => {
       .all()
       .map((r: any) => r.name);
     for (const t of ["packages", "lessons", "items", "quizzes", "games", "assets",
-                     "card_state", "review_log", "attempts", "lesson_progress"]) {
+                     "card_state", "review_log", "attempts", "lesson_progress", "notes", "explanations"]) {
       expect(tables).toContain(t);
     }
     expect(db.pragma("journal_mode", { simple: true })).toBe("wal");
@@ -81,6 +81,23 @@ describe("openDb", () => {
     ]);
     migrated.close();
   });
+});
+
+it("adds the Stage 3 tables to an existing database and enforces their checks", () => {
+  const dir = mkdtempSync(join(tmpdir(), "study-"));
+  const legacy = new Database(join(dir, "study.db"));
+  legacy.exec("CREATE TABLE packages (id TEXT PRIMARY KEY, manifest TEXT NOT NULL, imported_at TEXT NOT NULL); INSERT INTO packages VALUES ('demo', '{}', '2026-10-01');");
+  legacy.close();
+  const db = openDb(dir);
+  const names = (db.prepare("SELECT name FROM sqlite_master").all() as { name: string }[]).map((row) => row.name);
+  expect(names).toEqual(expect.arrayContaining(["notes", "explanations", "notes_target", "explanations_lesson"]));
+  expect(db.prepare("SELECT id FROM packages").all()).toEqual([{ id: "demo" }]);
+  expect(() => db.prepare("INSERT INTO notes (package_id, lesson_id, body, created_at, updated_at) VALUES (NULL, 'intro', 'x', 't', 't')").run()).toThrow(/CHECK constraint failed/);
+  const insert = db.prepare("INSERT INTO explanations (package_id, lesson_id, body, confidence, created_at, updated_at) VALUES ('demo', 'intro', 'x', ?, 't', 't')");
+  for (const confidence of [0, 6, 2.5]) expect(() => insert.run(confidence)).toThrow(/CHECK constraint failed/);
+  expect(() => insert.run(2)).not.toThrow();
+  db.close();
+  expect(() => openDb(dir).close()).not.toThrow();
 });
 
 it("adds the attempts history index to a Stage 1 database, idempotently", () => {

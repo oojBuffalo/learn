@@ -3,6 +3,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { openDb } from "../src/db.js";
+import type { Db } from "../src/db.js";
+import type { Item, OrphanCounts } from "@study/shared";
 
 export const freshDb = () => openDb(mkdtempSync(join(tmpdir(), "study-")));
 
@@ -30,6 +32,43 @@ export const GOOD_FILES: Record<string, string | Buffer> = {
   ]),
   "assets/dot.png": Buffer.from("89504e470d0a1a0a", "hex"), // fake but binary
 };
+
+export const V2_FILES: Record<string, string | Buffer> = {
+  ...GOOD_FILES,
+  "lessons/01-intro.md": GOOD_FILES["lessons/01-intro.md"]!.toString().replace("id: intro", "id: intro2"),
+  "items.json": JSON.stringify([
+    (JSON.parse(GOOD_FILES["items.json"] as string) as Item[])[0],
+    { id: "card2", type: "flashcard", front: "adios", back: "goodbye" },
+  ]),
+};
+
+export const NO_ORPHANS: OrphanCounts = { cardState: 0, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 };
+export const ORPHANS_AFTER_V2: OrphanCounts = { cardState: 2, reviewLog: 2, attempts: 0, lessonProgress: 1, notes: 1, explanations: 1 };
+export const ORPHANS_AFTER_DELETE: OrphanCounts = { cardState: 2, reviewLog: 2, attempts: 1, lessonProgress: 1, notes: 2, explanations: 1 };
+
+/**
+ * Inserts retained user-state fixtures without changing content.
+ * Args:
+ *   db: A freshly imported demo package database with Stage 3 tables.
+ * Returns:
+ *   Nothing.
+ * Raises:
+ *   Error: A fixture insert violates a constraint or the database is unavailable.
+ */
+export function seedUserState(db: Db): void {
+  const at = "2026-10-01T00:00:00.000Z";
+  for (const direction of ["front", "back"]) {
+    db.prepare("INSERT INTO card_state VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run("demo", "card1", direction, 1, 2.5, 1, 0, at);
+    db.prepare("INSERT INTO review_log (package_id, item_id, direction, rating, at) VALUES (?, ?, ?, ?, ?)").run("demo", "card1", direction, "good", at);
+  }
+  db.prepare("INSERT INTO attempts (package_id, kind, item_id, correct, score, at) VALUES ('demo', 'exercise', 'mc1', 1, 1, ?)").run(at);
+  db.prepare("INSERT INTO lesson_progress VALUES ('demo', 'intro', 'in-progress', ?)").run(at);
+  for (const [packageId, lessonId, body] of [[null, null, "standalone"], ["demo", null, "package note"], ["demo", "intro", "lesson note"]]) {
+    db.prepare("INSERT INTO notes (package_id, lesson_id, body, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
+      .run(packageId, lessonId, body, at, at);
+  }
+  db.prepare("INSERT INTO explanations (package_id, lesson_id, body, confidence, created_at, updated_at) VALUES ('demo', 'intro', 'my words', 2, ?, ?)").run(at, at);
+}
 
 export const PLAY_FILES: Record<string, string | Buffer> = {
   ...GOOD_FILES,
