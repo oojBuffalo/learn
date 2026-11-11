@@ -392,7 +392,7 @@ test("matching: one miss on three pairs scores 75%", async ({ page }) => {
   await expect(firstOpenTerm).toBeFocused();                 // focus goes back to the first unmatched term
   await tile("Spaced repetition").click(); await tile("Grow the gap between reviews").click();
   await expect(page.getByText("1 of 3 matched · 1 miss")).toBeVisible(); await expect(firstOpenTerm).toBeFocused();
-  for (const [l, r] of [["Active recall", "Test yourself before checking"], ["Interleaving", "Mix topics within one session"]]) {
+  for (const [l, r] of [["Active recall", "Test yourself before checking"], ["Interleaving", "Mix topics within one session"]] as const) {
     await tile(l).click(); await tile(r).click();          // a click waits while the board is disabled
   }
   await expect(page.getByRole("heading", { name: /^75% · 3 of 3 matched · 1 miss · \d+:\d\d$/ })).toBeFocused();
