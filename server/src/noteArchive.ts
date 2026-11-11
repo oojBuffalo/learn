@@ -6,6 +6,8 @@ import { buildTar } from "./tar.js";
 
 /** Longest slug in a file name; with the folder, id and extension the path stays under tar's 100 bytes. */
 const SLUG_MAX = 60;
+/** How much of a body is parsed for its heading: deep nesting makes parsing slow and can overflow the stack. */
+const HEADING_SCAN = 2_000;
 const FOLDER = "notes/";
 /** Characters a YAML double-quoted scalar can hold as themselves; everything else is escaped. */
 const UNSAFE = /[\\"]|[^\x20-\x7E\xA0-\u2027\u202A-\uD7FF\uE000-\uFEFE\uFF00-\uFFFD\u{10000}-\u{10FFFF}]/gu;
@@ -29,23 +31,28 @@ const plainText = (node: MarkdownNode): string =>
   typeof node.value === "string" ? node.value : (node.children ?? []).map(plainText).join("");
 
 /**
- * Derives a file-name slug from a note's first non-empty heading, else its first non-blank line.
- * The body is parsed as the browser renders notes, so a heading inside code or math is not one.
+ * Derives a file-name slug from the first non-empty heading in a note's first 2 000 characters, else its first non-blank line.
+ * That part is parsed as the browser renders notes, so a heading inside code or math is not one.
  * Args:
  *   body: The note's Markdown.
  * Returns:
  *   Lowercase ASCII letters, digits and single hyphens, at most 60 characters; "note" when nothing is left.
  * Raises:
- *   None.
+ *   None; a body the parser cannot handle falls back to its first line, so one note never blocks an export.
  */
 export function noteSlug(body: string): string {
+  const end = body.length <= HEADING_SCAN ? body.length : body.lastIndexOf("\n", HEADING_SCAN);
   let heading: string | undefined;
-  visit(processor.parse(body), "heading", (node) => {
-    const text = plainText(node);
-    if (!text.trim()) return CONTINUE;
-    heading = text;
-    return EXIT;
-  });
+  try {
+    visit(processor.parse(body.slice(0, end > 0 ? end : HEADING_SCAN)), "heading", (node) => {
+      const text = plainText(node);
+      if (!text.trim()) return CONTINUE;
+      heading = text;
+      return EXIT;
+    });
+  } catch {
+    heading = undefined;
+  }
   const source = heading ?? body.split(/\r?\n/).find((line) => line.trim() !== "") ?? "";
   const slug = source.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+/, "").slice(0, SLUG_MAX).replace(/-+$/, "");

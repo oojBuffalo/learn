@@ -2,6 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Note } from "@study/shared";
 import { createApp } from "../src/app.js";
 import { readLesson } from "../src/frontmatter.js";
+import { processor } from "../src/mathCheck.js";
 import { noteSlug } from "../src/noteArchive.js";
 import { GOOD_FILES, V2_FILES, extractTgz, freshDb, makeZip } from "./helpers.js";
 import type { Extracted } from "./helpers.js";
@@ -48,7 +49,7 @@ beforeEach(async () => {
   app = createApp(freshDb());
   await importFiles(FILES);
 });
-afterEach(() => { vi.useRealTimers(); });
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 it("downloads every note as Markdown with front matter and byte-exact bodies", async () => {
   const bodies = [
@@ -130,4 +131,21 @@ it("slugs the first heading outside code and math, else the first line, as bound
   const long = noteSlug(`# ${"word ".repeat(40)}`);
   expect(long.length).toBeLessThanOrEqual(60);
   expect(long).toMatch(/^word(-word)*$/);
+});
+
+it("exports a note nested too deeply to parse alongside an ordinary one", async () => {
+  const bodies = ["> ".repeat(5_000) + "# Title", "Plain"];
+  const deep = await create(bodies[0]!);
+  const plain = await create(bodies[1]!);
+  const { files } = await download();
+  const names = [`notes/${deep.id}-title.md`, `notes/${plain.id}-plain.md`];
+  expect([...files.keys()]).toEqual(["notes", ...names]);
+  names.forEach((name, i) => expect(parse(files.get(name)!).body.equals(Buffer.from(bodies[i]!, "utf8"))).toBe(true));
+});
+
+it("looks for the slug heading only near the top, and falls back to the first line if parsing fails", () => {
+  expect(noteSlug(`# Early\n${"y\n".repeat(5_000)}`)).toBe("early");
+  expect(noteSlug(`intro line\n${"x\n".repeat(1_500)}# Late`)).toBe("intro-line");
+  vi.spyOn(processor, "parse").mockImplementation(() => { throw new RangeError("Maximum call stack size exceeded"); });
+  expect(noteSlug("intro\n# Heading")).toBe("intro");
 });
