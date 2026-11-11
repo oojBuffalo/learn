@@ -58,7 +58,10 @@ export default function Library() {
   async function remove(id: string) {
     setConfirming(null);
     try {
-      await deletePackage(id);
+      // A 404 means the package is already gone (deleted in another tab, say): carry on as if this delete removed it.
+      await deletePackage(id).catch((e) => {
+        if (!(e instanceof ApiError && e.code === "not_found")) throw e;
+      });
       await refresh();
       refreshDue();
       setLeftoverKey((key) => key + 1);

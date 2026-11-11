@@ -253,6 +253,28 @@ test("Leftover progress clears progress, spares writing, and a re-import restore
   }
 });
 
+test("deleting a package another tab already deleted just refreshes the Library", async ({ page, request }) => {
+  const exported = await request.get(`/api/packages/${PKG}/export`);
+  expect(exported.status()).toBe(200);
+  const zip = await exported.body();
+  try {
+    expect((await request.post("/api/notes", { data: { body: "Note on a twice-deleted package", target: { packageId: PKG, lessonId: LESSON } } })).status()).toBe(201);
+    await page.goto("/library");
+    const sheet = page.locator("article.sheet").filter({ has: page.locator(`a[href="/api/packages/${PKG}/export"]`) });
+    await sheet.getByRole("button", { name: "Delete", exact: true }).click();
+    expect((await request.delete(`/api/packages/${PKG}`)).status()).toBe(204);
+    await sheet.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+    await expect(sheet).toHaveCount(0);
+    await expect(page.locator(".leftover-row").filter({ hasText: PKG })).toContainText("package deleted");
+    await expect(page.getByRole("alert")).toHaveCount(0);
+  } finally {
+    const listed = await (await request.get("/api/packages")).json();
+    if (!listed.packages.some((p: { id: string }) => p.id === PKG)) {
+      expect((await request.post("/api/packages/import", { data: zip })).status()).toBe(201);
+    }
+  }
+});
+
 test("a note deleted while its held save is pending keeps the text for New note", async ({ page, request }) => {
   const id = (await (await request.post("/api/notes", { data: { body: "Doomed note", target: null } })).json()).note.id;
   let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
