@@ -110,6 +110,12 @@ export interface DraftSession {
   clear(key: string, now?: Date): void;
   /** The editor now holds this draft's text, restored from storage, so its writes carry the draft's origin. */
   adopt(draft: Draft): void;
+  /**
+   * The key keeps this editor's older text because moving it failed. It is removed, if it still holds that text,
+   * when the editor next stores or clears a draft under another key, or by `dropAside`.
+   */
+  setAside(key: string): void;
+  dropAside(): void;
   /** The key is empty, or holds `holding` or the text this editor last stored there. */
   owns(key: string, holding: string): boolean;
   /**
@@ -125,8 +131,21 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
   let lineage = origin;
   // Every write stores the editor's current text, so its latest write or clear anywhere is when it last stood by it.
   let latest = started.toISOString();
-  const acted = (key: string, body: string | null, now: Date) => { last.set(key, { body, at: now.toISOString() }); latest = now.toISOString(); changed(); };
+  let aside: string | null = null;
+  const mineStill = (key: string) => {
+    const stored = readDraft(store, key); const mine = last.get(key);
+    return stored === null || (mine !== undefined && mine.body === stored.body && mine.at === stored.at);
+  };
+  const dropAside = () => { const key = aside; aside = null; if (key !== null && mineStill(key) && clearDraft(store, key)) last.set(key, { body: null, at: latest }); };
+  const acted = (key: string, body: string | null, now: Date) => {
+    last.set(key, { body, at: now.toISOString() }); latest = now.toISOString();
+    // Storing or clearing the set-aside key itself settles it; storing or clearing elsewhere supersedes its text.
+    if (aside === key) aside = null; else if (aside !== null) dropAside();
+    changed();
+  };
   return {
+    setAside(key) { aside = key; },
+    dropAside,
     adopt(draft) { if (draft.origin) lineage = draft.origin; },
     write(key, body, now) {
       if (!writeDraft(store, key, body, now, lineage)) return false;

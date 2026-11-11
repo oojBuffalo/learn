@@ -47,9 +47,6 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  // A first save that couldn't store its newer text under the new row leaves its old draft; the next save that
-  // stores or saves this editor's text clears it.
-  const leftover = useRef<string | null>(null);
   const slot = draftKey("explanation", id ?? recoveryId ?? "new");
   const draft = useDraft(slot, saved?.body ?? null, body);
   const dirty = saved !== null && (body !== saved.body || confidence !== saved.confidence || encodeTarget(target) !== encodeTarget(saved.target));
@@ -174,11 +171,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       }
       if (creating && (settled || moved) && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
       if (creating && (settled || moved) && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
-      if (creating && !settled && !moved) leftover.current = slot;
-      else if (!creating && (settled || moved) && leftover.current !== null) {
-        if (ownsDraft(leftover.current)) drafts.clear(leftover.current);
-        leftover.current = null;
-      }
+      // Until this editor next stores or clears its draft, the old one keeps the text the new row's key couldn't.
+      if (creating && !settled && !moved) drafts.setAside(slot);
       if (!mounted.current) return;
       draft.dismiss();
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);

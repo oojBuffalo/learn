@@ -115,6 +115,19 @@ it("an editor's latest write or clear anywhere puts older discards of its text b
   expect(late.dropped(k, "Base more")).toBe(false); expect(late.dropped("study.draft.note.8", "Base more")).toBe(false);
 });
 
+it("a draft set aside goes when the editor next stores or clears another draft, unless another editor replaced it", () => {
+  const s = mem(); const session = draftSession(s, at(0)); const row = "study.draft.note.3";
+  session.write(k, "Older text", at(1)); session.setAside(k);
+  session.write(row, "Older text", at(2)); expect(readDraft(s, k)).toBeNull();
+  session.write(k, "Older text", at(3)); session.setAside(k); session.clear(row, at(4)); expect(readDraft(s, k)).toBeNull();
+  session.write(k, "Older text", at(5)); session.setAside(k); session.dropAside(); expect(readDraft(s, k)).toBeNull();
+  session.write(k, "Older text", at(6)); session.setAside(k); draftSession(s).write(k, "Another tab", at(7));
+  session.write(row, "Newer", at(8)); expect(readDraft(s, k)?.body).toBe("Another tab");
+  // Storing the set-aside key itself settles it, so a later clear elsewhere keeps that text.
+  session.write(k, "Moved back", at(9)); session.setAside(k); session.write(k, "Moved back", at(10)); session.clear(row, at(11));
+  expect(readDraft(s, k)?.body).toBe("Moved back");
+});
+
 it("keeps each key's 20 newest discards from the last week, untouched by discards under other keys, and ignores a corrupt list", () => {
   const s = mem(); const session = draftSession(s, at(0));
   recordDiscard(s, k, { body: "Kept a long time" }, at(1));

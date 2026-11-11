@@ -1718,3 +1718,35 @@ for (const kind of ["note", "explanation"] as const) {
     expect(await storedBody(page, fresh)).toBeNull();
   });
 }
+
+for (const [kind, ending] of [["note", "revert"], ["explanation", "revert"], ["note", "delete"]] as const) {
+  test(`a first ${kind} save that can’t store newer text under the new row clears its old draft on a ${ending}`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    const { full } = await fillableDrafts(page);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() === "POST") await held; await route.continue();
+    });
+    const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("First");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" more");
+    expect(await storedBody(page, fresh)).toBe("First more");
+    await full(true); release(); await created; await expect(page).toHaveURL(new RegExp(`${w.base}/\\d+$`));
+    await expect(page.getByRole("status")).toHaveText("Unsaved changes");
+    expect(await storedBody(page, fresh)).toBe("First more");
+    await full(false);
+    if (ending === "revert") {
+      await editor.fill("First");
+      await expect(page.getByRole("status")).toHaveText(kind === "explanation" ? "Saved. Rated 4 · Solid." : "Saved");
+    } else {
+      await page.getByRole("button", { name: "Delete", exact: true }).click();
+      await page.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+      await expect(page).toHaveURL(/\/notes$/);
+    }
+    expect(await storedBody(page, fresh)).toBeNull();
+  });
+}

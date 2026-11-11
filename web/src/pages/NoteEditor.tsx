@@ -46,9 +46,6 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  // A first save that couldn't store its newer text under the new row leaves its old draft; the next save that
-  // stores or saves this editor's text clears it.
-  const leftover = useRef<string | null>(null);
   const slot = draftKey("note", id ?? recoveryId ?? "new");
   const draft = useDraft(slot, saved?.body ?? null, body);
   const dirty = saved !== null && (body !== saved.body || encodeTarget(target) !== encodeTarget(saved.target));
@@ -159,11 +156,8 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       }
       if (creating && (settled || moved) && recoveryId !== null && ownsDraft(draftKey("note", recoveryId))) drafts.clear(draftKey("note", recoveryId));
       if (creating && (settled || moved) && ownsDraft(draftKey("note", "new"))) drafts.clear(draftKey("note", "new"));
-      if (creating && !settled && !moved) leftover.current = slot;
-      else if (!creating && (settled || moved) && leftover.current !== null) {
-        if (ownsDraft(leftover.current)) drafts.clear(leftover.current);
-        leftover.current = null;
-      }
+      // Until this editor next stores or clears its draft, the old one keeps the text the new row's key couldn't.
+      if (creating && !settled && !moved) drafts.setAside(slot);
       if (!mounted.current) return;
       draft.dismiss();
       setId(note.id); setSaved(sent); setOrphaned(note.orphaned);
@@ -195,6 +189,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       // Text deleted with the note is recorded as discarded, so a late save never brings it back.
       const deleted = readDraft(browserDraftStore(), slot);
       if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(browserDraftStore(), slot, deleted, new Date()); }
+      draft.session.dropAside();
       if (mounted.current) navigate("/notes");
     } catch (e) {
       if (mounted.current) { setConfirming(false); setError(`This note wasn’t deleted (${message(e)}).`); }
