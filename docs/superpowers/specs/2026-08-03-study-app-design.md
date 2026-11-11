@@ -349,6 +349,13 @@ Every mode makes you *do* something with the material:
   Write/Preview keeps the entered text intact. Local drafts can be restored after
   leaving an editor; failed saves preserve the text. Typing during a save remains
   unsaved and in the draft, even when the editor is left before that save finishes.
+  Drafts live in this browser: one per note, plus one for a new note. The newest
+  editor's text wins. A save that settles late never overwrites another editor's
+  draft, and never brings back text that another editor discarded or deleted. When a
+  note is deleted elsewhere, its unsaved text moves to the new-note draft. If that
+  draft holds other text, the text stays under the deleted note, and Notes lists it
+  under **Kept drafts** with Restore (opens it as a new note) and Discard.
+  Explanations follow the same draft rules.
   A first save keeps the editor mounted and focused. Bodies are validated before
   saving, rather than truncated by a textarea length limit. The notes list has a
   search box that combines with its package/lesson, standalone and removed-content
