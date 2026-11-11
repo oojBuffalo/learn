@@ -66,6 +66,7 @@ All routes are under `/api`:
 - `GET /explanations` — all explanations; `?revisit=1` returns revisit prompts only.
 - `POST /explanations` — explain a lesson with a 1–5 confidence rating.
 - `GET/PATCH /explanations/:id` — read or edit an explanation; no individual delete route.
+- `POST /explanations/:id/dismiss` — hide a revisit prompt until a new low rating; 409 if the explanation isn't one.
 - `GET /maintenance/orphans` — per-package counts of retained state on removed content.
 - `POST /maintenance/orphans/purge` — purge confirmed orphan counts; writing requires opt-in and changed counts return 409 with no deletion.
 
