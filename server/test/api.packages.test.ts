@@ -119,6 +119,23 @@ describe("package routes", () => {
     expect(db.prepare("SELECT COUNT(*) n FROM lessons").get()).toMatchObject({ n: 0 });
     expect(db.prepare("SELECT COUNT(*) n FROM card_state").get()).toMatchObject({ n: 1 });
   });
+
+  it("404s a delete of an unknown or already-deleted package and writes nothing", async () => {
+    await importGood();
+    const content = () => db.prepare(
+      "SELECT (SELECT COUNT(*) FROM packages) p, (SELECT COUNT(*) FROM lessons) l, (SELECT COUNT(*) FROM assets) a",
+    ).get();
+    const notFound = { error: { code: "not_found", message: "unknown package" } };
+    const unknown = await app.request("/api/packages/nope", { method: "DELETE" });
+    expect(unknown.status).toBe(404);
+    expect(await unknown.json()).toEqual(notFound);
+    expect(content()).toEqual({ p: 1, l: 1, a: 1 });
+    expect((await app.request("/api/packages/demo", { method: "DELETE" })).status).toBe(204);
+    expect(content()).toEqual({ p: 0, l: 0, a: 0 });
+    const again = await app.request("/api/packages/demo", { method: "DELETE" });
+    expect(again.status).toBe(404);
+    expect(await again.json()).toEqual(notFound);
+  });
 });
 
 describe("package summaries", () => {

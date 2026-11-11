@@ -6,6 +6,7 @@ import { importPackage } from "../importer.js";
 import { exportPackage } from "../exporter.js";
 import { listGames, listQuizzes } from "../content.js";
 import { attemptStats } from "../attemptLog.js";
+import { apiError } from "../http.js";
 
 interface QuizSummary {
   id: string;
@@ -90,7 +91,8 @@ export function packageRoutes() {
   });
 
   r.delete("/:id", (c) => {
-    c.get("db").prepare("DELETE FROM packages WHERE id = ?").run(c.req.param("id"));
+    const { changes } = c.get("db").prepare("DELETE FROM packages WHERE id = ?").run(c.req.param("id"));
+    if (changes === 0) return apiError(c, 404, "not_found", "unknown package");
     return c.body(null, 204);
   });
 
