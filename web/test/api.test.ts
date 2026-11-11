@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, isStale, getQuiz, getGame, checkMove, submitQuiz, submitGame, listAttempts, listExplanations, updateNote, createNote, setProgress, deleteNote, purgeOrphans } from "../src/api.js";
+import { ApiError, isStale, getQuiz, getGame, checkMove, submitQuiz, submitGame, listAttempts, listExplanations, dismissExplanation, updateNote, createNote, setProgress, deleteNote, purgeOrphans } from "../src/api.js";
 import type { GameSubmission, QuizSubmission } from "@study/shared";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -54,4 +54,9 @@ it("surfaces a stale purge as orphans_changed", async () => {
   vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => new Response(JSON.stringify({ error: { code: "orphans_changed", message: "m" } }), { status: 409 })));
   const req = { packageId: "p", includeWriting: false, expected: { cardState: 0, reviewLog: 0, attempts: 0, lessonProgress: 0, notes: 0, explanations: 0 } };
   await expect(purgeOrphans(req)).rejects.toBeInstanceOf(ApiError); await expect(purgeOrphans(req)).rejects.toMatchObject({ code: "orphans_changed" });
+});
+it("dismisses a revisit prompt with a bodiless POST", async () => {
+  const explanation = { id: 4, revisit: false };
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ explanation }))); vi.stubGlobal("fetch", fetch);
+  expect(await dismissExplanation(4)).toEqual(explanation); expect(fetch).toHaveBeenCalledWith("/api/explanations/4/dismiss", { method: "POST" });
 });

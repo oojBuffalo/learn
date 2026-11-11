@@ -47,6 +47,12 @@ it("HomeView links each revisit to explaining again and rereading", () => {
   expect(out).toContain('href="/lesson/p/l1"');
   expect(out).toContain("2 · Shaky");
 });
+it("HomeView offers a Dismiss button named for each shown revisit prompt", () => {
+  const out = home({ revisit });
+  expect(out.match(/>Dismiss</g)).toHaveLength(5);
+  for (let i = 1; i <= 5; i++) expect(out).toContain(`aria-label="Dismiss revisit prompt for Lesson ${i}"`);
+  expect(out).not.toContain("Dismiss revisit prompt for Lesson 6");
+});
 it("HomeView preserves independently loaded sections after a failure", () => {
   const out = home({ due: null, packages: null, revisit: [], failed: true });
   expect(out).toContain('role="alert"');

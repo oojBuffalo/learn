@@ -205,6 +205,28 @@ test("Home recounts due cards after a failed count", async ({ page, request }) =
   expect(gets).toBe(4);
 });
 
+test("Home dismisses a revisit prompt until a new low rating", async ({ page, request }) => {
+  const explain = async (confidence: number) => expect((await request.post("/api/explanations", { data: {
+    packageId: PKG, lessonId: LESSON, body: "Recall, roughly.", confidence,
+  } })).status()).toBe(201);
+  await explain(2);
+  await page.goto("/");
+  const revisit = page.getByRole("region", { name: "Revisit" });
+  await expect(revisit).toContainText("Active Recall");
+  await revisit.evaluate((el) => el.setAttribute("data-probe", "kept"));
+  await revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true }).click();
+  await expect(revisit).not.toContainText("Active Recall");
+  await expect(revisit).toContainText("anything you rate 1 or 2 comes back here");
+  await expect(revisit).toHaveAttribute("data-probe", "kept");
+  await page.reload();
+  await expect(revisit).toContainText("anything you rate 1 or 2 comes back here");
+  await expect(revisit).not.toContainText("Active Recall");
+  await explain(1);
+  await page.reload();
+  await expect(revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true })).toBeVisible();
+  await explain(4);
+});
+
 test("Leftover progress clears progress, spares writing, and a re-import restores it", async ({ page, request }) => {
   let zip: Buffer | null = null;
   try {

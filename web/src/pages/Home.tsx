@@ -5,9 +5,32 @@ import { listExplanations, listPackages } from "../api.js";
 import type { PackageSummary } from "../api.js";
 import { useDue } from "../App.js";
 import { ConfidenceChip } from "../components/ConfidencePicker.js";
+import DismissRevisit from "../components/DismissRevisit.js";
 import { formatDay } from "../format.js";
 import { lessonsInProgress } from "../home.js";
 import { filterSearch } from "../listFilter.js";
+
+/**
+ * Lists the first five revisit prompts and drops each one the user dismisses.
+ * Args:
+ *   prompts: The revisit prompts, lowest confidence first.
+ * Returns:
+ *   The prompt rows and overflow link, or the empty state once none remain.
+ * Raises:
+ *   None.
+ */
+function RevisitPrompts({ prompts }: { prompts: Explanation[] }) {
+  const [dismissed, setDismissed] = useState<number[]>([]);
+  const shown = prompts.filter((row) => !dismissed.includes(row.id));
+  if (shown.length === 0) return <div className="sheet-head"><p className="note">Explain a lesson in your own words — anything you rate 1 or 2 comes back here.</p><Link to="/notes/explain/new">Explain a lesson</Link></div>;
+  return <><ul className="notes-list">{shown.slice(0, 5).map((row) => <li className="notes-row" key={row.id}>
+    <strong>{row.lessonTitle ?? row.lessonId}</strong><div className="actions"><ConfidenceChip confidence={row.confidence} /><span className="meta">{`explained ${formatDay(row.createdAt)}`}</span></div>
+    <div className="actions"><Link className="btn btn-primary" to={`/notes/explain/new${filterSearch({ kind: "package", packageId: row.packageId, lessonId: row.lessonId })}`}>Explain again</Link>
+      <Link className="link-btn" to={`/lesson/${row.packageId}/${row.lessonId}`}>Reread</Link>
+      <DismissRevisit explanation={row} onDismissed={() => setDismissed((ids) => [...ids, row.id])} /></div>
+  </li>)}</ul>
+  {shown.length > 5 && <div className="sheet-foot"><Link to="/notes?tab=explanations&revisit=1">{`+${shown.length - 5} more`}</Link></div>}</>;
+}
 
 export function HomeView({ today, due, dueLoading, dueRetrying, packages, revisit, failed, onRetry, onRetryDue }: {
   today: Date; due: number | null; dueLoading: boolean; dueRetrying: boolean; packages: PackageSummary[] | null;
@@ -40,13 +63,7 @@ export function HomeView({ today, due, dueLoading, dueRetrying, packages, revisi
       </section>
       <section className="sheet" aria-labelledby="home-revisit"><div className="sheet-head"><h2 id="home-revisit">Revisit</h2></div>
         {revisit === null ? <div className="sheet-head"><p className={failed ? "note" : "loading"}>{failed ? "Couldn’t load your revisit prompts." : "Loading…"}</p></div>
-          : revisit.length === 0 ? <div className="sheet-head"><p className="note">Explain a lesson in your own words — anything you rate 1 or 2 comes back here.</p><Link to="/notes/explain/new">Explain a lesson</Link></div>
-            : <ul className="notes-list">{revisit.slice(0, 5).map((row) => <li className="notes-row" key={row.id}>
-              <strong>{row.lessonTitle ?? row.lessonId}</strong><div className="actions"><ConfidenceChip confidence={row.confidence} /><span className="meta">{`explained ${formatDay(row.createdAt)}`}</span></div>
-              <div className="actions"><Link className="btn btn-primary" to={`/notes/explain/new${filterSearch({ kind: "package", packageId: row.packageId, lessonId: row.lessonId })}`}>Explain again</Link>
-                <Link className="link-btn" to={`/lesson/${row.packageId}/${row.lessonId}`}>Reread</Link></div>
-            </li>)}</ul>}
-        {revisit !== null && revisit.length > 5 && <div className="sheet-foot"><Link to="/notes?tab=explanations&revisit=1">{`+${revisit.length - 5} more`}</Link></div>}
+          : <RevisitPrompts prompts={revisit} />}
       </section>
     </div>
   </div>;

@@ -93,5 +93,6 @@ export const listExplanations = (opts: { revisit?: boolean } = {}) => req<{ expl
 export const getExplanation = (id: number) => req<{ explanation: Explanation }>(`/api/explanations/${id}`).then((r) => r.explanation);
 export const createExplanation = (input: ExplanationCreate) => req<{ explanation: Explanation }>("/api/explanations", json(input)).then((r) => r.explanation);
 export const updateExplanation = (id: number, patch: ExplanationPatch) => req<{ explanation: Explanation }>(`/api/explanations/${id}`, json(patch, "PATCH")).then((r) => r.explanation);
+export const dismissExplanation = (id: number) => req<{ explanation: Explanation }>(`/api/explanations/${id}/dismiss`, { method: "POST" }).then((r) => r.explanation);
 export const getOrphans = () => req<{ packages: OrphanGroup[] }>("/api/maintenance/orphans").then((r) => r.packages);
 export const purgeOrphans = (input: PurgeOrphansRequest) => req<{ purged: OrphanCounts }>("/api/maintenance/orphans/purge", json(input)).then((r) => r.purged);
