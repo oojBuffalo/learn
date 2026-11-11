@@ -24,7 +24,7 @@ const field = (header: Buffer, start: number, length: number) => header.subarray
 it("writes ustar headers that the system tar lists, with byte sizes", () => {
   expect(Buffer.byteLength(long)).toBe(100);
   expect(Buffer.byteLength(unicode)).toBeGreaterThan(unicode.length);
-  const lines = execFileSync("tar", ["-tvzf", "-"], { input: gzipSync(buildTar(ENTRIES)) }).toString("utf8").trimEnd().split("\n");
+  const lines = execFileSync("tar", ["-tvzf", "-"], { input: gzipSync(buildTar(ENTRIES)) }).toString("utf8").trimEnd().split(/\r?\n/);
   expect(lines).toHaveLength(ENTRIES.length);
   ENTRIES.forEach((entry, i) => {
     const line = lines[i]!;
