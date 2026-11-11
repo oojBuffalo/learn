@@ -1,11 +1,11 @@
 import Database from "better-sqlite3";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { backupDb } from "../src/backup.js";
 import { DEFAULT_DATA_DIR, openDb, resolveDefaultDataDir } from "../src/db.js";
+import { tempDir } from "./helpers.js";
 
 describe("openDb", () => {
   it("uses the repository data directory regardless of npm workspace cwd", () => {
@@ -13,7 +13,7 @@ describe("openDb", () => {
   });
 
   it("keeps using a legacy workspace database when no repository database exists", () => {
-    const dir = mkdtempSync(join(tmpdir(), "study-"));
+    const dir = tempDir();
     const preferred = join(dir, "preferred");
     const legacy = join(dir, "legacy");
     mkdirSync(legacy);
@@ -26,7 +26,7 @@ describe("openDb", () => {
   });
 
   it("creates the schema idempotently with WAL on", () => {
-    const dir = mkdtempSync(join(tmpdir(), "study-"));
+    const dir = tempDir();
     const db = openDb(dir);
     const tables = db
       .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
@@ -42,7 +42,7 @@ describe("openDb", () => {
   });
 
   it("creates a complete backup while the WAL database remains open", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "study-"));
+    const dir = tempDir();
     const db = openDb(join(dir, "live"));
     db.prepare("INSERT INTO packages (id, manifest, imported_at) VALUES (?, ?, ?)")
       .run("demo", JSON.stringify({ id: "demo" }), "2026-08-06T00:00:00.000Z");
@@ -57,7 +57,7 @@ describe("openDb", () => {
   });
 
   it("migrates legacy content rows to explicit package order", () => {
-    const dir = mkdtempSync(join(tmpdir(), "study-"));
+    const dir = tempDir();
     const legacy = new Database(join(dir, "study.db"));
     legacy.exec(`
       CREATE TABLE packages (id TEXT PRIMARY KEY, manifest TEXT NOT NULL, imported_at TEXT NOT NULL);
@@ -84,7 +84,7 @@ describe("openDb", () => {
 });
 
 it("adds the Stage 3 tables to an existing database and enforces their checks", () => {
-  const dir = mkdtempSync(join(tmpdir(), "study-"));
+  const dir = tempDir();
   const legacy = new Database(join(dir, "study.db"));
   legacy.exec("CREATE TABLE packages (id TEXT PRIMARY KEY, manifest TEXT NOT NULL, imported_at TEXT NOT NULL); INSERT INTO packages VALUES ('demo', '{}', '2026-10-01');");
   legacy.close();
@@ -101,7 +101,7 @@ it("adds the Stage 3 tables to an existing database and enforces their checks", 
 });
 
 it("adds the attempts history index to a Stage 1 database, idempotently", () => {
-  const dir = mkdtempSync(join(tmpdir(), "study-"));
+  const dir = tempDir();
   const legacy = new Database(join(dir, "study.db"));
   legacy.exec(`CREATE TABLE attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, package_id TEXT NOT NULL,
       kind TEXT NOT NULL CHECK (kind IN ('exercise','quiz','game')), ref_id TEXT, item_id TEXT,

@@ -1,15 +1,12 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
-import { openDb, type Db } from "../src/db.js";
-import { GOOD_FILES, makeZip } from "./helpers.js";
+import type { Db } from "../src/db.js";
+import { GOOD_FILES, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
 beforeEach(async () => {
-  db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+  db = freshDb();
   app = createApp(db);
   await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(GOOD_FILES)) });
 });
