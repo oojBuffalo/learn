@@ -1256,3 +1256,50 @@ test("Kept drafts are checked again when Notes retries and when another tab keep
   await expect(kept.locator(".kept-row").filter({ hasText: "Kept in another tab" })).toBeVisible();
   await other.close();
 });
+
+test("Kept drafts lists text that a late save keeps after Notes opened", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Late gone note", target: null } })).json()).note.id;
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH") await held; await route.continue();
+  });
+  await page.goto("/library");
+  await page.evaluate(() => localStorage.setItem("study.draft.note.new", JSON.stringify({ body: "Unrelated new writing", at: new Date().toISOString() })));
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Late gone note");
+  await editor.fill("Late gone note, edited"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  const checked = page.waitForResponse((r) => r.request().method() === "GET" && new URL(r.url()).pathname === `/api/notes/${id}`);
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Notes", exact: true }).click();
+  expect((await checked).status()).toBe(200);
+  const kept = page.getByRole("region", { name: "Kept drafts" }); await expect(kept).toHaveCount(0);
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect(kept.locator(".kept-row").filter({ hasText: "Late gone note, edited" })).toBeVisible();
+  expect(await storedBody(page, "study.draft.note.new")).toBe("Unrelated new writing");
+});
+
+test("a Kept drafts check that finishes after a Discard keeps the draft gone", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Checked late", target: null } })).json()).note.id;
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  const key = `study.draft.note.${id}`;
+  const touches = await watchDraft(page, key);
+  await page.goto("/library");
+  await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Discarded during a check", at: new Date().toISOString() })), key);
+  let gets = 0; let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "GET" && ++gets === 2) await held; await route.continue();
+  });
+  await page.goto("/notes");
+  const kept = page.getByRole("region", { name: "Kept drafts" });
+  await expect(kept.locator(".kept-row").filter({ hasText: "Discarded during a check" })).toBeVisible();
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await expect.poll(() => gets).toBe(2);
+  await kept.getByRole("button", { name: "Discard", exact: true }).click(); await expect(kept).toHaveCount(0);
+  expect(await storedBody(page, key)).toBeNull();
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "GET" && new URL(r.url()).pathname === `/api/notes/${id}`);
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(touches).toBeGreaterThan(before);
+  await expect(kept).toHaveCount(0);
+});

@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError, getExplanation, getNote } from "../api.js";
-import { browserDraftStore, clearDraft, draftKey, readDraft, recordDiscard, restoreState, rowDrafts } from "../drafts.js";
+import { browserDraftStore, clearDraft, draftKey, DRAFTS_CHANGED, readDraft, recordDiscard, restoreState, rowDrafts } from "../drafts.js";
 import type { Draft, DraftKind } from "../drafts.js";
 import { headline, message } from "../text.js";
 
@@ -29,8 +29,8 @@ export function KeptDraftsView({ kind, drafts, error, onRestore, onDiscard, onRe
 
 /**
  * Drafts whose note or explanation is gone, so no editor would offer them; text there is kept until restored or
- * discarded. The list is checked again when Notes retries, when this tab becomes visible and when another tab
- * adds or removes a draft.
+ * discarded. The list is checked again when Notes retries, when this tab becomes visible, when another tab adds or
+ * removes a draft and when a late save here moves one.
  */
 export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refreshKey: number }) {
   const navigate = useNavigate();
@@ -42,8 +42,10 @@ export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refr
     const visible = () => { if (document.visibilityState === "visible") again(); };
     // Typing in another tab rewrites a draft; only a draft that appears or goes away changes this list.
     const changed = (e: StorageEvent) => { if (e.key === null || (e.key.startsWith("study.draft.") && (e.oldValue === null || e.newValue === null))) again(); };
-    document.addEventListener("visibilitychange", visible); window.addEventListener("storage", changed);
-    return () => { document.removeEventListener("visibilitychange", visible); window.removeEventListener("storage", changed); };
+    document.addEventListener("visibilitychange", visible); window.addEventListener("storage", changed); window.addEventListener(DRAFTS_CHANGED, again);
+    return () => {
+      document.removeEventListener("visibilitychange", visible); window.removeEventListener("storage", changed); window.removeEventListener(DRAFTS_CHANGED, again);
+    };
   }, []);
   useEffect(() => {
     let live = true;
@@ -53,7 +55,12 @@ export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refr
       (e: unknown) => e instanceof ApiError && e.code === "not_found" ? { draft, error: null } : { draft: null, error: message(e) })))
       .then((found) => {
         if (!live) return;
-        setKept({ kind, drafts: found.flatMap((f) => f.draft ? [f.draft] : []), error: found.find((f) => f.error !== null)?.error ?? null });
+        // A draft discarded, restored or rewritten while its row was being looked up shows as it is now.
+        const drafts = found.flatMap((f) => {
+          const current = f.draft && readDraft(store, draftKey(kind, f.draft.id));
+          return f.draft && current ? [{ id: f.draft.id, ...current }] : [];
+        });
+        setKept({ kind, drafts, error: found.find((f) => f.error !== null)?.error ?? null });
       });
     return () => { live = false; };
   }, [kind, store, refreshKey, checks]);

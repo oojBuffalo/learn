@@ -55,6 +55,9 @@ export function restoredDraftId(state: unknown): number | null {
   return typeof id === "number" && Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
+/** Fired on this window when an editor stores or removes a draft; other tabs get a `storage` event instead. */
+export const DRAFTS_CHANGED = "study:drafts-changed";
+const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(new Event(DRAFTS_CHANGED)); };
 const DISCARDS = "study.draft.discarded";
 type Discard = { key: string; text: string; at: string };
 // Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
@@ -94,8 +97,8 @@ export interface DraftSession {
 export function draftSession(store: DraftStore, started = new Date()): DraftSession {
   const last = new Map<string, { body: string | null; at: string }>();
   return {
-    write(key, body, now) { if (writeDraft(store, key, body, now)) last.set(key, { body, at: now.toISOString() }); },
-    clear(key, now = new Date()) { if (clearDraft(store, key)) last.set(key, { body: null, at: now.toISOString() }); },
+    write(key, body, now) { if (writeDraft(store, key, body, now)) { last.set(key, { body, at: now.toISOString() }); changed(); } },
+    clear(key, now = new Date()) { if (clearDraft(store, key)) { last.set(key, { body: null, at: now.toISOString() }); changed(); } },
     owns(key, holding) {
       const stored = readDraft(store, key);
       const mine = last.get(key);
