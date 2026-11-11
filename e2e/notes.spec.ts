@@ -1608,3 +1608,79 @@ for (const kind of ["note", "explanation"] as const) {
     await other.close();
   });
 }
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a late first ${kind} save keeps newer text when another tab discards the older stored revision`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    // Lets the test make this page's draft writes fail, as a full storage quota would, and counts draft storage calls.
+    await page.addInitScript(() => {
+      const win = window as unknown as { draftsFull: boolean; touches: number }; win.draftsFull = false; win.touches = 0;
+      const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+      for (const name of ["getItem", "setItem", "removeItem"]) {
+        const original = proto[name]!;
+        proto[name] = function (this: Storage, ...args: unknown[]) {
+          if (typeof args[0] === "string" && args[0].startsWith("study.draft.")) {
+            win.touches += 1;
+            if (name === "setItem" && win.draftsFull) throw new DOMException("full", "QuotaExceededError");
+          }
+          return original.apply(this, args);
+        };
+      }
+    });
+    const touches = () => page.evaluate(() => (window as unknown as { touches: number }).touches);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() === "POST") await held; await route.continue();
+    });
+    const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("Stored text");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await page.evaluate(() => { (window as unknown as { draftsFull: boolean }).draftsFull = true; });
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" and newer text");
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+    expect(await storedBody(page, fresh)).toBe("Stored text");
+    const other = await page.context().newPage();
+    await other.goto(w.fresh); await other.getByRole("button", { name: "Discard", exact: true }).click();
+    expect(await storedBody(other, fresh)).toBeNull();
+    await page.evaluate(() => { (window as unknown as { draftsFull: boolean }).draftsFull = false; });
+    const before = await touches();
+    release(); const id = (await (await created).json())[kind].id;
+    await expect.poll(touches).toBeGreaterThan(before);
+    expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Stored text and newer text");
+    await other.close();
+  });
+
+  test(`a late first ${kind} save keeps text typed again after another tab discarded it`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    const touches = await watchDraft(page, "study.draft.");
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() === "POST") await held; await route.continue();
+    });
+    const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("Base");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" more");
+    const other = await page.context().newPage();
+    await other.goto(w.fresh); await other.getByRole("button", { name: "Discard", exact: true }).click();
+    expect(await storedBody(other, fresh)).toBeNull();
+    // Typed again on purpose after the Discard: newer than it, so it is kept.
+    await editor.fill("Base"); await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" more");
+    expect(await storedBody(page, fresh)).toBe("Base more");
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+    const before = await touches();
+    release(); const id = (await (await created).json())[kind].id;
+    await expect.poll(touches).toBeGreaterThan(before);
+    expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Base more");
+    expect(await storedBody(page, fresh)).toBeNull();
+    await other.close();
+  });
+}

@@ -113,8 +113,9 @@ export interface DraftSession {
   /** The key is empty, or holds `holding` or the text this editor last stored there. */
   owns(key: string, holding: string): boolean;
   /**
-   * Since this editor last wrote or cleared the key, the user discarded `holding` there (or deleted it with its note),
-   * or removed a draft of this editor's origin under any key of its kind, where another editor may have moved it.
+   * Since this editor last wrote or cleared any draft, the user discarded `holding` under the key (or deleted it with
+   * its note), or removed `holding` in a draft of this editor's origin under any key of its kind, where another
+   * editor may have moved it.
    */
   dropped(key: string, holding: string): boolean;
 }
@@ -122,13 +123,16 @@ const newOrigin = () => `${Date.now().toString(36)}-${Math.random().toString(36)
 export function draftSession(store: DraftStore, started = new Date(), origin = newOrigin()): DraftSession {
   const last = new Map<string, { body: string | null; at: string }>();
   let lineage = origin;
+  // Every write stores the editor's current text, so its latest write or clear anywhere is when it last stood by it.
+  let latest = started.toISOString();
+  const acted = (key: string, body: string | null, now: Date) => { last.set(key, { body, at: now.toISOString() }); latest = now.toISOString(); changed(); };
   return {
     adopt(draft) { if (draft.origin) lineage = draft.origin; },
     write(key, body, now) {
       if (!writeDraft(store, key, body, now, lineage)) return false;
-      last.set(key, { body, at: now.toISOString() }); changed(); return true;
+      acted(key, body, now); return true;
     },
-    clear(key, now = new Date()) { if (clearDraft(store, key)) { last.set(key, { body: null, at: now.toISOString() }); changed(); } },
+    clear(key, now = new Date()) { if (clearDraft(store, key)) acted(key, null, now); },
     owns(key, holding) {
       const stored = readDraft(store, key);
       const mine = last.get(key);
@@ -136,14 +140,15 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     },
     // An emptied key alone proves nothing: another editor that restored and saved this text clears it too, and this
     // editor's late request may since have overwritten that save. Only a recorded Discard or delete counts.
-    // The same words discarded under another row are a different draft; only the origin follows a move.
+    // The same words discarded under another row are a different draft, and an older revision of this editor's
+    // draft is not its current text; across keys only this origin's current words count.
     dropped(key, holding) {
-      const since = last.get(key)?.at ?? started.toISOString(); const text = fingerprint(holding);
-      if (readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > since)) return true;
+      const text = fingerprint(holding);
+      if (readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > latest)) return true;
       const kind = discardsKey(key.slice(0, key.lastIndexOf(".") + 1));
       const keys: string[] = [];
       try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(kind)) keys.push(k); } } catch { /* None to read. */ }
-      return keys.some((k) => readDiscards(store, k).some((d) => d.origin === lineage && d.at > since));
+      return keys.some((k) => readDiscards(store, k).some((d) => d.origin === lineage && d.text === text && d.at > latest));
     },
   };
 }

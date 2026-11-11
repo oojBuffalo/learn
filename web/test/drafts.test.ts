@@ -98,12 +98,21 @@ it("a session counts a removed draft of its origin under any key of its kind, bu
   recordDiscard(s, "study.draft.note.new", { body: "Unrelated", origin: "origin-c" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
   recordDiscard(s, "study.draft.note.9", { body: "Moved text" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
   recordDiscard(s, "study.draft.explanation.new", { body: "Moved text", origin: "origin-a" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.note.new", { body: "Older revision", origin: "origin-a" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
   recordDiscard(s, "study.draft.note.new", { body: "Moved text", origin: "origin-a" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(true);
   late.write(key, "Moved text", at(4)); expect(late.dropped(key, "Moved text")).toBe(false);
   // A draft that never had an origin, stored before origins existed, is matched by its words under its own key only.
   s.setItem("study.draft.note.7", JSON.stringify({ body: "Old", at: at(1).toISOString() })); expect(readDraft(s, "study.draft.note.7")).toEqual({ body: "Old", at: at(1).toISOString() });
   const restored = draftSession(s, at(0)); restored.adopt(readDraft(s, "study.draft.note.7")!);
   restored.write("study.draft.note.7", "Old", at(5)); expect(readDraft(s, "study.draft.note.7")?.origin).toMatch(/.+/);
+});
+
+it("an editor's latest write or clear anywhere puts older discards of its text behind it, for every key", () => {
+  const s = mem(); const late = draftSession(s, at(0), "origin-a");
+  late.write(k, "Base more", at(1)); recordDiscard(s, k, { body: "Base more", origin: "origin-a" }, at(2));
+  expect(late.dropped(k, "Base more")).toBe(true); expect(late.dropped("study.draft.note.8", "Base more")).toBe(true);
+  late.write(k, "Base", at(3)); late.write(k, "Base more", at(4));
+  expect(late.dropped(k, "Base more")).toBe(false); expect(late.dropped("study.draft.note.8", "Base more")).toBe(false);
 });
 
 it("keeps each key's 20 newest discards from the last week, untouched by discards under other keys, and ignores a corrupt list", () => {
@@ -134,9 +143,10 @@ it("a discard removes week-old discard records under every key and keeps recent 
 it("discarding older text spares newer text whose write failed", () => {
   const s = mem(); let full = false;
   const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };
-  const late = draftSession(store, at(0)); const other = draftSession(s, at(0));
+  const late = draftSession(store, at(0), "origin-late"); const other = draftSession(s, at(0));
   late.write(k, "Stored", at(1)); full = true; late.write(k, "Stored and more", at(2));
-  recordDiscard(s, k, { body: "Stored" }, at(3)); other.clear(k, at(3));
+  // Discard records the removed draft's origin, as the editor's Discard does.
+  other.clear(k, at(3)); recordDiscard(s, k, { body: "Stored", origin: "origin-late" }, at(3));
   expect(late.dropped(k, "Stored and more")).toBe(false); expect(late.owns(k, "Stored and more")).toBe(true);
   expect(late.dropped(k, "Stored")).toBe(true);
 });
