@@ -1,19 +1,27 @@
-import { expect, it } from "vitest";
-import { browserDraftStore, clearDraft, draftKey, readDraft, writeDraft } from "../src/drafts.js";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { browserDraftStore, clearDraft, draftKey, draftSession, readDraft, recordDiscard, restoreState, restoredDraftId, rowDrafts, writeDraft } from "../src/drafts.js";
 import type { DraftStore } from "../src/drafts.js";
 function mem(): DraftStore {
   const values = new Map<string, string>();
-  return { getItem: (k) => values.get(k) ?? null, setItem: (k, v) => { values.set(k, v); }, removeItem: (k) => { values.delete(k); } };
+  return { get length() { return values.size; }, key: (i) => [...values.keys()][i] ?? null,
+    getItem: (k) => values.get(k) ?? null, setItem: (k, v) => { values.set(k, v); }, removeItem: (k) => { values.delete(k); } };
 }
-function broken(): DraftStore { const fail = () => { throw new Error("blocked"); }; return { getItem: fail, setItem: fail, removeItem: fail }; }
+function broken(): DraftStore {
+  const fail = () => { throw new Error("blocked"); };
+  return { get length(): number { return fail(); }, key: fail, getItem: fail, setItem: fail, removeItem: fail };
+}
 const k = "study.draft.note.new";
+// The tests' times are on 2026-10-22; "now" sits there too, so an editor's last write is never a week old by accident.
+beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(Date.UTC(2026, 9, 22, 12))); });
+afterEach(() => { vi.useRealTimers(); });
+const at = (minute: number) => new Date(Date.UTC(2026, 9, 22, 10, minute));
 it("draftKey format", () => {
   expect(draftKey("note", "new")).toBe(k); expect(draftKey("explanation", 7)).toBe("study.draft.explanation.7");
 });
 it("round-trips and clears a draft", () => {
-  const s = mem(); writeDraft(s, k, "body", new Date("2026-10-22T10:00:00.000Z"));
+  const s = mem(); expect(writeDraft(s, k, "body", new Date("2026-10-22T10:00:00.000Z"))).toBe(true);
   expect(readDraft(s, k)).toEqual({ body: "body", at: "2026-10-22T10:00:00.000Z" });
-  clearDraft(s, k); expect(readDraft(s, k)).toBeNull();
+  expect(clearDraft(s, k)).toBe(true); expect(readDraft(s, k)).toBeNull();
 });
 it("treats corrupt or foreign values as no draft", () => {
   const s = mem();
@@ -21,6 +29,216 @@ it("treats corrupt or foreign values as no draft", () => {
 });
 it("never throws on a broken store", () => {
   expect(readDraft(broken(), k)).toBeNull();
-  expect(() => writeDraft(broken(), k, "b", new Date())).not.toThrow(); expect(() => clearDraft(broken(), k)).not.toThrow();
+  expect(writeDraft(broken(), k, "b", new Date())).toBe(false); expect(clearDraft(broken(), k)).toBe(false);
+  expect(rowDrafts(broken(), "note")).toEqual([]);
+  const session = draftSession(broken());
+  expect(() => { session.write(k, "b", new Date()); session.clear(k); recordDiscard(broken(), k, { body: "b" }, new Date()); }).not.toThrow();
+  expect(session.owns(k, "b")).toBe(true); expect(session.dropped(k, "b")).toBe(false);
   expect(() => { const s = browserDraftStore(); s.setItem(k, "b"); s.getItem(k); s.removeItem(k); }).not.toThrow();
+});
+
+it("lists drafts kept under row ids, newest first, and keeps reading drafts stored before sessions existed", () => {
+  const s = mem();
+  s.setItem("study.draft.note.12", JSON.stringify({ body: "Older format draft", at: at(5).toISOString() }));
+  writeDraft(s, "study.draft.note.3", "Earlier", at(1)); writeDraft(s, k, "New slot", at(2));
+  writeDraft(s, "study.draft.explanation.4", "Other kind", at(3));
+  for (const key of ["study.draft.note.07", "study.draft.note.0", "study.draft.note.1x", "study.draft.note.99999999999999999999", "study.draft.note"]) writeDraft(s, key, "Not a row", at(4));
+  s.setItem("study.draft.note.8", "{not json"); s.setItem("unrelated", "x");
+  expect(rowDrafts(s, "note")).toEqual([
+    { id: 12, body: "Older format draft", at: at(5).toISOString() }, { id: 3, body: "Earlier", at: at(1).toISOString() }]);
+  expect(rowDrafts(s, "explanation")).toEqual([{ id: 4, body: "Other kind", at: at(3).toISOString() }]);
+});
+
+it("passes a kept draft's id to a new editor through navigation state", () => {
+  expect(restoredDraftId(restoreState(5))).toBe(5);
+  for (const state of [null, undefined, "5", {}, { restoreDraft: "5" }, { restoreDraft: 0 }, { restoreDraft: 1.5 }, { restoreDraft: 2 ** 60 }, { editorKey: "x" }]) {
+    expect(restoredDraftId(state)).toBeNull();
+  }
+});
+
+it("a session owns an empty key it never wrote, its own text and the text it holds, but not another editor's", () => {
+  const s = mem(); const mine = draftSession(s, at(0)); const other = draftSession(s, at(0));
+  expect(mine.owns(k, "Typed")).toBe(true);
+  mine.write(k, "Typed", at(1)); expect(mine.owns(k, "Typed")).toBe(true); expect(mine.owns(k, "Typed more")).toBe(true);
+  other.write(k, "Other text", at(2)); expect(mine.owns(k, "Typed more")).toBe(false); expect(mine.owns(k, "Other text")).toBe(true);
+  expect(mine.dropped(k, "Typed more")).toBe(false);
+});
+
+it("a session tells another editor's Discard from a clear by a save", () => {
+  const s = mem(); const late = draftSession(s, at(0)); const other = draftSession(s, at(0));
+  late.write(k, "Late text", at(1)); recordDiscard(s, k, { body: "Late text" }, at(2)); other.clear(k, at(2));
+  expect(late.dropped(k, "Late text")).toBe(true); expect(late.owns(k, "Late text")).toBe(true);
+  late.write(k, "Typed after the discard", at(3));
+  expect(late.dropped(k, "Typed after the discard")).toBe(false); expect(late.owns(k, "Typed after the discard")).toBe(true);
+  // Another editor restored this text and saved it; a late request from this editor may since have overwritten that save.
+  other.write(k, "Typed after the discard", at(4)); other.clear(k, at(5));
+  expect(late.dropped(k, "Typed after the discard")).toBe(false); expect(late.owns(k, "Typed after the discard")).toBe(true);
+});
+
+it("a session never brings back text the user discarded after its last write or clear", () => {
+  const s = mem(); const late = draftSession(s, at(0)); const other = draftSession(s, at(0));
+  // Discarded, then the slot was typed over: the late text is still the discarded one.
+  late.write(k, "Late text", at(1)); recordDiscard(s, k, { body: "Late text" }, at(2)); other.write(k, "Newer text", at(3));
+  expect(late.dropped(k, "Late text")).toBe(true); expect(late.dropped(k, "Late text, edited")).toBe(false);
+  expect(late.dropped("study.draft.note.4", "Late text")).toBe(false);
+  // This editor's own clear came first, then the same text was discarded in another tab.
+  const reverted = draftSession(s, at(0)); const key = "study.draft.note.9";
+  const openedBefore = draftSession(s, at(4));
+  reverted.clear(key, at(4)); other.write(key, "Original", at(5)); recordDiscard(s, key, { body: "Original" }, at(6)); other.clear(key, at(6));
+  const openedAfter = draftSession(s, at(7));
+  expect(reverted.owns(key, "Original")).toBe(true); expect(reverted.dropped(key, "Original")).toBe(true);
+  // A discard older than this editor's last action is history.
+  reverted.write(key, "Original", at(7)); reverted.clear(key, at(8));
+  expect(reverted.dropped(key, "Original")).toBe(false);
+  // An editor that never touched the key checks discards made since it opened.
+  expect(openedBefore.dropped(key, "Original")).toBe(true); expect(openedAfter.dropped(key, "Original")).toBe(false);
+});
+
+it("a session counts a removed draft of its origin under any key of its kind, but not the same words in another draft", () => {
+  const s = mem(); const late = draftSession(s, at(0), "origin-a"); const key = "study.draft.note.5";
+  late.write(key, "Moved text", at(1)); expect(readDraft(s, key)).toEqual({ body: "Moved text", at: at(1).toISOString(), origin: "origin-a" });
+  // Another editor restores it, moves it to the new draft and discards it there.
+  const other = draftSession(s, at(0), "origin-b"); other.adopt(readDraft(s, key)!, key);
+  other.write("study.draft.note.new", "Moved text", at(2)); expect(readDraft(s, "study.draft.note.new")?.origin).toBe("origin-a");
+  recordDiscard(s, "study.draft.note.new", { body: "Unrelated", origin: "origin-c" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.note.9", { body: "Moved text" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.explanation.new", { body: "Moved text", origin: "origin-a" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.note.new", { body: "Older revision", origin: "origin-a" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.note.new", { body: "Moved text", origin: "origin-a" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(true);
+  late.write(key, "Moved text", at(4)); expect(late.dropped(key, "Moved text")).toBe(false);
+  // A draft that never had an origin, stored before origins existed, is matched by its words under its own key only.
+  s.setItem("study.draft.note.7", JSON.stringify({ body: "Old", at: at(1).toISOString() })); expect(readDraft(s, "study.draft.note.7")).toEqual({ body: "Old", at: at(1).toISOString() });
+  const restored = draftSession(s, at(0)); restored.adopt(readDraft(s, "study.draft.note.7")!, "study.draft.note.7");
+  restored.write("study.draft.note.7", "Old", at(5)); expect(readDraft(s, "study.draft.note.7")?.origin).toMatch(/.+/);
+});
+
+it("an editor's latest write or clear anywhere puts older discards of its text behind it, for every key", () => {
+  const s = mem(); const late = draftSession(s, at(0), "origin-a");
+  late.write(k, "Base more", at(1)); recordDiscard(s, k, { body: "Base more", origin: "origin-a" }, at(2));
+  expect(late.dropped(k, "Base more")).toBe(true); expect(late.dropped("study.draft.note.8", "Base more")).toBe(true);
+  late.write(k, "Base", at(3)); late.write(k, "Base more", at(4));
+  expect(late.dropped(k, "Base more")).toBe(false); expect(late.dropped("study.draft.note.8", "Base more")).toBe(false);
+});
+
+it("a draft set aside goes when the editor next stores or clears another draft, unless another editor replaced it", () => {
+  const s = mem(); const session = draftSession(s, at(0)); const row = "study.draft.note.3";
+  session.write(k, "Older text", at(1)); session.setAside(k);
+  session.write(row, "Older text", at(2)); expect(readDraft(s, k)).toBeNull();
+  session.write(k, "Older text", at(3)); session.setAside(k); session.clear(row, at(4)); expect(readDraft(s, k)).toBeNull();
+  session.write(k, "Older text", at(5)); session.setAside(k); session.dropAside(); expect(readDraft(s, k)).toBeNull();
+  session.write(k, "Older text", at(6)); session.setAside(k); draftSession(s).write(k, "Another tab", at(7));
+  session.write(row, "Newer", at(8)); expect(readDraft(s, k)?.body).toBe("Another tab");
+  // Storing the set-aside key itself settles it, so a later clear elsewhere keeps that text.
+  session.write(k, "Moved back", at(9)); session.setAside(k); session.write(k, "Moved back", at(10)); session.clear(row, at(11));
+  expect(readDraft(s, k)?.body).toBe("Moved back");
+});
+
+it("an adopted draft counts as the editor's own, so a set-aside restore is removed once superseded", () => {
+  const s = mem(); const kept = "study.draft.note.4";
+  s.setItem(kept, JSON.stringify({ body: "Kept text", at: at(1).toISOString(), origin: "old-tab" }));
+  const session = draftSession(s, at(2)); session.adopt(readDraft(s, kept)!, kept);
+  expect(session.owns(kept, "Something else")).toBe(true);
+  session.setAside(kept); session.write("study.draft.note.9", "Kept text, saved", at(3));
+  expect(readDraft(s, kept)).toBeNull(); expect(readDraft(s, "study.draft.note.9")?.origin).toBe("old-tab");
+});
+
+it("two tabs recording discards at once keep both, since each record has its own key", () => {
+  const s = mem();
+  // Each tab reads the shared store but its writes land only when both have finished, as two tabs' caches might.
+  const lagging = () => { const writes: [string, string][] = [];
+    return { store: { ...s, get length() { return s.length; }, setItem: (key: string, value: string) => { writes.push([key, value]); } } as DraftStore,
+      flush: () => { for (const [key, value] of writes) s.setItem(key, value); } }; };
+  const one = lagging(); const two = lagging(); const session = draftSession(s, at(0));
+  recordDiscard(one.store, k, { body: "First tab's offer" }, at(1)); recordDiscard(two.store, k, { body: "Second tab's offer" }, at(1));
+  one.flush(); two.flush();
+  expect(session.dropped(k, "First tab's offer")).toBe(true); expect(session.dropped(k, "Second tab's offer")).toBe(true);
+});
+
+it("orders a discard after the editor's last write even in the same millisecond or after the clock goes back", () => {
+  const s = mem(); const late = draftSession(s, at(0), "origin-a");
+  late.write(k, "Tied", at(5)); recordDiscard(s, k, { body: "Tied", origin: "origin-a" }, at(5));
+  expect(late.dropped(k, "Tied")).toBe(true);
+  late.write(k, "Rolled back", at(6)); recordDiscard(s, k, { body: "Rolled back", origin: "origin-a" }, at(1));
+  expect(late.dropped(k, "Rolled back")).toBe(true);
+  // The editor's own later write, whatever the clock says, still comes after the discard.
+  late.write(k, "Rolled back", at(1)); expect(late.dropped(k, "Rolled back")).toBe(false);
+});
+
+it("a discard made the moment another tab sees a write still counts against that write", () => {
+  const s = mem(); let discardNext = false;
+  // Another tab discards the text as soon as this editor's write lands, before this editor's next step.
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => {
+    s.setItem(key, value);
+    if (discardNext && key === k) { discardNext = false; recordDiscard(s, k, { body: "Seen at once", origin: "origin-a" }, at(1)); s.removeItem(k); }
+  } };
+  const late = draftSession(store, at(0), "origin-a");
+  discardNext = true; late.write(k, "Seen at once", at(1));
+  expect(late.dropped(k, "Seen at once")).toBe(true);
+});
+
+it("a corrupt shared clock never stops an editor from opening or writing", () => {
+  for (const value of ["Infinity", "1e300", "-5", "not a number", ""]) {
+    const s = mem(); s.setItem("study.draft.clock", value);
+    expect(() => { const session = draftSession(s, at(0)); session.write(k, "Still works", at(1)); session.dropped(k, "Still works"); }).not.toThrow();
+    expect(readDraft(s, k)?.body).toBe("Still works");
+    expect(() => recordDiscard(s, k, { body: "x" }, at(2))).not.toThrow();
+  }
+});
+
+it("a save resuming after discard records may have expired leaves the text where the editor stored it", () => {
+  const s = mem(); const late = draftSession(s, at(0)); const week = 7 * 24 * 60 * 60 * 1000;
+  late.write(k, "Suspended text", at(1));
+  expect(late.dropped(k, "Suspended text", new Date(at(1).getTime() + week - 60_000))).toBe(false);
+  expect(late.dropped(k, "Suspended text", new Date(at(1).getTime() + week + 60_000))).toBe(true);
+  expect(readDraft(s, k)?.body).toBe("Suspended text");
+  // Newer words that never reached storage (it was full) exist nowhere else, so they are still written.
+  let full = false;
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full && key === k) throw new Error("quota"); s.setItem(key, value); } };
+  const unstored = draftSession(store, at(0)); unstored.write(k, "Stored", at(1)); full = true; unstored.write(k, "Stored, then more", at(2));
+  expect(unstored.dropped(k, "Stored, then more", new Date(at(2).getTime() + week + 60_000))).toBe(false);
+});
+
+it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {
+  const s = mem(); const session = draftSession(s, at(0));
+  recordDiscard(s, k, { body: "Kept a long time" }, at(1));
+  for (let i = 0; i < 100; i++) recordDiscard(s, `study.draft.note.${i + 1}`, { body: "Elsewhere" }, at(2));
+  for (let i = 0; i < 100; i++) recordDiscard(s, k, { body: `Text ${i}` }, at(3));
+  expect(session.dropped(k, "Kept a long time")).toBe(true); expect(session.dropped(k, "Text 0")).toBe(true);
+  recordDiscard(s, k, { body: "A week later" }, new Date(at(3).getTime() + 8 * 24 * 60 * 60 * 1000));
+  expect(session.dropped(k, "Kept a long time")).toBe(false); expect(session.dropped(k, "Text 99")).toBe(false);
+  expect(session.dropped(k, "A week later")).toBe(true);
+  const corrupt = ["{not json", '{"text":1}', '[{"text":"x","at":"y"}]', "null"];
+  corrupt.forEach((value, i) => s.setItem(`study.draft.discarded.${k}.bad${i}`, value));
+  expect(session.dropped(k, "A week later")).toBe(true);
+  expect(() => recordDiscard(s, k, { body: "Text 50" }, at(4))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);
+  corrupt.forEach((_, i) => expect(s.getItem(`study.draft.discarded.${k}.bad${i}`)).toBeNull());
+  expect(rowDrafts(s, "note")).toEqual([]);
+});
+
+it("a discard removes week-old discard records under every key and keeps recent ones", () => {
+  const s = mem(); const session = draftSession(s, at(0));
+  recordDiscard(s, "study.draft.note.1", { body: "Old" }, at(1)); recordDiscard(s, "study.draft.note.2", { body: "Recent" }, new Date(at(1).getTime() + 3 * 24 * 60 * 60 * 1000));
+  s.setItem("study.draft.discarded.study.draft.note.3", "{not json");
+  recordDiscard(s, k, { body: "Now" }, new Date(at(1).getTime() + 8 * 24 * 60 * 60 * 1000));
+  expect(s.getItem("study.draft.discarded.study.draft.note.1")).toBeNull(); expect(s.getItem("study.draft.discarded.study.draft.note.3")).toBeNull();
+  expect(session.dropped("study.draft.note.2", "Recent")).toBe(true); expect(session.dropped(k, "Now")).toBe(true);
+});
+
+it("discarding older text spares newer text whose write failed", () => {
+  const s = mem(); let full = false;
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };
+  const late = draftSession(store, at(0), "origin-late"); const other = draftSession(s, at(0));
+  late.write(k, "Stored", at(1)); full = true; late.write(k, "Stored and more", at(2));
+  // Discard records the removed draft's origin, as the editor's Discard does.
+  other.clear(k, at(3)); recordDiscard(s, k, { body: "Stored", origin: "origin-late" }, at(3));
+  expect(late.dropped(k, "Stored and more")).toBe(false); expect(late.owns(k, "Stored and more")).toBe(true);
+  expect(late.dropped(k, "Stored")).toBe(true);
+});
+
+it("a failed write keeps a session's claim on the text it last stored", () => {
+  const s = mem(); let full = false;
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };
+  const session = draftSession(store);
+  expect(session.write(k, "Stored", at(1))).toBe(true); full = true; expect(session.write(k, "Too big", at(2))).toBe(false);
+  expect(readDraft(s, k)?.body).toBe("Stored"); expect(session.owns(k, "Too big")).toBe(true);
 });
