@@ -8,7 +8,7 @@ import Markdown from "../components/Markdown.js";
 import MarkdownEditor from "../components/MarkdownEditor.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
-import { browserDraftStore, draftKey, readDraft, restoredDraftId, useDraft } from "../drafts.js";
+import { browserDraftStore, draftKey, readDraft, recordDiscard, restoredDraftId, useDraft } from "../drafts.js";
 import { formatDay } from "../format.js";
 import { filterSearch } from "../listFilter.js";
 import { message } from "../text.js";
@@ -100,6 +100,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
 
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
+    if (draft.offer) recordDiscard(browserDraftStore(), slot, draft.offer.body, new Date());
     if (!ownsSlot()) { draft.dismiss(); return; }
     draft.clear();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
@@ -131,13 +132,12 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   function keepGoneText(oldId: number): boolean {
     const drafts = draft.session;
     const old = draftKey("explanation", oldId); const fresh = draftKey("explanation", "new");
-    const dropped = drafts.dropped(old);
-    if (ownsDraft(fresh)) {
-      if (!dropped) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
-      return true;
-    }
-    if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
-    return false;
+    const dropped = drafts.dropped(old, latestBody.current);
+    const free = ownsDraft(fresh);
+    if (dropped) return free;
+    if (free) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
+    else if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
+    return free;
   }
 
   async function save() {
@@ -153,7 +153,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         packageId: sent.target.packageId, lessonId: sent.target.lessonId! }) : await updateExplanation(id, patch);
       const drafts = draft.session;
       // Text that another editor discarded while this save was pending stays gone.
-      const dropped = drafts.dropped(slot);
+      const dropped = drafts.dropped(slot, latestBody.current);
       if (creating && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
       if (creating && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
       const key = draftKey("explanation", explanation.id);

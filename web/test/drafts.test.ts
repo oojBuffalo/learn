@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { browserDraftStore, clearDraft, draftKey, draftSession, readDraft, restoreState, restoredDraftId, rowDrafts, writeDraft } from "../src/drafts.js";
+import { browserDraftStore, clearDraft, draftKey, draftSession, readDraft, recordDiscard, restoreState, restoredDraftId, rowDrafts, writeDraft } from "../src/drafts.js";
 import type { DraftStore } from "../src/drafts.js";
 function mem(): DraftStore {
   const values = new Map<string, string>();
@@ -29,8 +29,8 @@ it("never throws on a broken store", () => {
   expect(writeDraft(broken(), k, "b", new Date())).toBe(false); expect(clearDraft(broken(), k)).toBe(false);
   expect(rowDrafts(broken(), "note")).toEqual([]);
   const session = draftSession(broken());
-  expect(() => { session.write(k, "b", new Date()); session.clear(k); }).not.toThrow();
-  expect(session.owns(k, "b")).toBe(true); expect(session.dropped(k)).toBe(false);
+  expect(() => { session.write(k, "b", new Date()); session.clear(k); recordDiscard(broken(), k, "b", new Date()); }).not.toThrow();
+  expect(session.owns(k, "b")).toBe(true); expect(session.dropped(k, "b")).toBe(false);
   expect(() => { const s = browserDraftStore(); s.setItem(k, "b"); s.getItem(k); s.removeItem(k); }).not.toThrow();
 });
 
@@ -54,23 +54,51 @@ it("passes a kept draft's id to a new editor through navigation state", () => {
 });
 
 it("a session owns an empty key it never wrote, its own text and the text it holds, but not another editor's", () => {
-  const s = mem(); const mine = draftSession(s); const other = draftSession(s);
+  const s = mem(); const mine = draftSession(s, at(0)); const other = draftSession(s, at(0));
   expect(mine.owns(k, "Typed")).toBe(true);
   mine.write(k, "Typed", at(1)); expect(mine.owns(k, "Typed")).toBe(true); expect(mine.owns(k, "Typed more")).toBe(true);
   other.write(k, "Other text", at(2)); expect(mine.owns(k, "Typed more")).toBe(false); expect(mine.owns(k, "Other text")).toBe(true);
-  expect(mine.dropped(k)).toBe(false);
+  expect(mine.dropped(k, "Typed more")).toBe(false);
 });
 
 it("a session tells its own clear from another editor's Discard", () => {
-  const s = mem(); const late = draftSession(s); const other = draftSession(s);
-  late.write(k, "Late text", at(1)); other.clear(k);
-  expect(late.dropped(k)).toBe(true); expect(late.owns(k, "Late text")).toBe(false);
-  late.write(k, "Typed after the discard", at(2));
-  expect(late.dropped(k)).toBe(false); expect(late.owns(k, "Typed after the discard")).toBe(true);
-  late.clear(k);
-  expect(late.dropped(k)).toBe(false); expect(late.owns(k, "Anything")).toBe(true);
-  other.write(k, "Other text", at(3)); other.clear(k);
-  expect(late.dropped(k)).toBe(false);
+  const s = mem(); const late = draftSession(s, at(0)); const other = draftSession(s, at(0));
+  late.write(k, "Late text", at(1)); other.clear(k, at(2));
+  expect(late.dropped(k, "Late text")).toBe(true); expect(late.owns(k, "Late text")).toBe(false);
+  late.write(k, "Typed after the discard", at(3));
+  expect(late.dropped(k, "Typed after the discard")).toBe(false); expect(late.owns(k, "Typed after the discard")).toBe(true);
+  late.clear(k, at(4));
+  expect(late.dropped(k, "Anything")).toBe(false); expect(late.owns(k, "Anything")).toBe(true);
+  other.write(k, "Other text", at(5)); other.clear(k, at(6));
+  expect(late.dropped(k, "Anything")).toBe(false);
+});
+
+it("a session never brings back text the user discarded after its last write or clear", () => {
+  const s = mem(); const late = draftSession(s, at(0)); const other = draftSession(s, at(0));
+  // Discarded, then the slot was typed over: the late text is still the discarded one.
+  late.write(k, "Late text", at(1)); recordDiscard(s, k, "Late text", at(2)); other.write(k, "Newer text", at(3));
+  expect(late.dropped(k, "Late text")).toBe(true); expect(late.dropped(k, "Late text, edited")).toBe(false);
+  expect(late.dropped("study.draft.note.4", "Late text")).toBe(false);
+  // This editor's own clear came first, then the same text was discarded in another tab.
+  const reverted = draftSession(s, at(0)); const key = "study.draft.note.9";
+  reverted.clear(key, at(4)); other.write(key, "Original", at(5)); recordDiscard(s, key, "Original", at(6)); other.clear(key, at(6));
+  expect(reverted.owns(key, "Original")).toBe(true); expect(reverted.dropped(key, "Original")).toBe(true);
+  // A discard older than this editor's last action is history.
+  reverted.write(key, "Original", at(7)); reverted.clear(key, at(8));
+  expect(reverted.dropped(key, "Original")).toBe(false);
+  // An editor that never touched the key checks discards made since it opened.
+  expect(draftSession(s, at(5)).dropped(key, "Original")).toBe(true); expect(draftSession(s, at(7)).dropped(key, "Original")).toBe(false);
+});
+
+it("keeps the 50 newest discards and ignores a corrupt list", () => {
+  const s = mem(); const session = draftSession(s, at(0));
+  for (let i = 0; i < 51; i++) recordDiscard(s, k, `Text ${i}`, at(1));
+  expect(session.dropped(k, "Text 0")).toBe(false); expect(session.dropped(k, "Text 1")).toBe(true); expect(session.dropped(k, "Text 50")).toBe(true);
+  for (const value of ["{not json", '{"key":1}', '[{"key":1,"text":"x","at":"y"}, null]']) {
+    s.setItem("study.draft.discarded", value); expect(session.dropped(k, "Text 50")).toBe(false);
+    expect(() => recordDiscard(s, k, "Text 50", at(1))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);
+  }
+  expect(rowDrafts(s, "note")).toEqual([]);
 });
 
 it("a failed write keeps a session's claim on the text it last stored", () => {

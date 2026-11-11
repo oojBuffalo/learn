@@ -7,7 +7,7 @@ import MarkdownEditor from "../components/MarkdownEditor.js";
 import Icon from "../components/Icon.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
-import { browserDraftStore, draftKey, readDraft, restoredDraftId, useDraft } from "../drafts.js";
+import { browserDraftStore, draftKey, readDraft, recordDiscard, restoredDraftId, useDraft } from "../drafts.js";
 import { headline, message } from "../text.js";
 
 type Fields = { body: string; target: NoteTarget | null };
@@ -93,6 +93,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
 
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
+    if (draft.offer) recordDiscard(browserDraftStore(), slot, draft.offer.body, new Date());
     if (!ownsSlot()) { draft.dismiss(); return; }
     draft.clear();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
@@ -116,13 +117,12 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   function keepGoneText(oldId: number): boolean {
     const drafts = draft.session;
     const old = draftKey("note", oldId); const fresh = draftKey("note", "new");
-    const dropped = drafts.dropped(old);
-    if (ownsDraft(fresh)) {
-      if (!dropped) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
-      return true;
-    }
-    if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
-    return false;
+    const dropped = drafts.dropped(old, latestBody.current);
+    const free = ownsDraft(fresh);
+    if (dropped) return free;
+    if (free) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
+    else if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
+    return free;
   }
 
   async function save() {
@@ -137,7 +137,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       const note = creating ? await createNote(sent) : await updateNote(id, patch);
       const drafts = draft.session;
       // Text that another editor discarded, or removed with a delete, while this save was pending stays gone.
-      const dropped = drafts.dropped(slot);
+      const dropped = drafts.dropped(slot, latestBody.current);
       if (creating && recoveryId !== null && ownsDraft(draftKey("note", recoveryId))) drafts.clear(draftKey("note", recoveryId));
       if (creating && ownsDraft(draftKey("note", "new"))) drafts.clear(draftKey("note", "new"));
       const key = draftKey("note", note.id);

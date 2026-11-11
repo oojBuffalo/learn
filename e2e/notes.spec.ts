@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { Page } from "@playwright/test";
+import type { Page, Route } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 
@@ -1195,3 +1195,64 @@ for (const kind of ["note", "explanation"] as const) {
     await other.close();
   });
 }
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a late ${kind} save after a revert never brings back the same text discarded in another tab`, async ({ page, request }) => {
+    const w = writing(kind);
+    const id = (await (await request.post(`/api/${w.api}`, { data: w.data("Original") })).json())[kind].id;
+    const key = `study.draft.${kind}.${id}`;
+    const touches = await watchDraft(page, key);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    // The server saves the change at once; only its answer to this editor is held.
+    await page.route(`**/api/${w.api}/${id}`, async (route) => {
+      if (route.request().method() !== "PATCH") return route.continue();
+      const response = await route.fetch(); await held; await route.fulfill({ response });
+    });
+    await page.goto(`${w.base}/${id}`);
+    const editor = page.getByLabel(w.label, { exact: true }); await expect(editor).toHaveValue("Original");
+    await editor.fill("Changed"); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect.poll(async () => (await (await request.get(`/api/${w.api}/${id}`)).json())[kind].body).toBe("Changed");
+    await editor.fill("Original"); expect(await storedBody(page, key)).toBeNull();
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await nav.getByRole("link", { name: "Library", exact: true }).click(); await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+    const other = await page.context().newPage();
+    const otherEditor = other.getByLabel(w.label, { exact: true });
+    await other.goto(`${w.base}/${id}`); await expect(otherEditor).toHaveValue("Changed");
+    await otherEditor.fill("Original"); expect(await storedBody(other, key)).toBe("Original");
+    await other.goto(`${w.base}/${id}`); await expect(other.getByText(/Restore unsaved text from/)).toBeVisible();
+    await other.getByRole("button", { name: "Discard", exact: true }).click(); expect(await storedBody(other, key)).toBeNull();
+    const before = await touches();
+    const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+    release(); expect((await answered).status()).toBe(200);
+    await expect.poll(touches).toBeGreaterThan(before);
+    expect(await storedBody(page, key)).toBeNull();
+    await other.reload(); await expect(otherEditor).toHaveValue("Changed");
+    await expect(other.getByText(/Restore unsaved text from/)).toHaveCount(0);
+    await other.close();
+  });
+}
+
+test("Kept drafts are checked again when Notes retries and when another tab keeps a draft", async ({ page, request }) => {
+  const deleted = async (body: string): Promise<number> => {
+    const id = (await (await request.post("/api/notes", { data: { body, target: null } })).json()).note.id;
+    expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204); return id;
+  };
+  const keep = (p: Page, id: number, body: string) => p.evaluate(([k, b]) => localStorage.setItem(k!, JSON.stringify({ body: b, at: new Date().toISOString() })), [`study.draft.note.${id}`, body]);
+  const first = await deleted("First gone note"); const second = await deleted("Second gone note");
+  await page.goto("/library"); await keep(page, first, "Kept through a failed check");
+  let failing = true;
+  const fail = (route: Route) => failing && route.request().method() === "GET"
+    ? route.fulfill({ status: 500, json: { error: { code: "internal", message: "offline" } } }) : route.continue();
+  await page.route("**/api/notes", fail); await page.route(`**/api/notes/${first}`, fail);
+  await page.goto("/notes");
+  const kept = page.getByRole("region", { name: "Kept drafts" });
+  await expect(kept.getByRole("alert")).toHaveText("Some drafts couldn’t be checked (offline).");
+  await expect(kept.locator(".kept-row").filter({ hasText: "Kept through a failed check" })).toHaveCount(0);
+  failing = false; await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(kept.locator(".kept-row").filter({ hasText: "Kept through a failed check" })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  const other = await page.context().newPage(); await other.goto("/library");
+  await keep(other, second, "Kept in another tab");
+  await expect(kept.locator(".kept-row").filter({ hasText: "Kept in another tab" })).toBeVisible();
+  await other.close();
+});

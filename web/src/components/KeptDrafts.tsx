@@ -1,17 +1,18 @@
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError, getExplanation, getNote } from "../api.js";
-import { browserDraftStore, clearDraft, draftKey, readDraft, restoreState, rowDrafts } from "../drafts.js";
+import { browserDraftStore, clearDraft, draftKey, readDraft, recordDiscard, restoreState, rowDrafts } from "../drafts.js";
 import type { Draft, DraftKind } from "../drafts.js";
-import { headline } from "../text.js";
+import { headline, message } from "../text.js";
 
 type Kept = Draft & { id: number };
 
-export function KeptDraftsView({ kind, drafts, onRestore, onDiscard }: {
-  kind: DraftKind; drafts: Kept[]; onRestore: (draft: Kept) => void; onDiscard: (draft: Kept) => void;
+export function KeptDraftsView({ kind, drafts, error, onRestore, onDiscard, onRetry }: {
+  kind: DraftKind; drafts: Kept[]; error: string | null;
+  onRestore: (draft: Kept) => void; onDiscard: (draft: Kept) => void; onRetry: () => void;
 }) {
   const heading = useId();
-  if (drafts.length === 0) return null;
+  if (drafts.length === 0 && error === null) return null;
   return <section className="sheet kept-drafts" aria-labelledby={heading}><div className="sheet-head"><h2 id={heading}>Kept drafts</h2>
     <p className="note">{kind === "note" ? "Unsaved text from notes that were deleted. Restore it as a new note, or discard it."
       : "Unsaved text from explanations that were removed. Restore it as a new explanation, or discard it."}</p></div>
@@ -21,31 +22,51 @@ export function KeptDraftsView({ kind, drafts, onRestore, onDiscard }: {
       <div className="actions"><button className="btn" onClick={() => onRestore(draft)}>Restore</button>
         <button className="btn btn-quiet" onClick={() => onDiscard(draft)}>Discard</button></div>
     </div>)}
+    {error !== null && <div className="kept-row"><p className="errors" role="alert">{`Some drafts couldn’t be checked (${error}).`}</p>
+      <div><button className="btn" onClick={onRetry}>Check again</button></div></div>}
   </section>;
 }
 
-/** Drafts whose note or explanation is gone, so no editor would offer them; text there is kept until restored or discarded. */
-export default function KeptDrafts({ kind }: { kind: DraftKind }) {
+/**
+ * Drafts whose note or explanation is gone, so no editor would offer them; text there is kept until restored or
+ * discarded. The list is checked again when Notes retries, when this tab becomes visible and when another tab
+ * adds or removes a draft.
+ */
+export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refreshKey: number }) {
   const navigate = useNavigate();
   const [store] = useState(browserDraftStore);
-  const [kept, setKept] = useState<{ kind: DraftKind; drafts: Kept[] }>({ kind, drafts: [] });
+  const [checks, setChecks] = useState(0);
+  const [kept, setKept] = useState<{ kind: DraftKind; drafts: Kept[]; error: string | null }>({ kind, drafts: [], error: null });
+  useEffect(() => {
+    const again = () => setChecks((n) => n + 1);
+    const visible = () => { if (document.visibilityState === "visible") again(); };
+    // Typing in another tab rewrites a draft; only a draft that appears or goes away changes this list.
+    const changed = (e: StorageEvent) => { if (e.key === null || (e.key.startsWith("study.draft.") && (e.oldValue === null || e.newValue === null))) again(); };
+    document.addEventListener("visibilitychange", visible); window.addEventListener("storage", changed);
+    return () => { document.removeEventListener("visibilitychange", visible); window.removeEventListener("storage", changed); };
+  }, []);
   useEffect(() => {
     let live = true;
     const load = kind === "note" ? getNote : getExplanation;
     // Only a row that answers 404 is gone; a draft of a row that still exists is offered when that row opens.
-    Promise.all(rowDrafts(store, kind).map((draft) => load(draft.id).then(() => [],
-      (e: unknown) => e instanceof ApiError && e.code === "not_found" ? [draft] : [])))
-      .then((found) => { if (live) setKept({ kind, drafts: found.flat() }); });
+    Promise.all(rowDrafts(store, kind).map((draft) => load(draft.id).then(() => ({ draft: null, error: null }),
+      (e: unknown) => e instanceof ApiError && e.code === "not_found" ? { draft, error: null } : { draft: null, error: message(e) })))
+      .then((found) => {
+        if (!live) return;
+        setKept({ kind, drafts: found.flatMap((f) => f.draft ? [f.draft] : []), error: found.find((f) => f.error !== null)?.error ?? null });
+      });
     return () => { live = false; };
-  }, [kind, store]);
+  }, [kind, store, refreshKey, checks]);
   function discard(draft: Kept) {
     const key = draftKey(kind, draft.id);
+    recordDiscard(store, key, draft.body, new Date());
     const current = readDraft(store, key);
     // Text written there since the list loaded, by an editor that restored it, stays and is shown instead.
     if (current?.body === draft.body && current.at === draft.at) clearDraft(store, key);
     const left = readDraft(store, key);
     setKept((list) => ({ ...list, drafts: list.drafts.flatMap((d) => d.id !== draft.id ? [d] : left ? [{ id: d.id, ...left }] : []) }));
   }
-  return <KeptDraftsView kind={kind} drafts={kept.kind === kind ? kept.drafts : []}
+  const shown = kept.kind === kind ? kept : { drafts: [], error: null };
+  return <KeptDraftsView kind={kind} drafts={shown.drafts} error={shown.error} onRetry={() => setChecks((n) => n + 1)}
     onRestore={(draft) => navigate(kind === "note" ? "/notes/new" : "/notes/explain/new", { state: restoreState(draft.id) })} onDiscard={discard} />;
 }

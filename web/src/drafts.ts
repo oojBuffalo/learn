@@ -55,30 +55,59 @@ export function restoredDraftId(state: unknown): number | null {
   return typeof id === "number" && Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
+const DISCARDS = "study.draft.discarded";
+type Discard = { key: string; text: string; at: string };
+// Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
+function fingerprint(body: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < body.length; i++) hash = Math.imul(hash ^ body.charCodeAt(i), 0x01000193) >>> 0;
+  return `${body.length}:${hash.toString(16)}`;
+}
+function readDiscards(store: DraftStore): Discard[] {
+  try {
+    const parsed: unknown = JSON.parse(store.getItem(DISCARDS) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((d): d is Discard => d !== null && typeof d === "object"
+      && typeof d.key === "string" && typeof d.text === "string" && typeof d.at === "string") : [];
+  } catch { return []; }
+}
+/** Remembers that the user discarded this text under the key, so a save that settles later never brings it back. */
+export function recordDiscard(store: DraftStore, key: string, body: string, now: Date): void {
+  const discards = [...readDiscards(store), { key, text: fingerprint(body), at: now.toISOString() }];
+  try { store.setItem(DISCARDS, JSON.stringify(discards.slice(-50))); } catch { /* Discarding still works without storage. */ }
+}
+
 /**
  * One editor's writes and clears. Each editor remembers what it last did under every key, so a save that
  * settles late can tell its own clear from another editor's Discard, delete or save.
  */
 export interface DraftSession {
   write(key: string, body: string, now: Date): void;
-  clear(key: string): void;
+  clear(key: string, now?: Date): void;
   /** The key holds `holding`, the text this editor last stored there, or nothing that another editor removed. */
   owns(key: string, holding: string): boolean;
-  /** Another editor removed the text this editor last stored under the key. */
-  dropped(key: string): boolean;
+  /**
+   * Another editor removed the text this editor last stored under the key, or the user discarded `holding` there
+   * since this editor last wrote or cleared it.
+   */
+  dropped(key: string, holding: string): boolean;
 }
-export function draftSession(store: DraftStore): DraftSession {
-  const last = new Map<string, Draft | null>();
+export function draftSession(store: DraftStore, started = new Date()): DraftSession {
+  const last = new Map<string, { body: string | null; at: string }>();
   return {
     write(key, body, now) { if (writeDraft(store, key, body, now)) last.set(key, { body, at: now.toISOString() }); },
-    clear(key) { if (clearDraft(store, key)) last.set(key, null); },
+    clear(key, now = new Date()) { if (clearDraft(store, key)) last.set(key, { body: null, at: now.toISOString() }); },
     owns(key, holding) {
       const stored = readDraft(store, key);
       const mine = last.get(key);
-      if (stored === null) return !mine;
-      return stored.body === holding || (mine != null && mine.body === stored.body && mine.at === stored.at);
+      if (stored === null) return mine?.body == null;
+      return stored.body === holding || (mine !== undefined && mine.body === stored.body && mine.at === stored.at);
     },
-    dropped(key) { return readDraft(store, key) === null && Boolean(last.get(key)); },
+    dropped(key, holding) {
+      const mine = last.get(key);
+      if (readDraft(store, key) === null && mine !== undefined && mine.body !== null) return true;
+      const since = mine?.at ?? started.toISOString(); const text = fingerprint(holding);
+      return readDiscards(store).some((d) => d.key === key && d.text === text && d.at > since);
+    },
   };
 }
 

@@ -150,7 +150,7 @@ export default function Notes() {
       <label><input type="radio" name={group} checked={!explainTab} onChange={() => navigate("/notes")} />Notes</label>
       <label><input type="radio" name={group} checked={explainTab} onChange={() => navigate("/notes?tab=explanations")} />Explain-back</label>
     </div>
-    <KeptDrafts kind={explainTab ? "explanation" : "note"} />
+    <KeptDrafts kind={explainTab ? "explanation" : "note"} refreshKey={loadKey} />
     {error ? <><div className="errors" role="alert"><strong>{explainTab ? "Your explanations couldn’t be loaded." : "Your notes couldn’t be loaded."}</strong><p>{error}</p></div>
       <button className="btn" onClick={() => { setNotesError(null); setExplanationsError(null); setLoadKey((k) => k + 1); }}>Try again</button></>
       : explainTab ? explanations === null ? <p className="loading">Loading…</p> : <ExplanationsListView explanations={explanations} packages={packages} filter={filter}
