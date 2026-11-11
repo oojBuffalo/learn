@@ -80,13 +80,15 @@ it("a session never brings back text the user discarded after its last write or 
   expect(late.dropped("study.draft.note.4", "Late text")).toBe(false);
   // This editor's own clear came first, then the same text was discarded in another tab.
   const reverted = draftSession(s, at(0)); const key = "study.draft.note.9";
+  const openedBefore = draftSession(s, at(4));
   reverted.clear(key, at(4)); other.write(key, "Original", at(5)); recordDiscard(s, key, { body: "Original" }, at(6)); other.clear(key, at(6));
+  const openedAfter = draftSession(s, at(7));
   expect(reverted.owns(key, "Original")).toBe(true); expect(reverted.dropped(key, "Original")).toBe(true);
   // A discard older than this editor's last action is history.
   reverted.write(key, "Original", at(7)); reverted.clear(key, at(8));
   expect(reverted.dropped(key, "Original")).toBe(false);
   // An editor that never touched the key checks discards made since it opened.
-  expect(draftSession(s, at(5)).dropped(key, "Original")).toBe(true); expect(draftSession(s, at(7)).dropped(key, "Original")).toBe(false);
+  expect(openedBefore.dropped(key, "Original")).toBe(true); expect(openedAfter.dropped(key, "Original")).toBe(false);
 });
 
 it("a session counts a removed draft of its origin under any key of its kind, but not the same words in another draft", () => {
@@ -143,11 +145,20 @@ it("two tabs recording discards at once keep both, since each record has its own
   const lagging = () => { const writes: [string, string][] = [];
     return { store: { ...s, get length() { return s.length; }, setItem: (key: string, value: string) => { writes.push([key, value]); } } as DraftStore,
       flush: () => { for (const [key, value] of writes) s.setItem(key, value); } }; };
-  const one = lagging(); const two = lagging();
+  const one = lagging(); const two = lagging(); const session = draftSession(s, at(0));
   recordDiscard(one.store, k, { body: "First tab's offer" }, at(1)); recordDiscard(two.store, k, { body: "Second tab's offer" }, at(1));
   one.flush(); two.flush();
-  const session = draftSession(s, at(0));
   expect(session.dropped(k, "First tab's offer")).toBe(true); expect(session.dropped(k, "Second tab's offer")).toBe(true);
+});
+
+it("orders a discard after the editor's last write even in the same millisecond or after the clock goes back", () => {
+  const s = mem(); const late = draftSession(s, at(0), "origin-a");
+  late.write(k, "Tied", at(5)); recordDiscard(s, k, { body: "Tied", origin: "origin-a" }, at(5));
+  expect(late.dropped(k, "Tied")).toBe(true);
+  late.write(k, "Rolled back", at(6)); recordDiscard(s, k, { body: "Rolled back", origin: "origin-a" }, at(1));
+  expect(late.dropped(k, "Rolled back")).toBe(true);
+  // The editor's own later write, whatever the clock says, still comes after the discard.
+  late.write(k, "Rolled back", at(1)); expect(late.dropped(k, "Rolled back")).toBe(false);
 });
 
 it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {

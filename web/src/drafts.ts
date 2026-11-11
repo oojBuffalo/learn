@@ -65,6 +65,16 @@ const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(
 // Every discard is stored under its own key, `study.draft.discarded.<draft key>.<time>.<random>`, so two tabs
 // discarding at once never overwrite each other's record.
 const DISCARDS = "study.draft.discarded.";
+// Orders discards against editors' writes across tabs: a stamp is never earlier than the last one any tab took and
+// never equal to it, even when two actions share a millisecond or the system clock is set back.
+const CLOCK = "study.draft.clock";
+function stamp(store: DraftStore, now: Date): string {
+  let last = 0;
+  try { last = Number(store.getItem(CLOCK)) || 0; } catch { /* No clock yet. */ }
+  const next = Math.max(now.getTime(), last + 1);
+  try { store.setItem(CLOCK, String(next)); } catch { /* Ordering then falls back to this tab's clock. */ }
+  return new Date(next).toISOString();
+}
 type Discard = { text: string; at: string; origin?: string };
 // Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
 function fingerprint(body: string): string {
@@ -104,7 +114,7 @@ export function recordDiscard(store: DraftStore, key: string, draft: { body: str
     const d = readDiscard(store, k);
     if (d === null || d.at <= weekAgo) { try { store.removeItem(k); } catch { /* Old records only cost space. */ } }
   }
-  const record: Discard = { text: fingerprint(draft.body), at: now.toISOString(), ...(draft.origin ? { origin: draft.origin } : {}) };
+  const record: Discard = { text: fingerprint(draft.body), at: stamp(store, now), ...(draft.origin ? { origin: draft.origin } : {}) };
   try { store.setItem(`${DISCARDS}${key}.${record.at}.${Math.random().toString(36).slice(2, 10)}`, JSON.stringify(record)); return true; }
   catch { /* Discarding still works without storage. */ }
   return false;
@@ -143,7 +153,7 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
   const last = new Map<string, { body: string | null; at: string }>();
   let lineage = origin;
   // Every write stores the editor's current text, so its latest write or clear anywhere is when it last stood by it.
-  let latest = started.toISOString();
+  let latest = stamp(store, started);
   let aside: string | null = null;
   const mineStill = (key: string) => {
     const stored = readDraft(store, key); const mine = last.get(key);
@@ -151,7 +161,7 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
   };
   const dropAside = () => { const key = aside; aside = null; if (key !== null && mineStill(key) && clearDraft(store, key)) last.set(key, { body: null, at: latest }); };
   const acted = (key: string, body: string | null, now: Date) => {
-    last.set(key, { body, at: now.toISOString() }); latest = now.toISOString();
+    last.set(key, { body, at: now.toISOString() }); latest = stamp(store, now);
     // Storing or clearing the set-aside key itself settles it; storing or clearing elsewhere supersedes its text.
     if (aside === key) aside = null; else if (aside !== null) dropAside();
     changed();
