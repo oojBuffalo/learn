@@ -361,12 +361,12 @@ Every mode makes you *do* something with the material:
   **Download all notes** (shown once any note exists) saves every note, whatever
   the search or filter and orphaned ones included, as `notes-YYYY-MM-DD.tgz` (the
   server's local date): one `notes/<id>-<slug>.md` per note, its slug taken from the
-  first heading outside code fences, or else the first non-blank line (lowercase
-  ASCII, at most 60 characters, `note` when empty). Each file is stamped with the
-  note's update time and opens with YAML front matter (`id`, `created`, `updated`,
-  `orphaned`, then `package` and `lesson` ids for attached notes, each with its
-  `title` while that content is in the library), followed by the body exactly as
-  stored.
+  first heading as the note renders (not one in a code or math block), or else the
+  first non-blank line (lowercase ASCII, at most 60 characters, `note` when empty).
+  Each file is stamped with the note's update time and opens with YAML front
+  matter (`id`, `created`, `updated`, `orphaned`, then `package` and `lesson` ids
+  for attached notes, each with its `title` while that content is in the library),
+  followed by the body exactly as stored.
 - **Explain-back** — pick a lesson, explain it in your own words in Markdown, and rate
   your confidence 1–5 (1 Lost, 2 Shaky, 3 Getting there, 4 Solid, 5 Could teach it; no
   default). A lesson in the library has one **revisit** prompt while its latest

@@ -1,5 +1,7 @@
 import { gzipSync } from "node:zlib";
 import type { Note } from "@study/shared";
+import { CONTINUE, EXIT, visit } from "unist-util-visit";
+import { processor } from "./mathCheck.js";
 import { buildTar } from "./tar.js";
 
 /** Longest slug in a file name; with the folder, id and extension the path stays under tar's 100 bytes. */
@@ -22,8 +24,13 @@ function yamlString(value: string): string {
   return `"${value.replace(UNSAFE, (ch) => ESCAPES[ch] ?? `\\u${ch.codePointAt(0)!.toString(16).padStart(4, "0")}`)}"`;
 }
 
+interface MarkdownNode { type: string; value?: unknown; children?: MarkdownNode[] }
+const plainText = (node: MarkdownNode): string =>
+  typeof node.value === "string" ? node.value : (node.children ?? []).map(plainText).join("");
+
 /**
- * Derives a file-name slug from a note's first heading outside code fences, else its first non-blank line.
+ * Derives a file-name slug from a note's first non-empty heading, else its first non-blank line.
+ * The body is parsed as the browser renders notes, so a heading inside code or math is not one.
  * Args:
  *   body: The note's Markdown.
  * Returns:
@@ -32,17 +39,14 @@ function yamlString(value: string): string {
  *   None.
  */
 export function noteSlug(body: string): string {
-  const lines = body.split(/\r?\n/);
-  // The open code fence's marker. As in CommonMark, a backtick opener's info string has no backticks,
-  // and only a bare run of the same character, at least as long, closes it.
-  let fence: string | null = null;
-  const heading = lines.find((line) => {
-    const [, marker = "", rest = ""] = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line) ?? [];
-    if (fence === null && marker && !(marker[0] === "`" && rest.includes("`"))) { fence = marker; return false; }
-    if (fence !== null && marker[0] === fence[0] && marker.length >= fence.length && /^[ \t]*$/.test(rest)) { fence = null; return false; }
-    return fence === null && /^ {0,3}#{1,6}[ \t]+\S/.test(line);
+  let heading: string | undefined;
+  visit(processor.parse(body), "heading", (node) => {
+    const text = plainText(node);
+    if (!text.trim()) return CONTINUE;
+    heading = text;
+    return EXIT;
   });
-  const source = heading ?? lines.find((line) => line.trim() !== "") ?? "";
+  const source = heading ?? body.split(/\r?\n/).find((line) => line.trim() !== "") ?? "";
   const slug = source.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+/, "").slice(0, SLUG_MAX).replace(/-+$/, "");
   return slug || "note";

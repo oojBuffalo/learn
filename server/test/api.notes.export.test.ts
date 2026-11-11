@@ -115,7 +115,7 @@ it("marks notes on removed content orphaned and keeps only the ids it no longer 
     orphaned: true, package: { id: "demo" } });
 });
 
-it("slugs the first heading, else the first line, as bounded lowercase ASCII", () => {
+it("slugs the first heading outside code and math, else the first line, as bounded lowercase ASCII", () => {
   expect(noteSlug("intro line\n# Résumé: Ünïcode — Notes!\n## later")).toBe("resume-unicode-notes");
   expect(noteSlug("\n\n  First line, not a #heading  \nsecond")).toBe("first-line-not-a-heading");
   expect(noteSlug("Intro text\n```sh\n# install\n```\n")).toBe("intro-text");
@@ -123,6 +123,9 @@ it("slugs the first heading, else the first line, as bounded lowercase ASCII", (
   expect(noteSlug("````md\n```\n# still fenced\n~~~\n````\n# After")).toBe("after");
   expect(noteSlug("Intro\n```md\n``` trailing text\n# Example\n```\n# Actual title")).toBe("actual-title");
   expect(noteSlug("``` not `a fence`\n# Real")).toBe("real");
+  expect(noteSlug("- ```js\n  # sample command\n  ```\n\n# Actual title")).toBe("actual-title");
+  expect(noteSlug("$$\n# not a heading\n$$\n\n# Math after")).toBe("math-after");
+  expect(noteSlug("intro\n\nSetext: title\n---\n\n# Later")).toBe("setext-title");
   for (const body of ["😀 🧠\n# —", "日本語", "#\n\n"]) expect(noteSlug(body)).toBe("note");
   const long = noteSlug(`# ${"word ".repeat(40)}`);
   expect(long.length).toBeLessThanOrEqual(60);
