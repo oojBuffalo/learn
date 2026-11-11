@@ -135,7 +135,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     const drafts = draft.session;
     const old = draftKey("explanation", oldId); const fresh = draftKey("explanation", "new");
     const free = ownsDraft(fresh);
-    if (drafts.dropped(old, latestBody.current) || (free && drafts.dropped(fresh, latestBody.current))) return free;
+    // Discarded text stays gone whichever of the two keys it was discarded from, even after other text took the new draft.
+    if (drafts.dropped(old, latestBody.current) || drafts.dropped(fresh, latestBody.current)) return free;
     // The old key keeps the text until the new draft holds it.
     if (free) { if (drafts.write(fresh, latestBody.current, new Date()) && ownsDraft(old)) drafts.clear(old); }
     else if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());

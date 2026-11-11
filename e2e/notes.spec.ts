@@ -1461,3 +1461,42 @@ test("a late first save keeps the stored draft when its newer text can’t be st
   expect(await storedBody(page, `study.draft.note.${id}`)).toBeNull();
   expect(await storedBody(page, fresh)).toBe("First stored");
 });
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a late ${kind} 404 never brings back text discarded from the new draft after other text took the slot`, async ({ page, request }) => {
+    const w = writing(kind);
+    const id = (await (await request.post(`/api/${w.api}`, { data: w.data("Moved writing") })).json())[kind].id;
+    const fresh = `study.draft.${kind}.new`; const key = `study.draft.${kind}.${id}`;
+    const touches = await watchDraft(page, fresh);
+    // Notes are deleted for real. Explanations have no delete, so every request for the removed one answers 404.
+    let removed = false;
+    await page.context().route(`**/api/${w.api}/${id}`, (route) => removed
+      ? route.fulfill({ status: 404, json: { error: { code: "not_found", message: `unknown ${kind}` } } }) : route.continue());
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}/${id}`, async (route) => {
+      if (route.request().method() === "PATCH") await held; await route.fallback();
+    });
+    await page.goto(`${w.base}/${id}`);
+    const editor = page.getByLabel(w.label, { exact: true }); await expect(editor).toHaveValue("Moved writing");
+    await editor.fill("Moved writing, edited"); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+    const other = await page.context().newPage();
+    const otherEditor = other.getByLabel(w.label, { exact: true });
+    await other.goto(`${w.base}/${id}`); await other.getByRole("button", { name: "Restore", exact: true }).click();
+    await expect(otherEditor).toHaveValue("Moved writing, edited late");
+    if (kind === "note") expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204); else removed = true;
+    await other.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(other.getByRole("alert")).toHaveText(w.gone);
+    expect(await storedBody(other, fresh)).toBe("Moved writing, edited late"); expect(await storedBody(other, key)).toBeNull();
+    await other.goto(w.fresh); await other.getByRole("button", { name: "Discard", exact: true }).click();
+    await otherEditor.fill("Unrelated new writing"); expect(await storedBody(other, fresh)).toBe("Unrelated new writing");
+    const before = await touches();
+    const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+    release(); expect((await answered).status()).toBe(404);
+    await expect.poll(touches).toBeGreaterThan(before);
+    expect(await storedBody(page, key)).toBeNull(); expect(await storedBody(page, fresh)).toBe("Unrelated new writing");
+    await other.close();
+  });
+}
