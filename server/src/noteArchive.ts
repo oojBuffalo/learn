@@ -1,0 +1,116 @@
+import { gzipSync } from "node:zlib";
+import type { Note } from "@study/shared";
+import { CONTINUE, EXIT, visit } from "unist-util-visit";
+import { processor } from "./mathCheck.js";
+import { buildTar } from "./tar.js";
+
+/** Longest slug in a file name; with the folder, id and extension the path stays under tar's 100 bytes. */
+const SLUG_MAX = 60;
+/** How much of a body is parsed for its heading: deep nesting makes parsing slow and can overflow the stack. */
+const HEADING_SCAN = 2_000;
+const FOLDER = "notes/";
+/** Characters a YAML double-quoted scalar can hold as themselves; everything else is escaped. */
+const UNSAFE = /[\\"]|[^\x20-\x7E\xA0-\u2027\u202A-\uD7FF\uE000-\uFEFE\uFF00-\uFFFD\u{10000}-\u{10FFFF}]/gu;
+const ESCAPES: Record<string, string> = { "\\": "\\\\", '"': '\\"', "\n": "\\n", "\r": "\\r", "\t": "\\t" };
+
+/**
+ * Quotes a string as a YAML double-quoted scalar.
+ * Args:
+ *   value: Any string, including colons, quotes, newlines and control characters.
+ * Returns:
+ *   A single-line scalar that YAML parsers read back as exactly `value`.
+ * Raises:
+ *   None.
+ */
+function yamlString(value: string): string {
+  return `"${value.replace(UNSAFE, (ch) => ESCAPES[ch] ?? `\\u${ch.codePointAt(0)!.toString(16).padStart(4, "0")}`)}"`;
+}
+
+interface MarkdownNode { type: string; value?: unknown; children?: MarkdownNode[] }
+const plainText = (node: MarkdownNode): string =>
+  typeof node.value === "string" ? node.value : (node.children ?? []).map(plainText).join("");
+
+/**
+ * Derives a file-name slug from the first non-empty heading in a note's first 2 000 characters, else its first non-blank line.
+ * That part is parsed as the browser renders notes, so a heading inside code or math is not one.
+ * Args:
+ *   body: The note's Markdown.
+ * Returns:
+ *   Lowercase ASCII letters, digits and single hyphens, at most 60 characters; "note" when nothing is left.
+ * Raises:
+ *   None; a body the parser cannot handle falls back to its first line, so one note never blocks an export.
+ */
+export function noteSlug(body: string): string {
+  const end = body.length <= HEADING_SCAN ? body.length : body.lastIndexOf("\n", HEADING_SCAN);
+  let heading: string | undefined;
+  try {
+    visit(processor.parse(body.slice(0, end > 0 ? end : HEADING_SCAN)), "heading", (node) => {
+      const text = plainText(node);
+      if (!text.trim()) return CONTINUE;
+      heading = text;
+      return EXIT;
+    });
+  } catch {
+    heading = undefined;
+  }
+  const source = heading ?? body.split(/\r?\n/).find((line) => line.trim() !== "") ?? "";
+  const slug = source.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+/, "").slice(0, SLUG_MAX).replace(/-+$/, "");
+  return slug || "note";
+}
+
+/**
+ * Writes one note as Markdown: YAML front matter, then the body exactly as stored.
+ * Args:
+ *   note: A saved note, possibly orphaned.
+ * Returns:
+ *   The file's text. `package` and `lesson` appear only for attached notes, each title only while its content is in the library.
+ * Raises:
+ *   None.
+ */
+export function noteMarkdown(note: Note): string {
+  const lines = ["---", `id: ${note.id}`, `created: ${yamlString(note.createdAt)}`, `updated: ${yamlString(note.updatedAt)}`,
+    `orphaned: ${note.orphaned}`];
+  const target = note.target;
+  if (target) {
+    lines.push("package:", `  id: ${yamlString(target.packageId)}`);
+    if (target.packageTitle !== null) lines.push(`  title: ${yamlString(target.packageTitle)}`);
+    if (target.lessonId !== null) {
+      lines.push("lesson:", `  id: ${yamlString(target.lessonId)}`);
+      if (target.lessonTitle !== null) lines.push(`  title: ${yamlString(target.lessonTitle)}`);
+    }
+  }
+  return `${lines.join("\n")}\n---\n${note.body}`;
+}
+
+/**
+ * Packs notes into a gzip-compressed tarball with one `notes/<id>-<slug>.md` file each.
+ * Args:
+ *   notes: The notes to include, in archive order.
+ *   now: The export time, used as the folder's mtime; each file's mtime is its note's last update.
+ * Returns:
+ *   The .tgz bytes; with no notes, an archive holding only the empty folder.
+ * Raises:
+ *   RangeError: A note's update time is before 1970 or unparseable.
+ */
+export function buildNoteArchive(notes: Note[], now: Date): Buffer {
+  return gzipSync(buildTar([
+    { type: "directory", name: FOLDER, mtime: now },
+    ...notes.map((note) => ({ type: "file" as const, name: `${FOLDER}${note.id}-${noteSlug(note.body)}.md`,
+      mtime: new Date(note.updatedAt), data: Buffer.from(noteMarkdown(note), "utf8") })),
+  ]));
+}
+
+/**
+ * Names a notes download after the server's local calendar date.
+ * Args:
+ *   now: The export time.
+ * Returns:
+ *   `notes-YYYY-MM-DD.tgz`.
+ * Raises:
+ *   None.
+ */
+export function noteArchiveName(now: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `notes-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.tgz`;
+}

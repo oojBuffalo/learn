@@ -4,6 +4,7 @@ import type { Note, NoteTarget } from "@study/shared";
 import type { AppEnv } from "../app.js";
 import type { Db } from "../db.js";
 import { apiError, parseJsonBody } from "../http.js";
+import { buildNoteArchive, noteArchiveName } from "../noteArchive.js";
 import { LIVE } from "../orphans.js";
 
 interface NoteRow {
@@ -50,12 +51,21 @@ function targetError(db: Db, target: NoteTarget | null): string | null {
  * Args:
  *   None; the app supplies the database in each request context.
  * Returns:
- *   Strict create/update, list, read and delete routes with orphan flags.
+ *   Strict create/update, list, read and delete routes with orphan flags, and a Markdown download of every note.
  * Raises:
  *   Error: A database operation fails.
  */
 export function noteRoutes(): Hono<AppEnv> {
   const r = new Hono<AppEnv>();
+  r.get("/export", (c) => {
+    const rows = c.get("db").prepare(`${SELECT_NOTE} ORDER BY n.id`).all() as NoteRow[];
+    const now = new Date();
+    const archive = buildNoteArchive(rows.map(toNote), now);
+    return c.body(archive.buffer.slice(archive.byteOffset, archive.byteOffset + archive.byteLength) as ArrayBuffer, 200, {
+      "Content-Type": "application/gzip",
+      "Content-Disposition": `attachment; filename="${noteArchiveName(now)}"`,
+    });
+  });
   r.get("/", (c) => {
     const rows = c.get("db").prepare(`${SELECT_NOTE} ORDER BY n.updated_at DESC, n.id DESC`).all() as NoteRow[];
     return c.json({ notes: rows.map(toNote) });

@@ -1,7 +1,8 @@
 import AdmZip from "adm-zip";
-import { mkdtempSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { onTestFinished } from "vitest";
 import { openDb } from "../src/db.js";
 import type { Db } from "../src/db.js";
@@ -63,6 +64,29 @@ export function corruptEntry(zip: Buffer, name: string): Buffer {
   const crcAt = entry.header.offset + 14; // the CRC-32 field of the local file header
   out.writeUInt32LE(~out.readUInt32LE(crcAt) >>> 0, crcAt);
   return out;
+}
+
+/** One path extracted from an archive: its bytes (empty for a folder) and mtime in whole seconds. */
+export interface Extracted { dir: boolean; data: Buffer; mtime: number }
+
+/**
+ * Extracts a gzip-compressed tarball with the system `tar` into a `tempDir` and reads every path back.
+ * Args:
+ *   archive: The .tgz bytes.
+ * Returns:
+ *   Every extracted path, relative and `/`-separated, sorted.
+ * Raises:
+ *   Error: `tar` rejects the archive, or this is called outside a running test.
+ */
+export function extractTgz(archive: Uint8Array): Map<string, Extracted> {
+  const out = tempDir("study-tgz-");
+  execFileSync("tar", ["-xzf", "-", "-C", out], { input: archive, stdio: ["pipe", "pipe", "pipe"] });
+  return new Map((readdirSync(out, { recursive: true }) as string[]).map((path) => {
+    const stat = statSync(join(out, path));
+    const dir = stat.isDirectory();
+    // Windows lists nested paths with backslashes; archive paths always use "/".
+    return [path.split(sep).join("/"), { dir, data: dir ? Buffer.alloc(0) : readFileSync(join(out, path)), mtime: Math.floor(stat.mtimeMs / 1000) }] as const;
+  }).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
 }
 
 export const GOOD_FILES: Record<string, string | Buffer> = {

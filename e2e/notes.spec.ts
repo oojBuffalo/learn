@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 
 test.describe.configure({ mode: "serial" });
 const PKG = "learning-how-to-learn";
@@ -373,6 +374,32 @@ test("saving a dismissed explanation promises Home only when its prompt is back"
   await save.click();
   await expect(page.getByRole("status")).toHaveText("Saved. Rated 1 · Lost — it’ll come back on Home until you explain it with more confidence.");
   expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, solidly.", confidence: 4 } })).status()).toBe(201);
+});
+
+test("Download all notes saves a gzip archive named for today and is hidden with no notes", async ({ page, request }) => {
+  const day = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const created = await request.post("/api/notes", { data: { body: "# Export me\n\nCafé ✓ 😀", target: null } });
+  expect(created.status()).toBe(201);
+  const id = ((await created.json()) as { note: { id: number } }).note.id;
+  try {
+    await page.goto("/notes");
+    const before = day();
+    const download = page.waitForEvent("download");
+    await page.getByRole("link", { name: "Download all notes", exact: true }).click();
+    const file = await download;
+    expect([`notes-${before}.tgz`, `notes-${day()}.tgz`]).toContain(file.suggestedFilename());
+    const path = await file.path();
+    if (path === null) throw new Error("notes download has no local path");
+    const archive = readFileSync(path);
+    expect([...archive.subarray(0, 2)]).toEqual([0x1f, 0x8b]);
+    expect(gunzipSync(archive).includes(`notes/${id}-export-me.md`)).toBe(true);
+  } finally {
+    expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  }
+  await page.route("**/api/notes", (route) => route.request().method() === "GET" ? route.fulfill({ json: { notes: [] } }) : route.continue());
+  await page.goto("/notes");
+  await expect(page.getByText("No notes yet", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download all notes" })).toHaveCount(0);
 });
 
 test("Leftover progress clears progress, spares writing, and a re-import restores it", async ({ page, request }) => {

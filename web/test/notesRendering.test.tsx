@@ -46,6 +46,12 @@ it("NotesListView searches, counts and shows 20 notes at a time", () => {
   expect(none).not.toContain("Write one here");
   expect(renderNotes({ kind: "all" }, many, "removed two")).toContain('href="/notes?q=removed+two&amp;orphaned=1"');
 });
+it("NotesListView offers Download all notes whenever any note exists, whatever the filter", () => {
+  const link = '<a class="btn" href="/api/notes/export" download="">Download all notes</a>';
+  for (const filter of [{ kind: "all" }, { kind: "orphaned" }, { kind: "package", packageId: "zzz" }] as ListFilter[]) expect(renderNotes(filter)).toContain(link);
+  expect(renderNotes({ kind: "all" }, notes, "matches nothing")).toContain(link);
+  expect(renderNotes({ kind: "all" }, [])).not.toContain("Download all notes");
+});
 const explanation = (id: number, over: Partial<Explanation> = {}): Explanation => ({ id, packageId: "p", lessonId: "l1", packageTitle: "Alpha", lessonTitle: "One",
   body: "Because retrieval…", confidence: 2, revisit: true, orphaned: false, createdAt: "2026-10-01T10:00:00.000Z", updatedAt: "2026-10-01T10:00:00.000Z", ...over });
 const explanations = [explanation(1), explanation(2, { lessonId: "l2", lessonTitle: "Two", confidence: 4, revisit: false }),

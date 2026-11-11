@@ -33,7 +33,8 @@ Deleting a package keeps its progress, notes and explanations, hidden until you
 re-import it. Library → Leftover progress permanently deletes orphaned progress;
 notes and explanations are deleted only when you opt in. Re-importing a package
 updates content in place. Notes and explanations are never part of a package
-export; `npm run backup -w server -- <dest>` includes them.
+export; `npm run backup -w server -- <dest>` includes them, and Notes → Download all
+notes saves every note as Markdown.
 
 ## Packages
 
@@ -61,6 +62,7 @@ All routes are under `/api`:
 - `POST /attempts` — check and log an exercise, quiz run or game play.
 - `GET /attempts?packageId&kind&refId&limit` — newest summaries, with removed content hidden.
 - `GET /notes` — all notes, including removed-content notes flagged as orphaned.
+- `GET /notes/export` — download every note as `notes-YYYY-MM-DD.tgz`: one Markdown file per note with YAML front matter.
 - `POST /notes` — create a standalone, package or lesson note.
 - `GET/PATCH/DELETE /notes/:id` — read, edit or delete a note.
 - `GET /explanations` — all explanations; `?revisit=1` returns revisit prompts only.
