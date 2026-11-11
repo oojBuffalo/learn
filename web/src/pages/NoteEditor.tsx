@@ -93,9 +93,11 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
 
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
-    if (draft.offer) recordDiscard(browserDraftStore(), slot, draft.offer.body, new Date());
-    if (!ownsSlot()) { draft.dismiss(); return; }
-    draft.clear();
+    const offered = draft.offer;
+    const record = () => { if (offered) recordDiscard(browserDraftStore(), slot, offered.body, new Date()); };
+    if (!ownsSlot()) { record(); draft.dismiss(); return; }
+    // Recorded once the clear has freed its space, and before this editor stores its own text again.
+    draft.clear(); record();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
 
@@ -117,10 +119,10 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   function keepGoneText(oldId: number): boolean {
     const drafts = draft.session;
     const old = draftKey("note", oldId); const fresh = draftKey("note", "new");
-    const dropped = drafts.dropped(old, latestBody.current);
     const free = ownsDraft(fresh);
-    if (dropped) return free;
-    if (free) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
+    if (drafts.dropped(old, latestBody.current) || (free && drafts.dropped(fresh, latestBody.current))) return free;
+    // The old key keeps the text until the new draft holds it.
+    if (free) { if (drafts.write(fresh, latestBody.current, new Date()) && ownsDraft(old)) drafts.clear(old); }
     else if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
     return free;
   }
@@ -137,14 +139,16 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       const note = creating ? await createNote(sent) : await updateNote(id, patch);
       const drafts = draft.session;
       // Text that another editor discarded, or removed with a delete, while this save was pending stays gone.
-      const dropped = drafts.dropped(slot, latestBody.current);
-      if (creating && recoveryId !== null && ownsDraft(draftKey("note", recoveryId))) drafts.clear(draftKey("note", recoveryId));
-      if (creating && ownsDraft(draftKey("note", "new"))) drafts.clear(draftKey("note", "new"));
       const key = draftKey("note", note.id);
+      const dropped = drafts.dropped(slot, latestBody.current) || drafts.dropped(key, latestBody.current);
+      // A create's old draft stays until the new key holds the text typed since, so a failed write loses nothing.
+      let moved = true;
       if (ownsDraft(key)) {
         if (latestBody.current === sent.body) drafts.clear(key);
-        else if (!dropped) drafts.write(key, latestBody.current, new Date());
+        else if (!dropped) moved = drafts.write(key, latestBody.current, new Date());
       }
+      if (creating && moved && recoveryId !== null && ownsDraft(draftKey("note", recoveryId))) drafts.clear(draftKey("note", recoveryId));
+      if (creating && moved && ownsDraft(draftKey("note", "new"))) drafts.clear(draftKey("note", "new"));
       if (!mounted.current) return;
       draft.dismiss();
       setId(note.id); setSaved(sent); setOrphaned(note.orphaned);
@@ -175,7 +179,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       // Another editor of this note, here or in another tab, may have stored newer text before the delete settled.
       // Text deleted with the note is recorded as discarded, so a late save never brings it back.
       const deleted = readDraft(browserDraftStore(), slot);
-      if (ownsSlot()) { if (deleted) recordDiscard(browserDraftStore(), slot, deleted.body, new Date()); draft.session.clear(slot); }
+      if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(browserDraftStore(), slot, deleted.body, new Date()); }
       if (mounted.current) navigate("/notes");
     } catch (e) {
       if (mounted.current) { setConfirming(false); setError(`This note wasn’t deleted (${message(e)}).`); }

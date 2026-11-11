@@ -99,7 +99,8 @@ export function recordDiscard(store: DraftStore, key: string, body: string, now:
  * settles late can tell a Discard or delete made since then from its own clear or another editor's save.
  */
 export interface DraftSession {
-  write(key: string, body: string, now: Date): void;
+  /** Returns whether the draft was stored. */
+  write(key: string, body: string, now: Date): boolean;
   clear(key: string, now?: Date): void;
   /** The key is empty, or holds `holding` or the text this editor last stored there. */
   owns(key: string, holding: string): boolean;
@@ -109,7 +110,10 @@ export interface DraftSession {
 export function draftSession(store: DraftStore, started = new Date()): DraftSession {
   const last = new Map<string, { body: string | null; at: string }>();
   return {
-    write(key, body, now) { if (writeDraft(store, key, body, now)) { last.set(key, { body, at: now.toISOString() }); changed(); } },
+    write(key, body, now) {
+      if (!writeDraft(store, key, body, now)) return false;
+      last.set(key, { body, at: now.toISOString() }); changed(); return true;
+    },
     clear(key, now = new Date()) { if (clearDraft(store, key)) { last.set(key, { body: null, at: now.toISOString() }); changed(); } },
     owns(key, holding) {
       const stored = readDraft(store, key);

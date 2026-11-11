@@ -100,9 +100,11 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
 
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
-    if (draft.offer) recordDiscard(browserDraftStore(), slot, draft.offer.body, new Date());
-    if (!ownsSlot()) { draft.dismiss(); return; }
-    draft.clear();
+    const offered = draft.offer;
+    const record = () => { if (offered) recordDiscard(browserDraftStore(), slot, offered.body, new Date()); };
+    if (!ownsSlot()) { record(); draft.dismiss(); return; }
+    // Recorded once the clear has freed its space, and before this editor stores its own text again.
+    draft.clear(); record();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
 
@@ -132,10 +134,10 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   function keepGoneText(oldId: number): boolean {
     const drafts = draft.session;
     const old = draftKey("explanation", oldId); const fresh = draftKey("explanation", "new");
-    const dropped = drafts.dropped(old, latestBody.current);
     const free = ownsDraft(fresh);
-    if (dropped) return free;
-    if (free) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
+    if (drafts.dropped(old, latestBody.current) || (free && drafts.dropped(fresh, latestBody.current))) return free;
+    // The old key keeps the text until the new draft holds it.
+    if (free) { if (drafts.write(fresh, latestBody.current, new Date()) && ownsDraft(old)) drafts.clear(old); }
     else if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
     return free;
   }
@@ -153,13 +155,15 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         packageId: sent.target.packageId, lessonId: sent.target.lessonId! }) : await updateExplanation(id, patch);
       const drafts = draft.session;
       // Text that another editor discarded while this save was pending stays gone.
-      const dropped = drafts.dropped(slot, latestBody.current);
-      if (creating && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
-      if (creating && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
       const key = draftKey("explanation", explanation.id);
+      const dropped = drafts.dropped(slot, latestBody.current) || drafts.dropped(key, latestBody.current);
+      // A create's old draft stays until the new key holds the text typed since, so a failed write loses nothing.
+      let moved = true;
       if (ownsDraft(key)) {
-        if (latestBody.current === sent.body) drafts.clear(key); else if (!dropped) drafts.write(key, latestBody.current, new Date());
+        if (latestBody.current === sent.body) drafts.clear(key); else if (!dropped) moved = drafts.write(key, latestBody.current, new Date());
       }
+      if (creating && moved && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
+      if (creating && moved && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
       if (!mounted.current) return;
       draft.dismiss();
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);

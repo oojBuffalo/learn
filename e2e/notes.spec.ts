@@ -1390,3 +1390,74 @@ test("a late note save keeps newer text that another tab restored and saved befo
   await other.getByRole("button", { name: "Restore", exact: true }).click(); await expect(otherEditor).toHaveValue("Sent text and newer text");
   await other.close();
 });
+
+test("a late 404 never brings back text another tab moved to the new-note draft and discarded there", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Moved note", target: null } })).json()).note.id;
+  const fresh = "study.draft.note.new";
+  const touches = await watchDraft(page, fresh);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH") await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Moved note");
+  await editor.fill("Moved note, edited"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const other = await page.context().newPage();
+  const otherEditor = other.getByLabel("Note", { exact: true });
+  await other.goto(`/notes/${id}`); await other.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(otherEditor).toHaveValue("Moved note, edited late");
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  await other.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(other.getByRole("alert")).toHaveText("This note was deleted elsewhere — Save will create it again.");
+  expect(await storedBody(other, fresh)).toBe("Moved note, edited late");
+  await other.goto("/notes/new"); await other.getByRole("button", { name: "Discard", exact: true }).click();
+  expect(await storedBody(other, fresh)).toBeNull();
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect(await storedBody(page, fresh)).toBeNull(); expect(await storedBody(page, `study.draft.note.${id}`)).toBeNull();
+  await other.close();
+});
+
+test("a late first save keeps the stored draft when its newer text can’t be stored", async ({ page }) => {
+  const fresh = "study.draft.note.new";
+  // Lets the test make every draft write fail, as a full storage quota would, and counts draft storage calls.
+  await page.addInitScript(() => {
+    const w = window as unknown as { draftsFull: boolean; touches: number }; w.draftsFull = false; w.touches = 0;
+    const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+    for (const name of ["getItem", "setItem", "removeItem"]) {
+      const original = proto[name]!;
+      proto[name] = function (this: Storage, ...args: unknown[]) {
+        if (typeof args[0] === "string" && args[0].startsWith("study.draft.")) {
+          w.touches += 1;
+          if (name === "setItem" && w.draftsFull) throw new DOMException("full", "QuotaExceededError");
+        }
+        return original.apply(this, args);
+      };
+    }
+  });
+  const touches = () => page.evaluate(() => (window as unknown as { touches: number }).touches);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/notes", async (route) => {
+    if (route.request().method() === "POST") await held; await route.continue();
+  });
+  const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/api/notes");
+  await page.goto("/notes/new");
+  const editor = page.getByLabel("Note", { exact: true });
+  await editor.fill("First"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" stored");
+  expect(await storedBody(page, fresh)).toBe("First stored");
+  await page.evaluate(() => { (window as unknown as { draftsFull: boolean }).draftsFull = true; });
+  await page.keyboard.type(" unstored");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const before = await touches();
+  release(); const id = (await (await created).json()).note.id;
+  await expect.poll(touches).toBeGreaterThan(before + 1);
+  expect(await storedBody(page, `study.draft.note.${id}`)).toBeNull();
+  expect(await storedBody(page, fresh)).toBe("First stored");
+});

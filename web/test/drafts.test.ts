@@ -128,6 +128,6 @@ it("a failed write keeps a session's claim on the text it last stored", () => {
   const s = mem(); let full = false;
   const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };
   const session = draftSession(store);
-  session.write(k, "Stored", at(1)); full = true; session.write(k, "Too big", at(2));
+  expect(session.write(k, "Stored", at(1))).toBe(true); full = true; expect(session.write(k, "Too big", at(2))).toBe(false);
   expect(readDraft(s, k)?.body).toBe("Stored"); expect(session.owns(k, "Too big")).toBe(true);
 });
