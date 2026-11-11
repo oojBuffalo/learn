@@ -61,16 +61,15 @@ it("a session owns an empty key it never wrote, its own text and the text it hol
   expect(mine.dropped(k, "Typed more")).toBe(false);
 });
 
-it("a session tells its own clear from another editor's Discard", () => {
+it("a session tells another editor's Discard from a clear by a save", () => {
   const s = mem(); const late = draftSession(s, at(0)); const other = draftSession(s, at(0));
-  late.write(k, "Late text", at(1)); other.clear(k, at(2));
-  expect(late.dropped(k, "Late text")).toBe(true); expect(late.owns(k, "Late text")).toBe(false);
+  late.write(k, "Late text", at(1)); recordDiscard(s, k, "Late text", at(2)); other.clear(k, at(2));
+  expect(late.dropped(k, "Late text")).toBe(true); expect(late.owns(k, "Late text")).toBe(true);
   late.write(k, "Typed after the discard", at(3));
   expect(late.dropped(k, "Typed after the discard")).toBe(false); expect(late.owns(k, "Typed after the discard")).toBe(true);
-  late.clear(k, at(4));
-  expect(late.dropped(k, "Anything")).toBe(false); expect(late.owns(k, "Anything")).toBe(true);
-  other.write(k, "Other text", at(5)); other.clear(k, at(6));
-  expect(late.dropped(k, "Anything")).toBe(false);
+  // Another editor restored this text and saved it; a late request from this editor may since have overwritten that save.
+  other.write(k, "Typed after the discard", at(4)); other.clear(k, at(5));
+  expect(late.dropped(k, "Typed after the discard")).toBe(false); expect(late.owns(k, "Typed after the discard")).toBe(true);
 });
 
 it("a session never brings back text the user discarded after its last write or clear", () => {
@@ -115,14 +114,14 @@ it("a discard removes week-old discard records under every key and keeps recent 
   expect(session.dropped("study.draft.note.2", "Recent")).toBe(true); expect(session.dropped(k, "Now")).toBe(true);
 });
 
-it("another editor removing older text spares newer text whose write failed", () => {
+it("discarding older text spares newer text whose write failed", () => {
   const s = mem(); let full = false;
   const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };
   const late = draftSession(store, at(0)); const other = draftSession(s, at(0));
   late.write(k, "Stored", at(1)); full = true; late.write(k, "Stored and more", at(2));
   recordDiscard(s, k, "Stored", at(3)); other.clear(k, at(3));
   expect(late.dropped(k, "Stored and more")).toBe(false); expect(late.owns(k, "Stored and more")).toBe(true);
-  expect(late.dropped(k, "Stored")).toBe(true); expect(late.owns(k, "Stored")).toBe(false);
+  expect(late.dropped(k, "Stored")).toBe(true);
 });
 
 it("a failed write keeps a session's claim on the text it last stored", () => {

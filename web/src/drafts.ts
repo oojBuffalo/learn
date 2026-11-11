@@ -95,18 +95,15 @@ export function recordDiscard(store: DraftStore, key: string, body: string, now:
 }
 
 /**
- * One editor's writes and clears. Each editor remembers what it last did under every key, so a save that
- * settles late can tell its own clear from another editor's Discard, delete or save.
+ * One editor's writes and clears. Each editor remembers when it last wrote or cleared every key, so a save that
+ * settles late can tell a Discard or delete made since then from its own clear or another editor's save.
  */
 export interface DraftSession {
   write(key: string, body: string, now: Date): void;
   clear(key: string, now?: Date): void;
-  /** The key holds `holding` or the text this editor last stored there, or it is empty but not because another editor removed `holding`. */
+  /** The key is empty, or holds `holding` or the text this editor last stored there. */
   owns(key: string, holding: string): boolean;
-  /**
-   * Another editor removed `holding` after this editor stored it under the key, or the user discarded `holding` there
-   * since this editor last wrote or cleared it.
-   */
+  /** The user discarded `holding` under the key, or deleted it with its note, since this editor last wrote or cleared it. */
   dropped(key: string, holding: string): boolean;
 }
 export function draftSession(store: DraftStore, started = new Date()): DraftSession {
@@ -117,14 +114,12 @@ export function draftSession(store: DraftStore, started = new Date()): DraftSess
     owns(key, holding) {
       const stored = readDraft(store, key);
       const mine = last.get(key);
-      // A failed write leaves older text stored; another editor removing that older text spares `holding`.
-      if (stored === null) return mine?.body == null || mine.body !== holding;
-      return stored.body === holding || (mine !== undefined && mine.body === stored.body && mine.at === stored.at);
+      return stored === null || stored.body === holding || (mine !== undefined && mine.body === stored.body && mine.at === stored.at);
     },
+    // An emptied key alone proves nothing: another editor that restored and saved this text clears it too, and this
+    // editor's late request may since have overwritten that save. Only a recorded Discard or delete counts.
     dropped(key, holding) {
-      const mine = last.get(key);
-      if (readDraft(store, key) === null && mine?.body === holding) return true;
-      const since = mine?.at ?? started.toISOString(); const text = fingerprint(holding);
+      const since = last.get(key)?.at ?? started.toISOString(); const text = fingerprint(holding);
       return readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > since);
     },
   };

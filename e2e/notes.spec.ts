@@ -1358,3 +1358,35 @@ test("a late note save after a revert never brings back the same text deleted wi
   await other.reload(); await expect(other.getByRole("region", { name: "Kept drafts" })).toHaveCount(0);
   await other.close();
 });
+
+test("a late note save keeps newer text that another tab restored and saved before the late save overwrote it", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Saved", target: null } })).json()).note.id;
+  const key = `study.draft.note.${id}`;
+  const touches = await watchDraft(page, key);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  // This editor's save reaches the server only after the other tab's save.
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH") await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Saved");
+  await editor.fill("Sent text"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" and newer text");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const other = await page.context().newPage();
+  const otherEditor = other.getByLabel("Note", { exact: true });
+  await other.goto(`/notes/${id}`); await expect(otherEditor).toHaveValue("Saved");
+  await other.getByRole("button", { name: "Restore", exact: true }).click(); await expect(otherEditor).toHaveValue("Sent text and newer text");
+  await other.getByRole("button", { name: "Save", exact: true }).click(); await expect(other.getByRole("status")).toHaveText("Saved");
+  expect(await storedBody(other, key)).toBeNull();
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(200);
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect((await (await request.get(`/api/notes/${id}`)).json()).note.body).toBe("Sent text");
+  expect(await storedBody(page, key)).toBe("Sent text and newer text");
+  await other.reload(); await expect(otherEditor).toHaveValue("Sent text");
+  await other.getByRole("button", { name: "Restore", exact: true }).click(); await expect(otherEditor).toHaveValue("Sent text and newer text");
+  await other.close();
+});
