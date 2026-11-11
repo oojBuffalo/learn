@@ -58,25 +58,30 @@ export function restoredDraftId(state: unknown): number | null {
 /** Fired on this window when an editor stores or removes a draft; other tabs get a `storage` event instead. */
 export const DRAFTS_CHANGED = "study:drafts-changed";
 const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(new Event(DRAFTS_CHANGED)); };
-const DISCARDS = "study.draft.discarded";
-type Discard = { key: string; text: string; at: string };
+// Each draft key keeps its own discards, so discards elsewhere never push one out.
+const discardsKey = (key: string) => `study.draft.discarded.${key}`;
+type Discard = { text: string; at: string };
 // Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
 function fingerprint(body: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < body.length; i++) hash = Math.imul(hash ^ body.charCodeAt(i), 0x01000193) >>> 0;
   return `${body.length}:${hash.toString(16)}`;
 }
-function readDiscards(store: DraftStore): Discard[] {
+function readDiscards(store: DraftStore, key: string): Discard[] {
   try {
-    const parsed: unknown = JSON.parse(store.getItem(DISCARDS) ?? "[]");
+    const parsed: unknown = JSON.parse(store.getItem(discardsKey(key)) ?? "[]");
     return Array.isArray(parsed) ? parsed.filter((d): d is Discard => d !== null && typeof d === "object"
-      && typeof d.key === "string" && typeof d.text === "string" && typeof d.at === "string") : [];
+      && typeof d.text === "string" && typeof d.at === "string") : [];
   } catch { return []; }
 }
-/** Remembers that the user discarded this text under the key, so a save that settles later never brings it back. */
+/**
+ * Remembers that the user discarded this text under the key, so a save that settles later never brings it back.
+ * A key keeps its 20 newest discards from the last week; no save stays pending that long.
+ */
 export function recordDiscard(store: DraftStore, key: string, body: string, now: Date): void {
-  const discards = [...readDiscards(store), { key, text: fingerprint(body), at: now.toISOString() }];
-  try { store.setItem(DISCARDS, JSON.stringify(discards.slice(-50))); } catch { /* Discarding still works without storage. */ }
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const discards = [...readDiscards(store, key).filter((d) => d.at > weekAgo), { text: fingerprint(body), at: now.toISOString() }];
+  try { store.setItem(discardsKey(key), JSON.stringify(discards.slice(-20))); } catch { /* Discarding still works without storage. */ }
 }
 
 /**
@@ -86,10 +91,10 @@ export function recordDiscard(store: DraftStore, key: string, body: string, now:
 export interface DraftSession {
   write(key: string, body: string, now: Date): void;
   clear(key: string, now?: Date): void;
-  /** The key holds `holding`, the text this editor last stored there, or nothing that another editor removed. */
+  /** The key holds `holding` or the text this editor last stored there, or it is empty but not because another editor removed `holding`. */
   owns(key: string, holding: string): boolean;
   /**
-   * Another editor removed the text this editor last stored under the key, or the user discarded `holding` there
+   * Another editor removed `holding` after this editor stored it under the key, or the user discarded `holding` there
    * since this editor last wrote or cleared it.
    */
   dropped(key: string, holding: string): boolean;
@@ -102,14 +107,15 @@ export function draftSession(store: DraftStore, started = new Date()): DraftSess
     owns(key, holding) {
       const stored = readDraft(store, key);
       const mine = last.get(key);
-      if (stored === null) return mine?.body == null;
+      // A failed write leaves older text stored; another editor removing that older text spares `holding`.
+      if (stored === null) return mine?.body == null || mine.body !== holding;
       return stored.body === holding || (mine !== undefined && mine.body === stored.body && mine.at === stored.at);
     },
     dropped(key, holding) {
       const mine = last.get(key);
-      if (readDraft(store, key) === null && mine !== undefined && mine.body !== null) return true;
+      if (readDraft(store, key) === null && mine?.body === holding) return true;
       const since = mine?.at ?? started.toISOString(); const text = fingerprint(holding);
-      return readDiscards(store).some((d) => d.key === key && d.text === text && d.at > since);
+      return readDiscards(store, key).some((d) => d.text === text && d.at > since);
     },
   };
 }

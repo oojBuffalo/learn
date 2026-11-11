@@ -29,8 +29,8 @@ export function KeptDraftsView({ kind, drafts, error, onRestore, onDiscard, onRe
 
 /**
  * Drafts whose note or explanation is gone, so no editor would offer them; text there is kept until restored or
- * discarded. The list is checked again when Notes retries, when this tab becomes visible, when another tab adds or
- * removes a draft and when a late save here moves one.
+ * discarded. The list is checked again when Notes retries, when this tab becomes visible, and when a draft changes
+ * here or in another tab.
  */
 export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refreshKey: number }) {
   const navigate = useNavigate();
@@ -38,13 +38,16 @@ export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refr
   const [checks, setChecks] = useState(0);
   const [kept, setKept] = useState<{ kind: DraftKind; drafts: Kept[]; error: string | null }>({ kind, drafts: [], error: null });
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const again = () => setChecks((n) => n + 1);
+    // An editor rewrites its draft on every key, so a burst of changes is checked once it pauses.
+    const soon = () => { clearTimeout(timer); timer = setTimeout(again, 300); };
     const visible = () => { if (document.visibilityState === "visible") again(); };
-    // Typing in another tab rewrites a draft; only a draft that appears or goes away changes this list.
-    const changed = (e: StorageEvent) => { if (e.key === null || (e.key.startsWith("study.draft.") && (e.oldValue === null || e.newValue === null))) again(); };
-    document.addEventListener("visibilitychange", visible); window.addEventListener("storage", changed); window.addEventListener(DRAFTS_CHANGED, again);
+    const changed = (e: StorageEvent) => { if (e.key === null || e.key.startsWith("study.draft.")) soon(); };
+    document.addEventListener("visibilitychange", visible); window.addEventListener("storage", changed); window.addEventListener(DRAFTS_CHANGED, soon);
     return () => {
-      document.removeEventListener("visibilitychange", visible); window.removeEventListener("storage", changed); window.removeEventListener(DRAFTS_CHANGED, again);
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", visible); window.removeEventListener("storage", changed); window.removeEventListener(DRAFTS_CHANGED, soon);
     };
   }, []);
   useEffect(() => {

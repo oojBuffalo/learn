@@ -90,15 +90,30 @@ it("a session never brings back text the user discarded after its last write or 
   expect(draftSession(s, at(5)).dropped(key, "Original")).toBe(true); expect(draftSession(s, at(7)).dropped(key, "Original")).toBe(false);
 });
 
-it("keeps the 50 newest discards and ignores a corrupt list", () => {
+it("keeps each key's 20 newest discards from the last week, untouched by discards under other keys, and ignores a corrupt list", () => {
   const s = mem(); const session = draftSession(s, at(0));
-  for (let i = 0; i < 51; i++) recordDiscard(s, k, `Text ${i}`, at(1));
-  expect(session.dropped(k, "Text 0")).toBe(false); expect(session.dropped(k, "Text 1")).toBe(true); expect(session.dropped(k, "Text 50")).toBe(true);
-  for (const value of ["{not json", '{"key":1}', '[{"key":1,"text":"x","at":"y"}, null]']) {
-    s.setItem("study.draft.discarded", value); expect(session.dropped(k, "Text 50")).toBe(false);
-    expect(() => recordDiscard(s, k, "Text 50", at(1))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);
+  recordDiscard(s, k, "Kept a long time", at(1));
+  for (let i = 0; i < 100; i++) recordDiscard(s, `study.draft.note.${i + 1}`, "Elsewhere", at(2));
+  expect(session.dropped(k, "Kept a long time")).toBe(true);
+  for (let i = 0; i < 20; i++) recordDiscard(s, k, `Text ${i}`, at(3));
+  expect(session.dropped(k, "Kept a long time")).toBe(false); expect(session.dropped(k, "Text 0")).toBe(true);
+  recordDiscard(s, k, "A week later", new Date(at(3).getTime() + 8 * 24 * 60 * 60 * 1000));
+  expect(session.dropped(k, "Text 19")).toBe(false); expect(session.dropped(k, "A week later")).toBe(true);
+  for (const value of ["{not json", '{"text":1}', '[{"text":1,"at":"y"}, null]']) {
+    s.setItem(`study.draft.discarded.${k}`, value); expect(session.dropped(k, "A week later")).toBe(false);
+    expect(() => recordDiscard(s, k, "Text 50", at(4))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);
   }
   expect(rowDrafts(s, "note")).toEqual([]);
+});
+
+it("another editor removing older text spares newer text whose write failed", () => {
+  const s = mem(); let full = false;
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };
+  const late = draftSession(store, at(0)); const other = draftSession(s, at(0));
+  late.write(k, "Stored", at(1)); full = true; late.write(k, "Stored and more", at(2));
+  recordDiscard(s, k, "Stored", at(3)); other.clear(k, at(3));
+  expect(late.dropped(k, "Stored and more")).toBe(false); expect(late.owns(k, "Stored and more")).toBe(true);
+  expect(late.dropped(k, "Stored")).toBe(true); expect(late.owns(k, "Stored")).toBe(false);
 });
 
 it("a failed write keeps a session's claim on the text it last stored", () => {

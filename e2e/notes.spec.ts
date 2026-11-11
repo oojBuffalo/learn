@@ -1303,3 +1303,26 @@ test("a Kept drafts check that finishes after a Discard keeps the draft gone", a
   await expect.poll(touches).toBeGreaterThan(before);
   await expect(kept).toHaveCount(0);
 });
+
+test("Kept drafts lists text that another tab keeps under a deleted note while Notes stays open", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Shared gone note", target: null } })).json()).note.id;
+  const other = await page.context().newPage();
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await other.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH") await held; await route.continue();
+  });
+  await other.goto("/library");
+  await other.evaluate(() => localStorage.setItem("study.draft.note.new", JSON.stringify({ body: "Unrelated new writing", at: new Date().toISOString() })));
+  await other.goto(`/notes/${id}`);
+  const editor = other.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Shared gone note");
+  await editor.fill("Shared gone note, edited"); await other.getByRole("button", { name: "Save", exact: true }).click();
+  const checked = page.waitForResponse((r) => r.request().method() === "GET" && new URL(r.url()).pathname === `/api/notes/${id}`);
+  await page.goto("/notes"); expect((await checked).status()).toBe(200);
+  const kept = page.getByRole("region", { name: "Kept drafts" }); await expect(kept).toHaveCount(0);
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  const answered = other.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect(other.getByRole("alert")).toHaveText("This note was deleted elsewhere — Save will create it again.");
+  await expect(kept.locator(".kept-row").filter({ hasText: "Shared gone note, edited" })).toBeVisible();
+  await other.close();
+});
