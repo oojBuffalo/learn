@@ -3,6 +3,7 @@ import { checkGameMove, gameMoveSchema, gameSettings } from "@study/shared";
 import type { AppEnv } from "../app.js";
 import { getGame } from "../content.js";
 import { apiError, parseJsonBody } from "../http.js";
+import { timedRegexTest } from "../regexTest.js";
 
 /**
  * Creates the game read routes.
@@ -28,7 +29,7 @@ export function gameRoutes(): Hono<AppEnv> {
     const found = getGame(c.get("db"), packageId, gameId);
     if (!found) return apiError(c, 404, "not_found", "unknown game");
     try {
-      return c.json(checkGameMove(found.game, found.pool, parsed.data));
+      return c.json(checkGameMove(found.game, found.pool, parsed.data, timedRegexTest));
     } catch (error) {
       return apiError(c, 422, "not_checkable", (error as Error).message);
     }

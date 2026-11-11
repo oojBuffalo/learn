@@ -76,7 +76,8 @@ function afterClass(pattern: string, index: number): number {
  * `{n}` with n > 1 or `{n,m}` with m > 1 may not contain `*`, `+`, `{n,}` or an
  * alternation. Lazy forms count the same. This is a guard against nested repetition,
  * not a full backtracking analysis: repeats in sequence (`a*a*a*`) and a ranged
- * repeat under a bounded one (`(a{1,2}){50}`) still pass.
+ * repeat under a bounded one (`(a{1,2}){50}`) still pass. The server also runs each
+ * pattern under a time budget (`server/src/regexTest.ts`), which covers those.
  *
  * Args:
  *   pattern: The accept entry's source, as stored in items.json.

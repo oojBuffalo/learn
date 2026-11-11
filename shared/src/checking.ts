@@ -72,7 +72,40 @@ export function expectedAnswer(item: CheckableItem): unknown {
   }
 }
 
-export function checkAnswer(item: Item, input: Answer): CheckResult {
+/**
+ * Runs one stored short-answer pattern against a trimmed answer.
+ *
+ * Args:
+ *   pattern: The accept entry's source, already vetted by `regexHazard`.
+ *   text: The learner's answer, trimmed.
+ *
+ * Returns:
+ *   Whether the pattern matches the text.
+ */
+export type RegexTest = (pattern: string, text: string) => boolean;
+
+/** The default `RegexTest`: `new RegExp(pattern).test(text)`, with no time limit. */
+function plainRegexTest(pattern: string, text: string): boolean {
+  return new RegExp(pattern).test(text);
+}
+
+/**
+ * Grades one answer against a checkable item.
+ *
+ * Args:
+ *   item: The item to grade against.
+ *   input: The learner's answer, validated again against `answerSchema`.
+ *   regexTest: Runs each `match: "regex"` accept entry. The server passes one with a
+ *     time budget; the default runs `new RegExp` with no limit.
+ *
+ * Returns:
+ *   The verdict, score and answer key.
+ *
+ * Raises:
+ *   Error: The answer has the wrong shape or type for the item, names an unknown option,
+ *     slot, step or choice, the item is a flashcard, or a stored regex is unsafe.
+ */
+export function checkAnswer(item: Item, input: Answer, regexTest: RegexTest = plainRegexTest): CheckResult {
   const parsed = answerSchema.safeParse(input);
   if (!parsed.success) throw new Error(`invalid answer: ${parsed.error.issues[0]?.message ?? "wrong shape"}`);
   const answer = parsed.data;
@@ -141,7 +174,7 @@ export function checkAnswer(item: Item, input: Answer): CheckResult {
         mode === "exact"
           ? item.accept.some((acc) => acc === a.text.trim())
           : mode === "regex"
-            ? item.accept.some((acc) => new RegExp(acc).test(a.text.trim()))
+            ? item.accept.some((acc) => regexTest(acc, a.text.trim()))
             : item.accept.some((acc) => fold(acc) === fold(a.text));
       return { correct: ok, score: ok ? 1 : 0, expected: expectedAnswer(item) };
     }

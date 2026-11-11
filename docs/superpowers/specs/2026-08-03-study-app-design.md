@@ -188,7 +188,10 @@ followed by `{n}` with n > 1 or `{n,m}` with m > 1 may not contain `*`, `+`, `{n
 or an alternation. Lazy forms count the same. This guards nested repetition;
 it is not a full backtracking analysis: overlapping repeats in sequence and
 ranged repeats inside bounded repeats may still pass. Stored patterns are checked
-before any regex accept entry runs.
+before any regex accept entry runs. On the server each stored pattern also runs
+under a time budget of 50 ms per accept entry, so a pattern that gets past this
+guard cannot block the server. An entry that runs out of time counts as no match:
+the timeout grades as a wrong answer unless another accept entry matches.
 
 Typed answers (short-answer text and each fill-blank value) are capped at 200
 characters. A matching item's pair texts and distractors are at most 2000

@@ -1,5 +1,5 @@
 import { checkAnswer, expectedAnswer } from "./checking.js";
-import type { CheckResult } from "./checking.js";
+import type { CheckResult, RegexTest } from "./checking.js";
 import type { Item } from "./items.js";
 import type { Quiz } from "./packageSchema.js";
 import type { QuizAnswer } from "./requests.js";
@@ -60,13 +60,16 @@ export interface QuizResult {
  *   items: Package items keyed by id.
  *   answers: Exactly one answer or null for each distinct quiz item.
  *   elapsedSeconds: The request-validated elapsed time.
+ *   regexTest: Passed to `checkAnswer` for regex accept entries; it defaults to an untimed run.
  * Returns:
  *   The mean item score, verdicts in quiz order and clamped elapsed time.
  * Raises:
  *   Error: Answers do not exactly cover the quiz, an item is missing or not
  *     checkable, or checkAnswer rejects an answer or unsafe stored regex.
  */
-export function scoreQuiz(quiz: Quiz, items: ReadonlyMap<string, Item>, answers: readonly QuizAnswer[], elapsedSeconds: number): QuizResult {
+export function scoreQuiz(
+  quiz: Quiz, items: ReadonlyMap<string, Item>, answers: readonly QuizAnswer[], elapsedSeconds: number, regexTest?: RegexTest,
+): QuizResult {
   const ids = quizItemIds(quiz);
   const byId = new Map(answers.map((a) => [a.itemId, a.answer]));
   if (answers.length !== ids.length || byId.size !== ids.length || ids.some((id) => !byId.has(id))) {
@@ -79,7 +82,7 @@ export function scoreQuiz(quiz: Quiz, items: ReadonlyMap<string, Item>, answers:
     const answer = byId.get(itemId)!;
     return answer === null
       ? { itemId, answered: false, correct: false, score: 0, expected: expectedAnswer(item) }
-      : { ...checkAnswer(item, answer), itemId, answered: true };
+      : { ...checkAnswer(item, answer, regexTest), itemId, answered: true };
   });
   const score = results.reduce((sum, r) => sum + r.score, 0) / ids.length;
   const limit = quiz.timeLimitSeconds;
