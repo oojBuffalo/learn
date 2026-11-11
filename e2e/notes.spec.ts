@@ -1837,3 +1837,64 @@ test("a late 404 never brings back a deleted note’s text that the deleting tab
   expect(await storedBody(page, fresh)).toBeNull(); expect(await storedBody(page, key)).toBeNull();
   await other.close();
 });
+
+test("Discard records the discarded text before it removes the draft, on an offer and under Kept drafts", async ({ page, request }) => {
+  // A save settling in another tab between the two steps then already sees the record.
+  await page.addInitScript(() => {
+    const w = window as unknown as { ops: string[] }; w.ops = [];
+    const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+    for (const name of ["setItem", "removeItem"]) {
+      const original = proto[name]!;
+      proto[name] = function (this: Storage, ...args: unknown[]) {
+        const key = String(args[0]);
+        if (key.startsWith("study.draft.discarded.")) w.ops.push("record"); else if (name === "removeItem" && key.startsWith("study.draft.")) w.ops.push(`remove ${key}`);
+        return original.apply(this, args);
+      };
+    }
+  });
+  const ops = () => page.evaluate(() => { const w = window as unknown as { ops: string[] }; const list = w.ops; w.ops = []; return list; });
+  await page.goto("/library");
+  await page.evaluate(() => localStorage.setItem("study.draft.note.new", JSON.stringify({ body: "Offered text", at: new Date().toISOString() })));
+  await page.goto("/notes/new"); await ops();
+  await page.getByRole("button", { name: "Discard", exact: true }).click();
+  expect(await ops()).toEqual(["record", "remove study.draft.note.new"]);
+  const id = (await (await request.post("/api/notes", { data: { body: "Gone", target: null } })).json()).note.id;
+  expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+  await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Kept text", at: new Date().toISOString() })), `study.draft.note.${id}`);
+  await page.goto("/notes");
+  const kept = page.getByRole("region", { name: "Kept drafts" });
+  await expect(kept.locator(".kept-row").filter({ hasText: "Kept text" })).toBeVisible(); await ops();
+  await kept.getByRole("button", { name: "Discard", exact: true }).click(); await expect(kept).toHaveCount(0);
+  expect(await ops()).toEqual(["record", `remove study.draft.note.${id}`]);
+});
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`reverting a first ${kind} save drops its set-aside draft even while another tab holds the new row’s draft`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    let rowCreated!: (id: number) => void; const createdId = new Promise<number>((resolve) => { rowCreated = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      const response = await route.fetch(); rowCreated((await response.json())[kind].id); await held; await route.fulfill({ response });
+    });
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("Sent");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    const id = await createdId;
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" tail");
+    const other = await page.context().newPage();
+    const otherEditor = other.getByLabel(w.label, { exact: true });
+    await other.goto(`${w.base}/${id}`); await expect(otherEditor).toHaveValue("Sent");
+    await otherEditor.fill("Other tab writing");
+    release(); await expect(page).toHaveURL(new RegExp(`${w.base}/${id}$`));
+    await expect(page.getByRole("status")).toHaveText("Unsaved changes");
+    expect(await storedBody(page, fresh)).toBe("Sent tail");
+    await editor.fill("Sent");
+    await expect(page.getByRole("status")).toHaveText(kind === "explanation" ? "Saved. Rated 4 · Solid." : "Saved");
+    expect(await storedBody(page, fresh)).toBeNull();
+    expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Other tab writing");
+    await other.close();
+  });
+}

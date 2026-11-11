@@ -89,19 +89,25 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     const last = latestBody.current;
     latestBody.current = value; setBody(value);
     if (value !== saved?.body || encodeTarget(target) !== encodeTarget(saved?.target ?? null)) draft.write(value);
-    else if (ownsSlot(last)) draft.clear(); else draft.dismiss();
+    else {
+      if (ownsSlot(last)) draft.clear(); else draft.dismiss();
+      // Back at the saved text: an older draft set aside after a failed move is no longer wanted either.
+      draft.session.dropAside();
+    }
   }
 
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
     const offered = draft.offer;
     const stored = readDraft(browserDraftStore(), slot);
+    const owned = ownsSlot();
     // The offer's origin is recorded only when the offer itself is removed; newer text over it is not discarded.
-    const record = (removed: boolean) => { if (offered) recordDiscard(browserDraftStore(), slot,
-      { body: offered.body, origin: removed && stored?.at === offered.at && stored.body === offered.body ? stored.origin : undefined }, new Date()); };
-    if (!ownsSlot()) { record(false); draft.dismiss(); return; }
-    // Recorded once the clear has freed its space, and before this editor stores its own text again.
-    draft.clear(); record(true);
+    const record = () => !offered || recordDiscard(browserDraftStore(), slot,
+      { body: offered.body, origin: owned && stored?.at === offered.at && stored.body === offered.body ? stored.origin : undefined }, new Date());
+    // Recorded before the clear, so a save settling in another tab in between sees it; again after it if storage was full.
+    const recorded = record();
+    if (!owned) { draft.dismiss(); return; }
+    draft.clear(); if (!recorded) record();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
 
@@ -190,7 +196,10 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       // late save from another editor never brings it back. Another editor's newer draft stays, and is not recorded.
       const store = browserDraftStore(); const now = new Date();
       const deleted = readDraft(store, slot);
-      if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(store, slot, deleted, now); }
+      if (ownsSlot()) {
+        const recorded = !deleted || recordDiscard(store, slot, deleted, now);
+        draft.session.clear(slot); if (!recorded && deleted) recordDiscard(store, slot, deleted, now);
+      }
       for (const body of new Set([saved?.body, latestBody.current])) if (body) recordDiscard(store, slot, { body }, now);
       draft.session.dropAside();
       if (mounted.current) navigate("/notes");

@@ -71,9 +71,12 @@ export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refr
     const key = draftKey(kind, draft.id);
     const current = readDraft(store, key);
     // Text written there since the list loaded, by an editor that restored it, stays and is shown instead.
-    const removed = current?.body === draft.body && current.at === draft.at && clearDraft(store, key);
-    // Recorded after the clear, which frees space when storage is full; the origin only when the draft was removed.
-    recordDiscard(store, key, { body: draft.body, origin: removed ? current.origin : undefined }, new Date());
+    const same = current?.body === draft.body && current.at === draft.at;
+    // Recorded before the clear, so a save settling in another tab in between sees it, and again after the clear,
+    // which frees space, if storage was full. The origin is recorded only when the draft itself is removed.
+    const record = () => recordDiscard(store, key, { body: draft.body, origin: same ? current.origin : undefined }, new Date());
+    const recorded = record();
+    if (same && clearDraft(store, key) && !recorded) record();
     const left = readDraft(store, key);
     setKept((list) => ({ ...list, drafts: list.drafts.flatMap((d) => d.id !== draft.id ? [d] : left ? [{ id: d.id, ...left }] : []) }));
   }

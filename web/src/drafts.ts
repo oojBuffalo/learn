@@ -92,9 +92,11 @@ function discardsUnder(store: DraftStore, prefix: string): Discard[] {
  * Remembers that the user discarded this text under the key, so a save that settles later never brings it back.
  * Pass the draft's `origin` only when the draft was actually removed; a draft only dismissed may have newer text.
  * Records are kept for a week, however many there are, so no number of later discards pushes out one that a save
- * still pending may need; week-old records, under any key, are removed here.
+ * still pending may need; week-old records, under any key, are removed here. Callers record before they clear the
+ * draft, so a save settling in another tab in between already sees the record, and record again after the clear
+ * (which frees space) when this returns false.
  */
-export function recordDiscard(store: DraftStore, key: string, draft: { body: string; origin?: string }, now: Date): void {
+export function recordDiscard(store: DraftStore, key: string, draft: { body: string; origin?: string }, now: Date): boolean {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const all: string[] = [];
   try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(DISCARDS)) all.push(k); } } catch { /* None to prune. */ }
@@ -103,8 +105,9 @@ export function recordDiscard(store: DraftStore, key: string, draft: { body: str
     if (d === null || d.at <= weekAgo) { try { store.removeItem(k); } catch { /* Old records only cost space. */ } }
   }
   const record: Discard = { text: fingerprint(draft.body), at: now.toISOString(), ...(draft.origin ? { origin: draft.origin } : {}) };
-  try { store.setItem(`${DISCARDS}${key}.${record.at}.${Math.random().toString(36).slice(2, 10)}`, JSON.stringify(record)); }
+  try { store.setItem(`${DISCARDS}${key}.${record.at}.${Math.random().toString(36).slice(2, 10)}`, JSON.stringify(record)); return true; }
   catch { /* Discarding still works without storage. */ }
+  return false;
 }
 
 /**
