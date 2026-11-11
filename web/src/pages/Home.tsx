@@ -62,16 +62,23 @@ export default function Home() {
   const [revisit, setRevisit] = useState<Explanation[] | null>(null);
   const [failed, setFailed] = useState(false);
   const session = useRef(0);
+  // Prompts dismissed while the current load runs: its answer may predate the dismissal, so they stay hidden.
+  const dismissedDuringLoad = useRef<number[]>([]);
   function load() {
     const current = ++session.current;
+    dismissedDuringLoad.current = [];
     setDueLoading(true);
     refreshDue().then(() => { if (session.current === current) setDueLoading(false); });
     Promise.allSettled([listPackages(), listExplanations({ revisit: true })]).then(([library, prompts]) => {
       if (session.current !== current) return;
       setPackages(library.status === "fulfilled" ? library.value : null);
-      setRevisit(prompts.status === "fulfilled" ? prompts.value : null);
+      setRevisit(prompts.status === "fulfilled" ? prompts.value.filter((row) => !dismissedDuringLoad.current.includes(row.id)) : null);
       setFailed(library.status === "rejected" || prompts.status === "rejected");
     });
+  }
+  function dismissed(row: Explanation) {
+    dismissedDuringLoad.current.push(row.id);
+    setRevisit((rows) => rows && rows.filter((r) => r.id !== row.id));
   }
   function retryDue() {
     setDueRetrying(true);
@@ -79,5 +86,5 @@ export default function Home() {
   }
   useEffect(() => { load(); return () => { session.current++; }; }, [refreshDue]);
   return <HomeView today={new Date()} due={due} dueLoading={dueLoading} dueRetrying={dueRetrying} packages={packages} revisit={revisit} failed={failed} onRetry={load} onRetryDue={retryDue}
-    onDismissed={(dismissed) => setRevisit((rows) => rows && rows.filter((row) => row.id !== dismissed.id))} />;
+    onDismissed={dismissed} />;
 }

@@ -261,6 +261,66 @@ test("Home’s Try again shows a dismissed prompt that came back elsewhere", asy
   expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, solidly.", confidence: 4 } })).status()).toBe(201);
 });
 
+test("Home keeps a prompt dismissed while Try again is still loading", async ({ page, request }) => {
+  expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, roughly.", confidence: 2 } })).status()).toBe(201);
+  let libraryGets = 0; let release!: () => void;
+  const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/packages", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    libraryGets += 1;
+    if (libraryGets === 1) return route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } });
+    await held;
+    return route.continue();
+  });
+  await page.goto("/");
+  const plan = page.getByRole("alert").filter({ hasText: "Some of today’s plan couldn’t be loaded." });
+  const revisit = page.getByRole("region", { name: "Revisit" });
+  const dismiss = revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true });
+  await expect(plan).toBeVisible(); await expect(dismiss).toBeVisible();
+  // The reload's prompts are answered before the dismissal, but its library request is still held.
+  const prompts = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/explanations" && new URL(r.url()).search === "?revisit=1");
+  await plan.getByRole("button", { name: "Try again", exact: true }).click();
+  await prompts;
+  await dismiss.click();
+  await expect(revisit).not.toContainText("Active Recall");
+  release();
+  await expect(plan).toHaveCount(0);
+  await expect(revisit).not.toContainText("Active Recall");
+  expect(libraryGets).toBe(2);
+  expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, solidly.", confidence: 4 } })).status()).toBe(201);
+});
+
+test("the Explain-back list keeps a prompt dismissed while Try again is still loading", async ({ page, request }) => {
+  expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, roughly.", confidence: 2 } })).status()).toBe(201);
+  let noteGets = 0; let release!: () => void;
+  const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/notes", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    noteGets += 1;
+    if (noteGets === 1) return route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } });
+    await held;
+    return route.continue();
+  });
+  await page.goto("/notes");
+  await expect(page.getByRole("alert")).toContainText("Your notes couldn’t be loaded.");
+  // The reload's explanations are answered before the dismissal, but its notes request is still held.
+  const explanations = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/explanations" && r.request().method() === "GET");
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await explanations;
+  await page.getByRole("radio", { name: "Explain-back" }).click();
+  const dismiss = page.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true });
+  await dismiss.click();
+  await expect(dismiss).toHaveCount(0);
+  release();
+  await page.getByRole("radio", { name: "Notes" }).click();
+  await expect(page.getByRole("link", { name: "New note", exact: true })).toBeVisible();
+  await page.getByRole("radio", { name: "Explain-back" }).click();
+  await expect(page.getByRole("link", { name: "Explain a lesson", exact: true })).toBeVisible();
+  await expect(dismiss).toHaveCount(0);
+  expect(noteGets).toBe(2);
+  expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, solidly.", confidence: 4 } })).status()).toBe(201);
+});
+
 test("Leftover progress clears progress, spares writing, and a re-import restores it", async ({ page, request }) => {
   let zip: Buffer | null = null;
   try {

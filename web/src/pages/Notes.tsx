@@ -122,16 +122,25 @@ export default function Notes() {
   const filter = parseListFilter(params);
   const revisitOnly = params.get("revisit") === "1";
   const query = params.get("q") ?? "";
+  // Prompts dismissed while the current load runs: its answer may predate the dismissal, so they stay dismissed.
+  const dismissedDuringLoad = useRef<number[]>([]);
   useEffect(() => {
     const current = ++session.current;
+    dismissedDuringLoad.current = [];
     Promise.allSettled([listNotes(), listPackages(), listExplanations()]).then(([n, p, e]) => {
       if (current !== session.current) return;
       if (n.status === "fulfilled") { setNotes(n.value); setNotesError(null); } else setNotesError(message(n.reason));
       setPackages(p.status === "fulfilled" ? p.value : []);
-      if (e.status === "fulfilled") { setExplanations(e.value); setExplanationsError(null); } else setExplanationsError(message(e.reason));
+      if (e.status === "fulfilled") {
+        setExplanations(e.value.map((x) => dismissedDuringLoad.current.includes(x.id) ? { ...x, revisit: false } : x)); setExplanationsError(null);
+      } else setExplanationsError(message(e.reason));
     });
     return () => { session.current += 1; };
   }, [loadKey]);
+  function dismissed(row: Explanation) {
+    dismissedDuringLoad.current.push(row.id);
+    setExplanations((list) => list && list.map((e) => e.id === row.id ? row : e));
+  }
   const error = explainTab ? explanationsError : notesError;
   return <div className="page">
     <header className="page-head"><p className="eyebrow">In your own words</p><h1 className="page-title">Notes</h1></header>
@@ -144,7 +153,7 @@ export default function Notes() {
       : explainTab ? explanations === null ? <p className="loading">Loading…</p> : <ExplanationsListView explanations={explanations} packages={packages} filter={filter}
         revisitOnly={revisitOnly} onFilterChange={(f) => navigate({ search: filterSearch(f, { tab: "explanations", ...(revisitOnly ? { revisit: "1" } : {}) }) })}
         onRevisitChange={(value) => navigate({ search: filterSearch(filter, { tab: "explanations", ...(value ? { revisit: "1" } : {}) }) })}
-        onDismissed={(dismissed) => setExplanations((list) => list && list.map((e) => e.id === dismissed.id ? dismissed : e))} />
+        onDismissed={dismissed} />
         : notes === null ? <p className="loading">Loading…</p> : <NotesListView notes={notes} packages={packages} filter={filter} query={query}
           onFilterChange={(f, q) => navigate({ search: filterSearch(f, q ? { q } : {}) })}
           onQueryChange={(q) => navigate({ search: filterSearch(filter, q ? { q } : {}) }, { replace: true })} />}
