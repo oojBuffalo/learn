@@ -5,13 +5,14 @@ import { listExplanations, listPackages } from "../api.js";
 import type { PackageSummary } from "../api.js";
 import { useDue } from "../App.js";
 import { ConfidenceChip } from "../components/ConfidencePicker.js";
+import DismissRevisit, { dismissalCovers } from "../components/DismissRevisit.js";
 import { formatDay } from "../format.js";
 import { lessonsInProgress } from "../home.js";
 import { filterSearch } from "../listFilter.js";
 
-export function HomeView({ today, due, dueLoading, dueRetrying, packages, revisit, failed, onRetry, onRetryDue }: {
+export function HomeView({ today, due, dueLoading, dueRetrying, packages, revisit, failed, onRetry, onRetryDue, onDismissed }: {
   today: Date; due: number | null; dueLoading: boolean; dueRetrying: boolean; packages: PackageSummary[] | null;
-  revisit: Explanation[] | null; failed: boolean; onRetry: () => void; onRetryDue: () => void;
+  revisit: Explanation[] | null; failed: boolean; onRetry: () => void; onRetryDue: () => void; onDismissed: (dismissed: Explanation) => void;
 }) {
   const reading = lessonsInProgress(packages ?? []);
   return <div className="page">
@@ -44,7 +45,8 @@ export function HomeView({ today, due, dueLoading, dueRetrying, packages, revisi
             : <ul className="notes-list">{revisit.slice(0, 5).map((row) => <li className="notes-row" key={row.id}>
               <strong>{row.lessonTitle ?? row.lessonId}</strong><div className="actions"><ConfidenceChip confidence={row.confidence} /><span className="meta">{`explained ${formatDay(row.createdAt)}`}</span></div>
               <div className="actions"><Link className="btn btn-primary" to={`/notes/explain/new${filterSearch({ kind: "package", packageId: row.packageId, lessonId: row.lessonId })}`}>Explain again</Link>
-                <Link className="link-btn" to={`/lesson/${row.packageId}/${row.lessonId}`}>Reread</Link></div>
+                <Link className="link-btn" to={`/lesson/${row.packageId}/${row.lessonId}`}>Reread</Link>
+                <DismissRevisit explanation={row} onDismissed={onDismissed} /></div>
             </li>)}</ul>}
         {revisit !== null && revisit.length > 5 && <div className="sheet-foot"><Link to="/notes?tab=explanations&revisit=1">{`+${revisit.length - 5} more`}</Link></div>}
       </section>
@@ -60,21 +62,29 @@ export default function Home() {
   const [revisit, setRevisit] = useState<Explanation[] | null>(null);
   const [failed, setFailed] = useState(false);
   const session = useRef(0);
+  // Prompts dismissed while the current load runs: its answer may predate the dismissal, so they stay hidden.
+  const dismissedDuringLoad = useRef<Explanation[]>([]);
   function load() {
     const current = ++session.current;
+    dismissedDuringLoad.current = [];
     setDueLoading(true);
     refreshDue().then(() => { if (session.current === current) setDueLoading(false); });
     Promise.allSettled([listPackages(), listExplanations({ revisit: true })]).then(([library, prompts]) => {
       if (session.current !== current) return;
       setPackages(library.status === "fulfilled" ? library.value : null);
-      setRevisit(prompts.status === "fulfilled" ? prompts.value : null);
+      setRevisit(prompts.status === "fulfilled" ? prompts.value.filter((row) => !dismissedDuringLoad.current.some((d) => dismissalCovers(d, row))) : null);
       setFailed(library.status === "rejected" || prompts.status === "rejected");
     });
+  }
+  function dismissed(row: Explanation) {
+    dismissedDuringLoad.current.push(row);
+    setRevisit((rows) => rows && rows.filter((r) => !dismissalCovers(row, r)));
   }
   function retryDue() {
     setDueRetrying(true);
     refreshDue().then(() => setDueRetrying(false));
   }
   useEffect(() => { load(); return () => { session.current++; }; }, [refreshDue]);
-  return <HomeView today={new Date()} due={due} dueLoading={dueLoading} dueRetrying={dueRetrying} packages={packages} revisit={revisit} failed={failed} onRetry={load} onRetryDue={retryDue} />;
+  return <HomeView today={new Date()} due={due} dueLoading={dueLoading} dueRetrying={dueRetrying} packages={packages} revisit={revisit} failed={failed} onRetry={load} onRetryDue={retryDue}
+    onDismissed={dismissed} />;
 }

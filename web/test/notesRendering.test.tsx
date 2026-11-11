@@ -51,12 +51,16 @@ const explanation = (id: number, over: Partial<Explanation> = {}): Explanation =
 const explanations = [explanation(1), explanation(2, { lessonId: "l2", lessonTitle: "Two", confidence: 4, revisit: false }),
   explanation(3, { packageId: "gone", lessonId: "x", packageTitle: null, lessonTitle: null, confidence: 1, revisit: false, orphaned: true })];
 const renderExplanations = (filter: ListFilter = { kind: "all" }, revisitOnly = false, values = explanations) => renderToStaticMarkup(<MemoryRouter>
-  <ExplanationsListView explanations={values} packages={pkgs} filter={filter} revisitOnly={revisitOnly} onFilterChange={() => {}} onRevisitChange={() => {}} /></MemoryRouter>);
+  <ExplanationsListView explanations={values} packages={pkgs} filter={filter} revisitOnly={revisitOnly} onFilterChange={() => {}} onRevisitChange={() => {}} onDismissed={() => {}} /></MemoryRouter>);
 it("ExplanationsListView flags revisits and hides removed content", () => {
   const html = renderExplanations(); expect(html).toContain("One"); expect(html).toContain("Two"); expect(html.match(/>revisit</g)).toHaveLength(1);
   for (const s of ["conf-chip is-low", 'href="/notes/explain/1"', 'href="/notes/explain/new"', "Needs revisit",
     "1 explanation belongs to content that’s no longer in your library.", 'href="/notes?tab=explanations&amp;orphaned=1"']) expect(html).toContain(s);
   expect(html).not.toContain("gone/x"); expect(html.match(/<input[^>]*checkbox[^>]*>/)![0]).not.toContain("checked");
+});
+it("ExplanationsListView offers Dismiss only on revisit prompts", () => {
+  const html = renderExplanations(); expect(html.match(/>Dismiss</g)).toHaveLength(1);
+  expect(html).toContain('aria-label="Dismiss revisit prompt for One"'); expect(html).not.toContain("Dismiss revisit prompt for Two");
 });
 it("ExplanationsListView narrows to revisit prompts", () => {
   const html = renderExplanations({ kind: "all" }, true); expect(html).toContain("One"); expect(html).not.toContain("Two");

@@ -304,7 +304,7 @@ content is read-mostly, so no over-normalization), `quizzes`, `games`, `assets`
 - `lesson_progress` — per lesson: not started / in progress / completed.
 - `notes` — Markdown body, optionally linked to a package or lesson, or standalone.
 - `explanations` — explain-back write-ups: linked lesson, Markdown body, self-rated
-  confidence, timestamp.
+  confidence, timestamp, and when its revisit prompt was dismissed (§4).
 
 Content removed by a re-import or a package delete leaves **orphaned** user state.
 A row is live while what it points at exists:
@@ -361,10 +361,15 @@ Every mode makes you *do* something with the material:
 - **Explain-back** — pick a lesson, explain it in your own words in Markdown, and rate
   your confidence 1–5 (1 Lost, 2 Shaky, 3 Getting there, 4 Solid, 5 Could teach it; no
   default). A lesson in the library has one **revisit** prompt while its latest
-  explanation (highest id) is rated 2 or lower. Explaining it again at 3+, raising the
-  latest rating to 3+, or a Leftover progress purge that deletes it clears it; a newer
-  low explanation replaces it. Rereading, completing the lesson or time passing does
-  not. There is no dismiss.
+  explanation (highest id) is rated 2 or lower and not dismissed. Explaining it again at
+  3+, raising the latest rating to 3+, or a Leftover progress purge that deletes it
+  clears it; a newer low explanation replaces it. Rereading, completing the lesson or
+  time passing does not. **Dismiss** (on Home and in the Explain-back list) hides the
+  prompt until there's a new low rating. The dismissal belongs to that latest
+  explanation, so a new explanation rated 2 or lower prompts again, and so does lowering
+  the dismissed explanation's rating (lowering clears its dismissal). Removing and
+  re-importing the lesson keeps it dismissed; a purge deletes the dismissal with its
+  explanation.
 - **Home screen** (`/`) — cards due (the nav badge's number, new cards included), up to 5
   lessons in progress ordered by when you last opened them, and up to 5 revisit prompts,
   lowest confidence first: one glance says what to work on.
@@ -396,10 +401,15 @@ REST JSON API (all under `/api`):
 - `GET /explanations` (every explanation, each with an `orphaned` flag; `?revisit=1`:
   revisit prompts only), `POST /explanations`, `GET/PATCH /explanations/:id` (no delete;
   see §3 for the purge); bodies are Markdown, non-blank, at most 100 000 characters
+- `POST /explanations/:id/dismiss` (no body; hides that explanation's revisit prompt
+  until a new low rating, see §4, and returns it with `revisit: false`; dismissing it
+  again is a no-op; 404 for an unknown id, 409 `not_revisit` unless it is a live
+  lesson's latest explanation rated 2 or lower)
 - `GET /maintenance/orphans`, `POST /maintenance/orphans/purge` (`packageId`,
   `includeWriting`, and the `expected` counts the user confirmed; a mismatch returns 409
   `orphans_changed` and deletes nothing)
-- Errors: 400 `invalid_request`, 404 `not_found`, 409 `orphans_changed` (purge only),
+- Errors: 400 `invalid_request`, 404 `not_found`, 409 `orphans_changed` (purge only) /
+  `not_revisit` (dismiss only),
   422 `not_checkable` / `invalid_package`; a rejected request writes nothing.
 
 Answer checking happens server-side (single source of truth in `shared/` checking

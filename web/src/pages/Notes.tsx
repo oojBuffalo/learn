@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate, useNavigationType, useSearchParams } fr
 import type { Explanation, Note } from "@study/shared";
 import { listExplanations, listNotes, listPackages } from "../api.js";
 import { ConfidenceChip } from "../components/ConfidencePicker.js";
+import DismissRevisit, { dismissalCovers } from "../components/DismissRevisit.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
 import { formatDay } from "../format.js";
 import { filterExplanations, filterNotes, filterSearch, noteLabel, NOTES_PAGE, parseListFilter, searchNotes } from "../listFilter.js";
@@ -80,9 +81,9 @@ export function NotesListView({ notes, packages, filter, query, onFilterChange, 
   </>;
 }
 
-export function ExplanationsListView({ explanations, packages, filter, revisitOnly, onFilterChange, onRevisitChange }: {
+export function ExplanationsListView({ explanations, packages, filter, revisitOnly, onFilterChange, onRevisitChange, onDismissed }: {
   explanations: Explanation[]; packages: TargetPackage[]; filter: ListFilter; revisitOnly: boolean;
-  onFilterChange: (f: ListFilter) => void; onRevisitChange: (v: boolean) => void;
+  onFilterChange: (f: ListFilter) => void; onRevisitChange: (v: boolean) => void; onDismissed: (e: Explanation) => void;
 }) {
   const [revisitChecked, setRevisitChecked] = useState(revisitOnly);
   useEffect(() => { setRevisitChecked(revisitOnly); }, [revisitOnly]);
@@ -102,7 +103,7 @@ export function ExplanationsListView({ explanations, packages, filter, revisitOn
         <span className="lesson-row-text"><span className="lesson-row-title">{e.lessonTitle ?? `${e.packageId}/${e.lessonId}`}</span>
           <ConfidenceChip confidence={e.confidence} /> {e.revisit && <span className="chip">revisit</span>}
           <span className="meta">{`explained ${formatDay(e.createdAt)}`}</span><span className="lesson-row-sum">{headline(e.body)}</span></span>
-      </Link></li>)}</ul>}
+      </Link>{e.revisit && <div className="actions notes-row-actions"><DismissRevisit explanation={e} onDismissed={onDismissed} /></div>}</li>)}</ul>}
   </>;
 }
 
@@ -121,16 +122,25 @@ export default function Notes() {
   const filter = parseListFilter(params);
   const revisitOnly = params.get("revisit") === "1";
   const query = params.get("q") ?? "";
+  // Prompts dismissed while the current load runs: its answer may predate the dismissal, so they stay dismissed.
+  const dismissedDuringLoad = useRef<Explanation[]>([]);
   useEffect(() => {
     const current = ++session.current;
+    dismissedDuringLoad.current = [];
     Promise.allSettled([listNotes(), listPackages(), listExplanations()]).then(([n, p, e]) => {
       if (current !== session.current) return;
       if (n.status === "fulfilled") { setNotes(n.value); setNotesError(null); } else setNotesError(message(n.reason));
       setPackages(p.status === "fulfilled" ? p.value : []);
-      if (e.status === "fulfilled") { setExplanations(e.value); setExplanationsError(null); } else setExplanationsError(message(e.reason));
+      if (e.status === "fulfilled") {
+        setExplanations(e.value.map((x) => dismissedDuringLoad.current.some((d) => dismissalCovers(d, x)) ? { ...x, revisit: false } : x)); setExplanationsError(null);
+      } else setExplanationsError(message(e.reason));
     });
     return () => { session.current += 1; };
   }, [loadKey]);
+  function dismissed(row: Explanation) {
+    dismissedDuringLoad.current.push(row);
+    setExplanations((list) => list && list.map((e) => dismissalCovers(row, e) ? row : e));
+  }
   const error = explainTab ? explanationsError : notesError;
   return <div className="page">
     <header className="page-head"><p className="eyebrow">In your own words</p><h1 className="page-title">Notes</h1></header>
@@ -142,7 +152,8 @@ export default function Notes() {
       <button className="btn" onClick={() => { setNotesError(null); setExplanationsError(null); setLoadKey((k) => k + 1); }}>Try again</button></>
       : explainTab ? explanations === null ? <p className="loading">Loading…</p> : <ExplanationsListView explanations={explanations} packages={packages} filter={filter}
         revisitOnly={revisitOnly} onFilterChange={(f) => navigate({ search: filterSearch(f, { tab: "explanations", ...(revisitOnly ? { revisit: "1" } : {}) }) })}
-        onRevisitChange={(value) => navigate({ search: filterSearch(filter, { tab: "explanations", ...(value ? { revisit: "1" } : {}) }) })} />
+        onRevisitChange={(value) => navigate({ search: filterSearch(filter, { tab: "explanations", ...(value ? { revisit: "1" } : {}) }) })}
+        onDismissed={dismissed} />
         : notes === null ? <p className="loading">Loading…</p> : <NotesListView notes={notes} packages={packages} filter={filter} query={query}
           onFilterChange={(f, q) => navigate({ search: filterSearch(f, q ? { q } : {}) })}
           onQueryChange={(q) => navigate({ search: filterSearch(filter, q ? { q } : {}) }, { replace: true })} />}

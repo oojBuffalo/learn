@@ -116,3 +116,19 @@ it("adds the attempts history index to a Stage 1 database, idempotently", () => 
   db.close();
   openDb(dir).close();
 });
+
+it("adds the revisit dismissal column to a Stage 3 database without dismissing anything", () => {
+  const dir = tempDir();
+  const legacy = new Database(join(dir, "study.db"));
+  legacy.exec(`CREATE TABLE explanations (id INTEGER PRIMARY KEY AUTOINCREMENT, package_id TEXT NOT NULL, lesson_id TEXT NOT NULL,
+      body TEXT NOT NULL, confidence INTEGER NOT NULL CHECK (confidence IN (1, 2, 3, 4, 5)), created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    INSERT INTO explanations (package_id, lesson_id, body, confidence, created_at, updated_at) VALUES ('demo', 'intro', 'x', 2, 't', 't');`);
+  legacy.close();
+  const db = openDb(dir);
+  expect(db.prepare("SELECT id, confidence, dismissed_at FROM explanations").all()).toEqual([{ id: 1, confidence: 2, dismissed_at: null }]);
+  db.prepare("UPDATE explanations SET dismissed_at = 't2'").run();
+  db.close();
+  const reopened = openDb(dir);
+  expect(reopened.prepare("SELECT dismissed_at FROM explanations").all()).toEqual([{ dismissed_at: "t2" }]);
+  reopened.close();
+});

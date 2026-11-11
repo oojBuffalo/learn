@@ -22,7 +22,7 @@ interface ExplanationRow {
 }
 
 /**
- * Builds the shared predicate for a live lesson's latest low-confidence explanation.
+ * Builds the predicate for the explanation that raises a lesson's prompt, whether or not it was dismissed.
  * Args:
  *   e: A trusted internal SQL table name or alias.
  * Returns:
@@ -30,9 +30,22 @@ interface ExplanationRow {
  * Raises:
  *   None.
  */
-export function revisitSql(e: string): string {
+function promptSql(e: string): string {
   return `${LIVE.explanations(e)} AND ${e}.confidence <= ${LOW_CONFIDENCE_MAX} AND ${e}.id =
     (SELECT MAX(x.id) FROM explanations x WHERE x.package_id = ${e}.package_id AND x.lesson_id = ${e}.lesson_id)`;
+}
+
+/**
+ * Builds the shared predicate for a live lesson's latest low-confidence explanation that isn't dismissed.
+ * Args:
+ *   e: A trusted internal SQL table name or alias.
+ * Returns:
+ *   SQL matching only the latest explanation id for a live lesson, when rated 1 or 2 and not dismissed.
+ * Raises:
+ *   None.
+ */
+export function revisitSql(e: string): string {
+  return `${promptSql(e)} AND ${e}.dismissed_at IS NULL`;
 }
 
 const SELECT_EXPLANATION = `SELECT e.id, e.package_id, e.lesson_id, e.body, e.confidence, e.created_at, e.updated_at,
@@ -60,7 +73,7 @@ function readExplanation(db: Db, id: string): ExplanationRow | undefined {
  * Args:
  *   None; the app supplies the database in each request context.
  * Returns:
- *   Strict create/update, list and read routes with orphan and revisit flags.
+ *   Strict create/update, list, read and dismiss routes with orphan and revisit flags.
  * Raises:
  *   Error: A database operation fails.
  */
@@ -99,8 +112,20 @@ export function explanationRoutes(): Hono<AppEnv> {
     const id = c.req.param("id");
     const previous = readExplanation(db, id);
     if (!previous) return apiError(c, 404, "not_found", "unknown explanation");
-    db.prepare("UPDATE explanations SET body = ?, confidence = ?, updated_at = ? WHERE id = ?")
-      .run(request.data.body ?? previous.body, request.data.confidence ?? previous.confidence, new Date().toISOString(), id);
+    const confidence = request.data.confidence ?? previous.confidence;
+    // A lower rating is a new low rating, so it clears a dismissal (`confidence` on the right is the old value).
+    db.prepare(`UPDATE explanations SET body = ?, confidence = ?, updated_at = ?,
+      dismissed_at = CASE WHEN ? < confidence THEN NULL ELSE dismissed_at END WHERE id = ?`)
+      .run(request.data.body ?? previous.body, confidence, new Date().toISOString(), confidence, id);
+    return c.json({ explanation: toExplanation(readExplanation(db, id)!) });
+  });
+  r.post(`${ID_PATH}/dismiss`, (c) => {
+    const db = c.get("db");
+    const id = c.req.param("id");
+    const row = db.prepare(`SELECT (${promptSql("e")}) AS prompt FROM explanations e WHERE e.id = ?`).get(id) as { prompt: 0 | 1 } | undefined;
+    if (!row) return apiError(c, 404, "not_found", "unknown explanation");
+    if (row.prompt !== 1) return apiError(c, 409, "not_revisit", "explanation is not a revisit prompt");
+    db.prepare("UPDATE explanations SET dismissed_at = COALESCE(dismissed_at, ?) WHERE id = ?").run(new Date().toISOString(), id);
     return c.json({ explanation: toExplanation(readExplanation(db, id)!) });
   });
   return r;

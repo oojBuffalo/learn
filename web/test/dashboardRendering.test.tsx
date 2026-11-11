@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { HomeView } from "../src/pages/Home.js";
+import { dismissalCovers } from "../src/components/DismissRevisit.js";
 import { LeftoverProgressView } from "../src/components/LeftoverProgress.js";
 import LessonCompanion from "../src/components/LessonCompanion.js";
 import type { Explanation, OrphanGroup } from "@study/shared";
@@ -16,7 +17,7 @@ const revisit: Explanation[] = Array.from({ length: 7 }, (_, i) => ({
   body: "Recall", confidence: 2, revisit: true, orphaned: false, createdAt: "2026-10-22T12:00:00Z", updatedAt: "2026-10-22T12:00:00Z",
 }));
 const home = (over: Partial<React.ComponentProps<typeof HomeView>> = {}) => render(<HomeView
-  today={today} due={0} dueLoading={false} dueRetrying={false} packages={[]} revisit={[]} failed={false} onRetry={() => {}} onRetryDue={() => {}} {...over} />);
+  today={today} due={0} dueLoading={false} dueRetrying={false} packages={[]} revisit={[]} failed={false} onRetry={() => {}} onRetryDue={() => {}} onDismissed={() => {}} {...over} />);
 const dueSheet = (out: string) => out.match(/<section[^>]*aria-labelledby="home-due"[\s\S]*?<\/section>/)![0];
 
 it("HomeView points an empty library at the Library", () => {
@@ -46,6 +47,19 @@ it("HomeView links each revisit to explaining again and rereading", () => {
   expect(out).toContain('href="/notes/explain/new?packageId=p&amp;lessonId=l1"');
   expect(out).toContain('href="/lesson/p/l1"');
   expect(out).toContain("2 · Shaky");
+});
+it("HomeView offers a Dismiss button named for each shown revisit prompt", () => {
+  const out = home({ revisit });
+  expect(out.match(/>Dismiss</g)).toHaveLength(5);
+  for (let i = 1; i <= 5; i++) expect(out).toContain(`aria-label="Dismiss revisit prompt for Lesson ${i}"`);
+  expect(out).not.toContain("Dismiss revisit prompt for Lesson 6");
+});
+it("a dismissal covers its explanation up to the dismissed revision only", () => {
+  const dismissed = { ...revisit[0]!, revisit: false, updatedAt: "2026-10-22T12:05:00Z" };
+  expect(dismissalCovers(dismissed, revisit[0]!)).toBe(true);
+  expect(dismissalCovers(dismissed, { ...revisit[0]!, updatedAt: "2026-10-22T12:05:00Z" })).toBe(true);
+  expect(dismissalCovers(dismissed, { ...revisit[0]!, confidence: 1, updatedAt: "2026-10-22T12:06:00Z" })).toBe(false);
+  expect(dismissalCovers(dismissed, revisit[1]!)).toBe(false);
 });
 it("HomeView preserves independently loaded sections after a failure", () => {
   const out = home({ due: null, packages: null, revisit: [], failed: true });

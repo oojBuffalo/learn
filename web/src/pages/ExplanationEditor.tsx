@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { BODY_MAX, isLowConfidence } from "@study/shared";
+import { BODY_MAX } from "@study/shared";
 import type { Confidence, Explanation, ExplanationPatch, NoteTarget } from "@study/shared";
 import { ApiError, createExplanation, getExplanation, listExplanations, listPackages, updateExplanation } from "../api.js";
 import ConfidencePicker, { ConfidenceChip, CONFIDENCE_LABEL } from "../components/ConfidencePicker.js";
@@ -184,7 +184,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   if (!saved) return <p className="loading">Loading…</p>;
   const previous = target && earlier?.filter((e) => e.id !== id && e.packageId === target.packageId && e.lessonId === target.lessonId);
   const status = pending ? "Saving…" : dirty ? "Unsaved changes" : hasSaved && saved.confidence !== null
-    ? `Saved. Rated ${saved.confidence} · ${CONFIDENCE_LABEL[saved.confidence]}${isLowConfidence(saved.confidence)
+    ? `Saved. Rated ${saved.confidence} · ${CONFIDENCE_LABEL[saved.confidence]}${info?.revisit
       ? " — it’ll come back on Home until you explain it with more confidence." : "."}` : "";
   return <div className="page">
     <Link className="back-link" to="/notes?tab=explanations">Notes</Link>
