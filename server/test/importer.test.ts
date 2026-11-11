@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { importPackage } from "../src/importer.js";
-import { freshDb, GOOD_FILES, makeZip } from "./helpers.js";
+import { corruptEntry, freshDb, GOOD_FILES, makeZip } from "./helpers.js";
 
 describe("importPackage", () => {
   it("imports a valid zip and stores all content", () => {
@@ -75,6 +75,36 @@ describe("importPackage", () => {
           message: expect.stringContaining("invalid YAML"),
         }),
       ],
+    });
+    expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
+  });
+
+  it.each(["manifest.json", "lessons/01-intro.md"])("reports an unreadable %s instead of throwing", (file) => {
+    const db = freshDb();
+    expect(importPackage(db, corruptEntry(makeZip(GOOD_FILES), file))).toEqual({
+      ok: false,
+      errors: [{ file, path: "", message: "unreadable entry" }],
+    });
+    expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
+  });
+
+  // Losing either one also leaves something dangling, which is reported after it.
+  it.each(["items.json", "assets/dot.png"])("reports an unreadable %s first, instead of throwing", (file) => {
+    const db = freshDb();
+    const res = importPackage(db, corruptEntry(makeZip(GOOD_FILES), file));
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.errors[0]).toEqual({ file, path: "", message: "unreadable entry" });
+    expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
+  });
+
+  it("reports a corrupt central directory as an unreadable archive instead of throwing", () => {
+    const db = freshDb();
+    const zip = makeZip(GOOD_FILES);
+    // The last 22 bytes are the end record; its bytes 16-19 locate the central directory.
+    zip.writeUInt32LE(0, zip.readUInt32LE(zip.length - 22 + 16)); // wipe the first record's signature
+    expect(importPackage(db, zip)).toEqual({
+      ok: false,
+      errors: [{ file: "(zip)", path: "", message: "not a readable zip archive" }],
     });
     expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
   });

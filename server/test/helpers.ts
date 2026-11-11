@@ -16,6 +16,25 @@ export function makeZip(files: Record<string, string | Buffer>): Buffer {
   return zip.toBuffer();
 }
 
+/**
+ * Corrupts one entry of a zip so reading its data fails the CRC-32 check.
+ * Args:
+ *   zip: A zip archive, as built by makeZip.
+ *   name: The entry to corrupt.
+ * Returns:
+ *   A copy of the archive whose entry has a wrong CRC-32 in its local header.
+ * Raises:
+ *   Error: The archive has no entry with that name.
+ */
+export function corruptEntry(zip: Buffer, name: string): Buffer {
+  const entry = new AdmZip(zip).getEntry(name);
+  if (!entry) throw new Error(`no zip entry named ${name}`);
+  const out = Buffer.from(zip);
+  const crcAt = entry.header.offset + 14; // the CRC-32 field of the local file header
+  out.writeUInt32LE(~out.readUInt32LE(crcAt) >>> 0, crcAt);
+  return out;
+}
+
 export const GOOD_FILES: Record<string, string | Buffer> = {
   "manifest.json": JSON.stringify({
     formatVersion: "1.0.0", id: "demo", title: "Demo", version: "1",
