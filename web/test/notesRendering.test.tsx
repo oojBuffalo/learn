@@ -44,6 +44,7 @@ it("NotesListView searches, counts and shows 20 notes at a time", () => {
   const one = renderNotes({ kind: "all" }, many, "milk"); expect(one).toContain(">1 note<"); expect(rows(one)).toBe(1); expect(one).not.toContain("Show more");
   const none = renderNotes({ kind: "package", packageId: "p" }, many, " résumé "); expect(none).toContain("No notes match “résumé”."); expect(rows(none)).toBe(0);
   expect(none).not.toContain("Write one here");
+  expect(renderNotes({ kind: "all" }, many, "removed two")).toContain('href="/notes?q=removed+two&amp;orphaned=1"');
 });
 const explanation = (id: number, over: Partial<Explanation> = {}): Explanation => ({ id, packageId: "p", lessonId: "l1", packageTitle: "Alpha", lessonTitle: "One",
   body: "Because retrieval…", confidence: 2, revisit: true, orphaned: false, createdAt: "2026-10-01T10:00:00.000Z", updatedAt: "2026-10-01T10:00:00.000Z", ...over });

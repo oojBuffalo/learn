@@ -67,7 +67,7 @@ export function NotesListView({ notes, packages, filter, query, onFilterChange, 
       <input type="search" className="field field-grow" aria-label="Search notes" placeholder="Search notes"
         value={text} onChange={(e) => { setText(e.target.value); onQueryChange(e.target.value); }} /></Filters>
     {filter.kind === "all" && orphaned > 0 && <p className="note">{`${plural(orphaned, "note")} ${orphaned === 1 ? "belongs" : "belong"} to content that’s no longer in your library.`}{" "}
-      <Link to="/notes?orphaned=1">Show them</Link></p>}
+      <Link to={"/notes" + filterSearch({ kind: "orphaned" }, text ? { q: text } : {})}>Show them</Link></p>}
     <div className="actions"><Link className="btn btn-primary" to={`/notes/new${filter.kind === "package" ? filterSearch(filter) : ""}`}>New note</Link></div>
     <div role="status">{shown.length === 0 ? <div className="empty"><p className="empty-title">{words ? `No notes match “${words}”.` : filter.kind === "all" ? "No notes yet" : "Nothing here yet."}</p>
       {!words && filter.kind === "all" && <p className="note">Write one here or from any lesson.</p>}</div>
