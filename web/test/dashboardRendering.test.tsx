@@ -16,7 +16,8 @@ const revisit: Explanation[] = Array.from({ length: 7 }, (_, i) => ({
   body: "Recall", confidence: 2, revisit: true, orphaned: false, createdAt: "2026-10-22T12:00:00Z", updatedAt: "2026-10-22T12:00:00Z",
 }));
 const home = (over: Partial<React.ComponentProps<typeof HomeView>> = {}) => render(<HomeView
-  today={today} due={0} dueLoading={false} packages={[]} revisit={[]} failed={false} onRetry={() => {}} {...over} />);
+  today={today} due={0} dueLoading={false} dueRetrying={false} packages={[]} revisit={[]} failed={false} onRetry={() => {}} onRetryDue={() => {}} {...over} />);
+const dueSheet = (out: string) => out.match(/<section[^>]*aria-labelledby="home-due"[\s\S]*?<\/section>/)![0];
 
 it("HomeView points an empty library at the Library", () => {
   expect(home()).toContain("Your library is empty");
@@ -59,6 +60,18 @@ it("HomeView distinguishes the initial due load from a failed count", () => {
   const out = home({ due: null, dueLoading: true });
   expect(out).toContain("Loading…");
   expect(out).not.toContain("Couldn’t count your cards.");
+  expect(dueSheet(out)).not.toContain("Try again");
+});
+it("HomeView offers to recount a failed due count and disables it while recounting", () => {
+  const failed = dueSheet(home({ due: null }));
+  expect(failed).toContain('<p class="note">Couldn’t count your cards.</p>');
+  expect(failed).toContain('<div class="actions"><button class="btn" aria-disabled="false">Try again</button></div>');
+  // aria-disabled, not disabled: a disabled button drops keyboard focus to the page.
+  const recounting = dueSheet(home({ due: null, dueRetrying: true }));
+  expect(recounting).toContain("Couldn’t count your cards.");
+  expect(recounting).toContain('<button class="btn" aria-disabled="true">Try again</button>');
+  expect(dueSheet(home())).not.toContain("Try again");
+  expect(dueSheet(home({ due: 4 }))).not.toContain("Try again");
 });
 
 const group: OrphanGroup = { packageId: "gone", packageTitle: null, inLibrary: false,

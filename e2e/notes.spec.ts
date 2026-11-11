@@ -161,6 +161,50 @@ test("Home shows today’s plan and clears a revisit prompt", async ({ page, req
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(640);
 });
 
+test("Home recounts due cards after a failed count", async ({ page, request }) => {
+  const due = (await (await request.get("/api/review/due")).json()).cards.length;
+  expect(due).toBeGreaterThan(0);
+  let fail = true; let gets = 0; let release!: () => void; let held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/review/due", async (route) => {
+    if (route.request().method() !== "GET") return route.continue();
+    gets += 1;
+    if (gets > 2) await held;
+    return fail ? route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } }) : route.continue();
+  });
+  await page.goto("/");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  const cards = page.getByRole("region", { name: "Cards due" });
+  const retry = cards.getByRole("button", { name: "Try again", exact: true });
+  await expect(cards).toContainText("Couldn’t count your cards.");
+  await expect(nav.locator(".due-badge")).toHaveCount(0);
+  await expect.poll(() => gets).toBe(2);
+  // A recount that fails keeps the failure, and its button is disabled only while it runs.
+  // Pressing it again meanwhile sends nothing, and keyboard focus stays on it throughout.
+  await retry.focus();
+  await page.keyboard.press("Enter");
+  await expect.poll(() => gets).toBe(3);
+  await expect(retry).toBeDisabled();
+  await expect(retry).toBeFocused();
+  await expect(cards).toContainText("Couldn’t count your cards.");
+  await page.keyboard.press("Enter");
+  release();
+  await expect(retry).toBeEnabled();
+  await expect(retry).toBeFocused();
+  await expect(cards).toContainText("Couldn’t count your cards.");
+  await expect(nav.locator(".due-badge")).toHaveCount(0);
+  expect(gets).toBe(3);
+  // A recount that succeeds shows the number on Home and in the nav badge.
+  fail = false; held = new Promise<void>((resolve) => { release = resolve; });
+  await retry.click();
+  await expect.poll(() => gets).toBe(4);
+  await expect(retry).toBeDisabled();
+  release();
+  await expect(cards.locator(".home-figure")).toHaveText(String(due));
+  await expect(nav.locator(".due-badge")).toContainText(String(due));
+  await expect(retry).toHaveCount(0);
+  expect(gets).toBe(4);
+});
+
 test("Leftover progress clears progress, spares writing, and a re-import restores it", async ({ page, request }) => {
   let zip: Buffer | null = null;
   try {
