@@ -16,7 +16,7 @@ const revisit: Explanation[] = Array.from({ length: 7 }, (_, i) => ({
   body: "Recall", confidence: 2, revisit: true, orphaned: false, createdAt: "2026-10-22T12:00:00Z", updatedAt: "2026-10-22T12:00:00Z",
 }));
 const home = (over: Partial<React.ComponentProps<typeof HomeView>> = {}) => render(<HomeView
-  today={today} due={0} dueLoading={false} dueRetrying={false} packages={[]} revisit={[]} failed={false} onRetry={() => {}} onRetryDue={() => {}} {...over} />);
+  today={today} due={0} dueLoading={false} dueRetrying={false} packages={[]} revisit={[]} failed={false} onRetry={() => {}} onRetryDue={() => {}} onDismissed={() => {}} {...over} />);
 const dueSheet = (out: string) => out.match(/<section[^>]*aria-labelledby="home-due"[\s\S]*?<\/section>/)![0];
 
 it("HomeView points an empty library at the Library", () => {

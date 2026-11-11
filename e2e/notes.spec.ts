@@ -210,21 +210,55 @@ test("Home dismisses a revisit prompt until a new low rating", async ({ page, re
     packageId: PKG, lessonId: LESSON, body: "Recall, roughly.", confidence,
   } })).status()).toBe(201);
   await explain(2);
+  let dismissals = 0;
+  await page.route("**/api/explanations/*/dismiss", (route) => {
+    dismissals += 1;
+    return dismissals === 1 ? route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } }) : route.continue();
+  });
   await page.goto("/");
   const revisit = page.getByRole("region", { name: "Revisit" });
+  const dismiss = revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true });
   await expect(revisit).toContainText("Active Recall");
   await revisit.evaluate((el) => el.setAttribute("data-probe", "kept"));
-  await revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true }).click();
+  // A failed dismissal says so and keeps the prompt; Dismiss stays usable and a retry sends a new request.
+  await dismiss.click();
+  await expect(revisit.getByRole("alert")).toHaveText("Couldn’t dismiss it (boom).");
+  await expect(dismiss).toBeEnabled();
+  await dismiss.click();
   await expect(revisit).not.toContainText("Active Recall");
   await expect(revisit).toContainText("anything you rate 1 or 2 comes back here");
   await expect(revisit).toHaveAttribute("data-probe", "kept");
+  expect(dismissals).toBe(2);
   await page.reload();
   await expect(revisit).toContainText("anything you rate 1 or 2 comes back here");
   await expect(revisit).not.toContainText("Active Recall");
   await explain(1);
   await page.reload();
-  await expect(revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true })).toBeVisible();
+  await expect(dismiss).toBeVisible();
   await explain(4);
+});
+
+test("Home’s Try again shows a dismissed prompt that came back elsewhere", async ({ page, request }) => {
+  const created = await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, roughly.", confidence: 2 } });
+  expect(created.status()).toBe(201);
+  const id = (await created.json()).explanation.id as number;
+  let libraryFails = true;
+  await page.route("**/api/packages", (route) => libraryFails && route.request().method() === "GET"
+    ? route.fulfill({ status: 500, json: { error: { code: "internal", message: "boom" } } }) : route.continue());
+  await page.goto("/");
+  const plan = page.getByRole("alert").filter({ hasText: "Some of today’s plan couldn’t be loaded." });
+  const revisit = page.getByRole("region", { name: "Revisit" });
+  const dismiss = revisit.getByRole("button", { name: "Dismiss revisit prompt for Active Recall", exact: true });
+  await expect(plan).toBeVisible();
+  await dismiss.click();
+  await expect(revisit).not.toContainText("Active Recall");
+  // Lowering the rating elsewhere clears the dismissal, so the reloaded plan shows the prompt again.
+  expect((await request.patch(`/api/explanations/${id}`, { data: { confidence: 1 } })).status()).toBe(200);
+  libraryFails = false;
+  await plan.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(plan).toHaveCount(0);
+  await expect(dismiss).toBeVisible();
+  expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, solidly.", confidence: 4 } })).status()).toBe(201);
 });
 
 test("Leftover progress clears progress, spares writing, and a re-import restores it", async ({ page, request }) => {
