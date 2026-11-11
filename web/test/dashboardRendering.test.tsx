@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { HomeView } from "../src/pages/Home.js";
+import { dismissalCovers } from "../src/components/DismissRevisit.js";
 import { LeftoverProgressView } from "../src/components/LeftoverProgress.js";
 import LessonCompanion from "../src/components/LessonCompanion.js";
 import type { Explanation, OrphanGroup } from "@study/shared";
@@ -52,6 +53,13 @@ it("HomeView offers a Dismiss button named for each shown revisit prompt", () =>
   expect(out.match(/>Dismiss</g)).toHaveLength(5);
   for (let i = 1; i <= 5; i++) expect(out).toContain(`aria-label="Dismiss revisit prompt for Lesson ${i}"`);
   expect(out).not.toContain("Dismiss revisit prompt for Lesson 6");
+});
+it("a dismissal covers its explanation up to the dismissed revision only", () => {
+  const dismissed = { ...revisit[0]!, revisit: false, updatedAt: "2026-10-22T12:05:00Z" };
+  expect(dismissalCovers(dismissed, revisit[0]!)).toBe(true);
+  expect(dismissalCovers(dismissed, { ...revisit[0]!, updatedAt: "2026-10-22T12:05:00Z" })).toBe(true);
+  expect(dismissalCovers(dismissed, { ...revisit[0]!, confidence: 1, updatedAt: "2026-10-22T12:06:00Z" })).toBe(false);
+  expect(dismissalCovers(dismissed, revisit[1]!)).toBe(false);
 });
 it("HomeView preserves independently loaded sections after a failure", () => {
   const out = home({ due: null, packages: null, revisit: [], failed: true });

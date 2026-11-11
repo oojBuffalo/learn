@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate, useNavigationType, useSearchParams } fr
 import type { Explanation, Note } from "@study/shared";
 import { listExplanations, listNotes, listPackages } from "../api.js";
 import { ConfidenceChip } from "../components/ConfidencePicker.js";
-import DismissRevisit from "../components/DismissRevisit.js";
+import DismissRevisit, { dismissalCovers } from "../components/DismissRevisit.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
 import { formatDay } from "../format.js";
 import { filterExplanations, filterNotes, filterSearch, noteLabel, NOTES_PAGE, parseListFilter, searchNotes } from "../listFilter.js";
@@ -123,7 +123,7 @@ export default function Notes() {
   const revisitOnly = params.get("revisit") === "1";
   const query = params.get("q") ?? "";
   // Prompts dismissed while the current load runs: its answer may predate the dismissal, so they stay dismissed.
-  const dismissedDuringLoad = useRef<number[]>([]);
+  const dismissedDuringLoad = useRef<Explanation[]>([]);
   useEffect(() => {
     const current = ++session.current;
     dismissedDuringLoad.current = [];
@@ -132,14 +132,14 @@ export default function Notes() {
       if (n.status === "fulfilled") { setNotes(n.value); setNotesError(null); } else setNotesError(message(n.reason));
       setPackages(p.status === "fulfilled" ? p.value : []);
       if (e.status === "fulfilled") {
-        setExplanations(e.value.map((x) => dismissedDuringLoad.current.includes(x.id) ? { ...x, revisit: false } : x)); setExplanationsError(null);
+        setExplanations(e.value.map((x) => dismissedDuringLoad.current.some((d) => dismissalCovers(d, x)) ? { ...x, revisit: false } : x)); setExplanationsError(null);
       } else setExplanationsError(message(e.reason));
     });
     return () => { session.current += 1; };
   }, [loadKey]);
   function dismissed(row: Explanation) {
-    dismissedDuringLoad.current.push(row.id);
-    setExplanations((list) => list && list.map((e) => e.id === row.id ? row : e));
+    dismissedDuringLoad.current.push(row);
+    setExplanations((list) => list && list.map((e) => dismissalCovers(row, e) ? row : e));
   }
   const error = explainTab ? explanationsError : notesError;
   return <div className="page">

@@ -4,6 +4,19 @@ import { dismissExplanation } from "../api.js";
 import { message } from "../text.js";
 
 /**
+ * Tests whether a dismissal covers a loaded copy of an explanation.
+ * Args:
+ *   dismissed: The explanation a dismissal returned. row: A loaded explanation.
+ * Returns:
+ *   True for the same explanation at or before the dismissed revision; a rating changed since is newer and stays.
+ * Raises:
+ *   None.
+ */
+export function dismissalCovers(dismissed: Explanation, row: Explanation): boolean {
+  return row.id === dismissed.id && row.updatedAt <= dismissed.updatedAt;
+}
+
+/**
  * Renders a revisit prompt's Dismiss button, which hides the prompt until a new low rating.
  * Args:
  *   explanation: The explanation raising the prompt. onDismissed: Receives it, no longer flagged revisit.

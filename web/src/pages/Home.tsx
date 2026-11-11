@@ -5,7 +5,7 @@ import { listExplanations, listPackages } from "../api.js";
 import type { PackageSummary } from "../api.js";
 import { useDue } from "../App.js";
 import { ConfidenceChip } from "../components/ConfidencePicker.js";
-import DismissRevisit from "../components/DismissRevisit.js";
+import DismissRevisit, { dismissalCovers } from "../components/DismissRevisit.js";
 import { formatDay } from "../format.js";
 import { lessonsInProgress } from "../home.js";
 import { filterSearch } from "../listFilter.js";
@@ -63,7 +63,7 @@ export default function Home() {
   const [failed, setFailed] = useState(false);
   const session = useRef(0);
   // Prompts dismissed while the current load runs: its answer may predate the dismissal, so they stay hidden.
-  const dismissedDuringLoad = useRef<number[]>([]);
+  const dismissedDuringLoad = useRef<Explanation[]>([]);
   function load() {
     const current = ++session.current;
     dismissedDuringLoad.current = [];
@@ -72,13 +72,13 @@ export default function Home() {
     Promise.allSettled([listPackages(), listExplanations({ revisit: true })]).then(([library, prompts]) => {
       if (session.current !== current) return;
       setPackages(library.status === "fulfilled" ? library.value : null);
-      setRevisit(prompts.status === "fulfilled" ? prompts.value.filter((row) => !dismissedDuringLoad.current.includes(row.id)) : null);
+      setRevisit(prompts.status === "fulfilled" ? prompts.value.filter((row) => !dismissedDuringLoad.current.some((d) => dismissalCovers(d, row))) : null);
       setFailed(library.status === "rejected" || prompts.status === "rejected");
     });
   }
   function dismissed(row: Explanation) {
-    dismissedDuringLoad.current.push(row.id);
-    setRevisit((rows) => rows && rows.filter((r) => r.id !== row.id));
+    dismissedDuringLoad.current.push(row);
+    setRevisit((rows) => rows && rows.filter((r) => !dismissalCovers(row, r)));
   }
   function retryDue() {
     setDueRetrying(true);
