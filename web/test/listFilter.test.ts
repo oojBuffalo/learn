@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { Explanation, Note } from "@study/shared";
-import { filterExplanations, filterNotes, filterSearch, parseListFilter } from "../src/listFilter.js";
+import { filterExplanations, filterNotes, filterSearch, parseListFilter, searchNotes } from "../src/listFilter.js";
 import type { ListFilter } from "../src/listFilter.js";
 const target = (packageId: string, lessonId: string | null) => ({ packageId, lessonId, packageTitle: packageId, lessonTitle: lessonId });
 const note = (id: number, t: Note["target"], orphaned = false): Note => ({ id, target: t, orphaned, body: "b", createdAt: "x", updatedAt: "x" });
@@ -28,4 +28,15 @@ it("filters notes", () => {
 it("filters explanations", () => {
   const cases: [ListFilter, boolean, number[]][] = [[{ kind: "all" }, false, [1, 2, 3]], [{ kind: "all" }, true, [1, 3]], [{ kind: "package", packageId: "p", lessonId: "l2" }, true, [3]], [{ kind: "orphaned" }, false, [4]], [{ kind: "orphaned" }, true, []], [{ kind: "standalone" }, false, []]];
   for (const [f, revisit, want] of cases) expect(filterExplanations(explanations, f, revisit).map((e) => e.id)).toEqual(want);
+});
+it("searches note bodies and their shown targets, ignoring case and accents", () => {
+  const n = (id: number, body: string, t: Note["target"] = null, orphaned = false): Note => ({ ...note(id, t, orphaned), body });
+  const hot = { packageId: "drinks", lessonId: "hot", packageTitle: "Boissons chaudes", lessonTitle: "Café crème" };
+  const list = [n(1, "Le Café de Flore"), n(2, "CAFE au lait"), n(3, "tea", hot), n(4, "old", { packageId: "gone-pkg", lessonId: "old-lesson", packageTitle: null, lessonTitle: null }, true), n(5, "nothing")];
+  const ids = (q: string) => searchNotes(list, q).map((x) => x.id);
+  for (const q of ["café", "CAFÉ", "cafe", "  Cafe "]) expect(ids(q)).toEqual([1, 2, 3]);
+  expect(ids("")).toEqual([1, 2, 3, 4, 5]); expect(ids("   ")).toEqual([1, 2, 3, 4, 5]);
+  expect(ids("boissons")).toEqual([3]); expect(ids("creme TEA")).toEqual([3]); expect(ids("old-lesson")).toEqual([4]);
+  expect(ids("café flore")).toEqual([1]); expect(ids("flore lait")).toEqual([]); expect(ids("standalone")).toEqual([1, 2, 5]);
+  expect(searchNotes(filterNotes(list, { kind: "package", packageId: "drinks" }), "café").map((x) => x.id)).toEqual([3]);
 });

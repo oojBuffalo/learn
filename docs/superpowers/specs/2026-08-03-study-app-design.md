@@ -350,7 +350,14 @@ Every mode makes you *do* something with the material:
   leaving an editor; failed saves preserve the text. Typing during a save remains
   unsaved and in the draft, even when the editor is left before that save finishes.
   A first save keeps the editor mounted and focused. Bodies are validated before
-  saving, rather than truncated by a textarea length limit.
+  saving, rather than truncated by a textarea length limit. The notes list has a
+  search box that combines with its package/lesson, standalone and removed-content
+  filters: a note matches when its body or its shown package/lesson label contains
+  every word typed, ignoring case and accents (the same fold as answer checking).
+  The search lives in the URL (`/notes?q=…`) beside the filter, so Back keeps it.
+  The list shows 20 notes with a count ("Showing 20 of 57 notes") and a Show more
+  button that adds 20; a new search or filter starts again from the first 20.
+  Search runs in the browser over `GET /notes`. The explain-back list has neither.
 - **Explain-back** — pick a lesson, explain it in your own words in Markdown, and rate
   your confidence 1–5 (1 Lost, 2 Shaky, 3 Getting there, 4 Solid, 5 Could teach it; no
   default). A lesson in the library has one **revisit** prompt while its latest
