@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BODY_MAX } from "@study/shared";
 import type { Confidence, Explanation, ExplanationPatch, NoteTarget } from "@study/shared";
 import { ApiError, createExplanation, getExplanation, listExplanations, listPackages, updateExplanation } from "../api.js";
@@ -8,8 +8,7 @@ import Markdown from "../components/Markdown.js";
 import MarkdownEditor from "../components/MarkdownEditor.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
-import { browserDraftStore, clearDraft, draftKey, readDraft, useDraft, writeDraft } from "../drafts.js";
-import type { DraftStore } from "../drafts.js";
+import { browserDraftStore, draftKey, readDraft, restoredDraftId, useDraft } from "../drafts.js";
 import { formatDay } from "../format.js";
 import { filterSearch } from "../listFilter.js";
 import { message } from "../text.js";
@@ -21,11 +20,14 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const hintId = useId();
+  const location = useLocation();
   const initial = useRef({ explanationId, prefill: params.get("packageId")
-    ? decodeTarget(`${params.get("packageId")}/${params.get("lessonId") ?? ""}`) : null });
+    ? decodeTarget(`${params.get("packageId")}/${params.get("lessonId") ?? ""}`) : null,
+    restore: explanationId === undefined ? restoredDraftId(location.state) : null });
   const invalidId = initial.current.explanationId !== undefined && !/^[1-9][0-9]*$/.test(initial.current.explanationId);
   const [id, setId] = useState<number | null>(() => initial.current.explanationId && !invalidId ? Number(initial.current.explanationId) : null);
-  const [recoveryId, setRecoveryId] = useState<number | null>(null);
+  // Restore on Notes opens a removed explanation's kept draft here, and its key stays this editor's draft until the save.
+  const [recoveryId, setRecoveryId] = useState<number | null>(initial.current.restore);
   const [body, setBody] = useState("");
   const latestBody = useRef("");
   const [confidence, setConfidence] = useState<Confidence | null>(null);
@@ -46,7 +48,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const mounted = useRef(false);
   const session = useRef(0);
   const slot = draftKey("explanation", id ?? recoveryId ?? "new");
-  const draft = useDraft(slot, saved?.body ?? null);
+  const draft = useDraft(slot, saved?.body ?? null, body);
   const dirty = saved !== null && (body !== saved.body || confidence !== saved.confidence || encodeTarget(target) !== encodeTarget(saved.target));
   const hint = !target?.lessonId ? "Pick a lesson to save." : !body.trim() ? "Write your explanation to save."
     : body.length > BODY_MAX ? "Shorten it to 100,000 characters to save." : confidence === null ? "Rate your confidence to save." : null;
@@ -70,9 +72,12 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         const prefill = initial.current.prefill;
         const livePrefill = prefill && pkgs.some((pkg) => pkg.id === prefill.packageId && pkg.lessons.some((lesson) => lesson.id === prefill.lessonId));
         const selected = explanation ? { packageId: explanation.packageId, lessonId: explanation.lessonId } : livePrefill ? prefill : null;
-        latestBody.current = explanation?.body ?? ""; setBody(latestBody.current);
+        const restore = initial.current.restore;
+        const kept = restore === null ? null : readDraft(browserDraftStore(), draftKey("explanation", restore));
+        if (restore !== null && !kept) setRecoveryId(null);
+        latestBody.current = explanation?.body ?? kept?.body ?? ""; setBody(latestBody.current);
         setTarget(selected); setConfidence(explanation?.confidence ?? null); setInfo(explanation);
-        setSaved({ body: latestBody.current, confidence: explanation?.confidence ?? null, target: selected });
+        setSaved({ body: explanation?.body ?? "", confidence: explanation?.confidence ?? null, target: selected });
         setStalePrefill(!explanation && prefill !== null && !livePrefill);
         setPackages(pkgs); setLibraryFailed(p.status === "rejected"); setEarlier(all.status === "fulfilled" ? all.value : null);
       });
@@ -100,10 +105,10 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
 
-  // A newer editor of the same key may have stored its own text since this save started; a late settle leaves that draft alone.
-  function ownsDraft(store: DraftStore, key: string): boolean {
-    const stored = readDraft(store, key);
-    return stored === null || stored.body === latestBody.current;
+  // A newer editor of the same key may have stored its own text, or discarded this editor's, since this save started;
+  // a late settle leaves that key alone.
+  function ownsDraft(key: string): boolean {
+    return draft.session.owns(key, latestBody.current);
   }
 
   // This editor's slot holds nothing, its own last text or the offer it showed; anything else is newer text from another editor of the row.
@@ -120,6 +125,21 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       () => { if (session.current === current) setLibraryFailed(true); });
   }
 
+  // A removed explanation's text moves to the new draft, which Explain a lesson offers, unless another new explanation's
+  // text is there; then it stays under the old key, and Notes lists it as a kept draft. Text another editor discarded
+  // stays gone. Returns whether the new draft is free for this editor.
+  function keepGoneText(oldId: number): boolean {
+    const drafts = draft.session;
+    const old = draftKey("explanation", oldId); const fresh = draftKey("explanation", "new");
+    const dropped = drafts.dropped(old);
+    if (ownsDraft(fresh)) {
+      if (!dropped) { drafts.write(fresh, latestBody.current, new Date()); if (ownsDraft(old)) drafts.clear(old); }
+      return true;
+    }
+    if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
+    return false;
+  }
+
   async function save() {
     if (inFlight.current || !canSave || !saved || confidence === null || !target?.lessonId) return;
     inFlight.current = true; setPending(true); setError(null);
@@ -131,12 +151,14 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       if (sent.confidence !== saved.confidence) patch.confidence = sent.confidence;
       const explanation = creating ? await createExplanation({ body: sent.body, confidence: sent.confidence,
         packageId: sent.target.packageId, lessonId: sent.target.lessonId! }) : await updateExplanation(id, patch);
-      const store = browserDraftStore();
-      if (creating && recoveryId !== null && ownsDraft(store, draftKey("explanation", recoveryId))) clearDraft(store, draftKey("explanation", recoveryId));
-      if (creating && ownsDraft(store, draftKey("explanation", "new"))) clearDraft(store, draftKey("explanation", "new"));
+      const drafts = draft.session;
+      // Text that another editor discarded while this save was pending stays gone.
+      const dropped = drafts.dropped(slot);
+      if (creating && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
+      if (creating && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
       const key = draftKey("explanation", explanation.id);
-      if (ownsDraft(store, key)) {
-        if (latestBody.current === sent.body) clearDraft(store, key); else writeDraft(store, key, latestBody.current, new Date());
+      if (ownsDraft(key)) {
+        if (latestBody.current === sent.body) drafts.clear(key); else if (!dropped) drafts.write(key, latestBody.current, new Date());
       }
       if (!mounted.current) return;
       draft.dismiss();
@@ -145,28 +167,13 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     } catch (e) {
       const gone = !creating && e instanceof ApiError && e.code === "not_found";
       if (!mounted.current) {
-        if (gone) {
-          // The editor and its row are both gone: Explain a lesson offers the text, unless another new explanation's text is there.
-          const store = browserDraftStore();
-          if (ownsDraft(store, draftKey("explanation", "new"))) {
-            writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date());
-            if (ownsDraft(store, draftKey("explanation", id))) clearDraft(store, draftKey("explanation", id));
-          }
-        }
+        if (gone) keepGoneText(id);
         return;
       }
       if (gone) {
         setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
-        const store = browserDraftStore();
-        if (ownsDraft(store, draftKey("explanation", "new"))) {
-          writeDraft(store, draftKey("explanation", "new"), latestBody.current, new Date());
-          if (ownsDraft(store, draftKey("explanation", id))) clearDraft(store, draftKey("explanation", id));
-          setRecoveryId(null);
-        } else {
-          // Keep recovery edits on the old key so another new draft stays intact.
-          setRecoveryId(id);
-          if (ownsDraft(store, draftKey("explanation", id))) writeDraft(store, draftKey("explanation", id), latestBody.current, new Date());
-        }
+        // Recovery edits stay on the old key while another new explanation's text holds the new draft.
+        setRecoveryId(keepGoneText(id) ? null : id);
         if (initial.current.explanationId) loadLibrary();
         setError("This explanation was removed elsewhere — Save will create it again.");
       } else setError(`Your explanation wasn’t saved (${message(e)}).`);
