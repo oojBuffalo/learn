@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readPackageFolder } from "../src/packageFolder.js";
+import { tempDir } from "./helpers.js";
 
 describe("readPackageFolder", () => {
   it("accepts the authored matching-and-recommendation package", () => {
@@ -24,11 +24,10 @@ describe("readPackageFolder", () => {
   });
 
   it("reports a missing manifest", () => {
-    const dir = mkdtempSync(join(tmpdir(), "pkg-"));
+    const dir = tempDir("pkg-");
     mkdirSync(join(dir, "lessons"));
     writeFileSync(join(dir, "lessons", "01-a.md"), "---\nid: a\ntitle: A\n---\n\nBody\n");
     const { pkg, errors } = readPackageFolder(dir);
-    rmSync(dir, { recursive: true, force: true });
     expect(pkg).toBeNull();
     expect(errors).toContainEqual({
       file: "manifest.json",

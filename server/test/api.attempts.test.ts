@@ -1,22 +1,15 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
-import { openDb } from "../src/db.js";
 import type { Db } from "../src/db.js";
-import { PLAY_FILES, makeZip } from "./helpers.js";
+import { PLAY_FILES, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
-let dir: string;
 let app: ReturnType<typeof createApp>;
 beforeEach(async () => {
-  dir = mkdtempSync(join(tmpdir(), "study-"));
-  db = openDb(dir);
+  db = freshDb();
   app = createApp(db);
   expect((await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(PLAY_FILES)) })).status).toBe(201);
 });
-afterEach(() => { db.close(); rmSync(dir, { recursive: true, force: true }); });
 const send = (path: string, body: unknown) => app.request(path, {
   method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
 });

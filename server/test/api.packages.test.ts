@@ -1,15 +1,12 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
-import { openDb, type Db } from "../src/db.js";
-import { GOOD_FILES, PLAY_FILES, V2_FILES, corruptEntry, makeZip } from "./helpers.js";
+import type { Db } from "../src/db.js";
+import { GOOD_FILES, PLAY_FILES, V2_FILES, corruptEntry, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
 beforeEach(() => {
-  db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+  db = freshDb();
   app = createApp(db);
 });
 

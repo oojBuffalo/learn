@@ -1,12 +1,42 @@
 import AdmZip from "adm-zip";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { onTestFinished } from "vitest";
 import { openDb } from "../src/db.js";
 import type { Db } from "../src/db.js";
 import type { Item, OrphanCounts } from "@study/shared";
 
-export const freshDb = () => openDb(mkdtempSync(join(tmpdir(), "study-")));
+/**
+ * Makes an empty dir in the OS temp dir and removes it when the current test finishes.
+ * Args:
+ *   prefix: The start of the dir name.
+ * Returns:
+ *   The path of the new dir.
+ * Raises:
+ *   Error: Called outside a running test or its beforeEach, such as in beforeAll.
+ */
+export function tempDir(prefix = "study-"): string {
+  let dir: string | undefined;
+  // Register first: outside a test this throws before any dir exists to leak.
+  onTestFinished(() => { if (dir) rmSync(dir, { recursive: true, force: true }); });
+  dir = mkdtempSync(join(tmpdir(), prefix));
+  return dir;
+}
+
+/**
+ * Opens an empty database in its own temp dir. When the current test finishes,
+ * after its afterEach hooks, the database is closed and the dir is removed.
+ * Returns:
+ *   The open database.
+ * Raises:
+ *   Error: Called outside a running test or its beforeEach, such as in beforeAll.
+ */
+export function freshDb(): Db {
+  const db = openDb(tempDir());
+  onTestFinished(() => { db.close(); });
+  return db;
+}
 
 export function makeZip(files: Record<string, string | Buffer>): Buffer {
   const zip = new AdmZip();

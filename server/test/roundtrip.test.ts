@@ -1,13 +1,9 @@
 import AdmZip from "adm-zip";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { openDb } from "../src/db.js";
 import { importPackage } from "../src/importer.js";
 import { exportPackage, loadPackageFromDb } from "../src/exporter.js";
 import { readPackageZip } from "../src/zip.js";
-import { GOOD_FILES, makeZip, seedUserState } from "./helpers.js";
+import { GOOD_FILES, freshDb, makeZip, seedUserState } from "./helpers.js";
 
 // Local extension of GOOD_FILES (not a mutation — other suites assert against GOOD_FILES
 // as-is) that adds a quiz and a game so the round-trip proves quizzes/games survive too.
@@ -23,7 +19,7 @@ const FILES = {
 
 describe("export round-trip", () => {
   it("import → export → parse yields identical content", () => {
-    const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+    const db = freshDb();
     const original = readPackageZip(makeZip(FILES)).pkg!;
     // Guard against the round-trip going vacuous: if these fixtures ever lose their
     // quiz/game content, the toEqual checks below would trivially pass on [] === [].
@@ -52,7 +48,7 @@ describe("export round-trip", () => {
       "---\nnot: frontmatter\n---\nStill body.\n",
     ];
     for (const body of tricky) {
-      const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+      const db = freshDb();
       const files = { ...FILES, "lessons/01-intro.md": `---\nid: intro\ntitle: Intro\n---\n${body}` };
       expect(importPackage(db, makeZip(files))).toEqual({ ok: true, packageId: "demo" });
       const reread = readPackageZip(exportPackage(db, "demo")!);
@@ -63,12 +59,12 @@ describe("export round-trip", () => {
   });
 
   it("returns null for an unknown package", () => {
-    const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+    const db = freshDb();
     expect(exportPackage(db, "nope")).toBeNull();
   });
 
   it("loads structured content by its persisted package order", () => {
-    const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+    const db = freshDb();
     importPackage(db, makeZip(FILES));
 
     const reorder = db.transaction(() => {
@@ -83,7 +79,7 @@ describe("export round-trip", () => {
 
 
 it("exports the same package when notes and explanations exist", () => {
-  const db = openDb(mkdtempSync(join(tmpdir(), "study-")));
+  const db = freshDb();
   expect(importPackage(db, makeZip(FILES))).toMatchObject({ ok: true });
   const before = exportPackage(db, "demo")!; seedUserState(db);
   const after = exportPackage(db, "demo")!;

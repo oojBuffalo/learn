@@ -1,16 +1,11 @@
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Explanation } from "@study/shared";
 import { createApp } from "../src/app.js";
-import { openDb } from "../src/db.js";
 import type { Db } from "../src/db.js";
-import { GOOD_FILES, makeZip } from "./helpers.js";
+import { GOOD_FILES, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
-let dir: string;
 const T0 = "2026-10-01T10:00:00.000Z";
 const TWO_LESSONS = { ...GOOD_FILES, "lessons/02-more.md": "---\nid: more\ntitle: More\n---\n\nMore.\n" };
 const at = (iso: string) => vi.setSystemTime(new Date(iso));
@@ -31,10 +26,10 @@ const count = () => (db.prepare("SELECT COUNT(*) n FROM explanations").get() as 
 const importGood = () => app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(TWO_LESSONS)) });
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ["Date"] }); at(T0);
-  dir = mkdtempSync(join(tmpdir(), "study-")); db = openDb(dir); app = createApp(db);
+  db = freshDb(); app = createApp(db);
   expect((await importGood()).status).toBe(201);
 });
-afterEach(() => { db.close(); rmSync(dir, { recursive: true, force: true }); vi.useRealTimers(); });
+afterEach(() => { vi.useRealTimers(); });
 
 it("creates an explanation with titles and flags", async () => {
   const id = await explain("intro", 2);
