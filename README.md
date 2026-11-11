@@ -8,6 +8,10 @@ flashcards, quizzes and games, notes and explain-back, and a Home dashboard at `
 
 ## Run
 
+Requires Node 22 or 24 (`engines` in `package.json`). On macOS, Linux and
+Windows, better-sqlite3 downloads a prebuilt binary for these versions, so
+`npm install` needs no C++ toolchain.
+
     npm install
     npm run build -w web
     npm start -w server        # http://localhost:4321
