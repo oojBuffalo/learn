@@ -106,6 +106,15 @@ it("keeps each key's 20 newest discards from the last week, untouched by discard
   expect(rowDrafts(s, "note")).toEqual([]);
 });
 
+it("a discard removes week-old discard records under every key and keeps recent ones", () => {
+  const s = mem(); const session = draftSession(s, at(0));
+  recordDiscard(s, "study.draft.note.1", "Old", at(1)); recordDiscard(s, "study.draft.note.2", "Recent", new Date(at(1).getTime() + 3 * 24 * 60 * 60 * 1000));
+  s.setItem("study.draft.discarded.study.draft.note.3", "{not json");
+  recordDiscard(s, k, "Now", new Date(at(1).getTime() + 8 * 24 * 60 * 60 * 1000));
+  expect(s.getItem("study.draft.discarded.study.draft.note.1")).toBeNull(); expect(s.getItem("study.draft.discarded.study.draft.note.3")).toBeNull();
+  expect(session.dropped("study.draft.note.2", "Recent")).toBe(true); expect(session.dropped(k, "Now")).toBe(true);
+});
+
 it("another editor removing older text spares newer text whose write failed", () => {
   const s = mem(); let full = false;
   const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full) throw new Error("quota"); s.setItem(key, value); } };

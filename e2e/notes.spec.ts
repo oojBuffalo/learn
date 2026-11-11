@@ -1326,3 +1326,35 @@ test("Kept drafts lists text that another tab keeps under a deleted note while N
   await expect(kept.locator(".kept-row").filter({ hasText: "Shared gone note, edited" })).toBeVisible();
   await other.close();
 });
+
+test("a late note save after a revert never brings back the same text deleted with the note in another tab", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Original", target: null } })).json()).note.id;
+  const key = `study.draft.note.${id}`;
+  const touches = await watchDraft(page, key);
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() !== "PATCH") return route.continue();
+    const response = await route.fetch(); await held; await route.fulfill({ response });
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Original");
+  await editor.fill("Changed"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(async () => (await (await request.get(`/api/notes/${id}`)).json()).note.body).toBe("Changed");
+  await editor.fill("Original"); expect(await storedBody(page, key)).toBeNull();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const other = await page.context().newPage();
+  const otherEditor = other.getByLabel("Note", { exact: true });
+  await other.goto(`/notes/${id}`); await expect(otherEditor).toHaveValue("Changed");
+  await otherEditor.fill("Original"); expect(await storedBody(other, key)).toBe("Original");
+  await other.getByRole("button", { name: "Delete", exact: true }).click();
+  await other.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(other).toHaveURL(/\/notes$/); expect(await storedBody(other, key)).toBeNull();
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(200);
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect(await storedBody(page, key)).toBeNull();
+  await other.reload(); await expect(other.getByRole("region", { name: "Kept drafts" })).toHaveCount(0);
+  await other.close();
+});

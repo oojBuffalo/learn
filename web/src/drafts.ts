@@ -59,7 +59,8 @@ export function restoredDraftId(state: unknown): number | null {
 export const DRAFTS_CHANGED = "study:drafts-changed";
 const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(new Event(DRAFTS_CHANGED)); };
 // Each draft key keeps its own discards, so discards elsewhere never push one out.
-const discardsKey = (key: string) => `study.draft.discarded.${key}`;
+const DISCARDS = "study.draft.discarded.";
+const discardsKey = (key: string) => DISCARDS + key;
 type Discard = { text: string; at: string };
 // Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
 function fingerprint(body: string): string {
@@ -67,20 +68,29 @@ function fingerprint(body: string): string {
   for (let i = 0; i < body.length; i++) hash = Math.imul(hash ^ body.charCodeAt(i), 0x01000193) >>> 0;
   return `${body.length}:${hash.toString(16)}`;
 }
-function readDiscards(store: DraftStore, key: string): Discard[] {
+function readDiscards(store: DraftStore, storageKey: string): Discard[] {
   try {
-    const parsed: unknown = JSON.parse(store.getItem(discardsKey(key)) ?? "[]");
+    const parsed: unknown = JSON.parse(store.getItem(storageKey) ?? "[]");
     return Array.isArray(parsed) ? parsed.filter((d): d is Discard => d !== null && typeof d === "object"
       && typeof d.text === "string" && typeof d.at === "string") : [];
   } catch { return []; }
 }
 /**
  * Remembers that the user discarded this text under the key, so a save that settles later never brings it back.
- * A key keeps its 20 newest discards from the last week; no save stays pending that long.
+ * A key keeps its 20 newest discards from the last week; no save stays pending that long, so older records, under
+ * any key, are removed here.
  */
 export function recordDiscard(store: DraftStore, key: string, body: string, now: Date): void {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const discards = [...readDiscards(store, key).filter((d) => d.at > weekAgo), { text: fingerprint(body), at: now.toISOString() }];
+  try {
+    const expired: string[] = [];
+    for (let i = 0; i < store.length; i++) {
+      const other = store.key(i);
+      if (other?.startsWith(DISCARDS) && !readDiscards(store, other).some((d) => d.at > weekAgo)) expired.push(other);
+    }
+    for (const other of expired) store.removeItem(other);
+  } catch { /* Old records only cost space. */ }
+  const discards = [...readDiscards(store, discardsKey(key)).filter((d) => d.at > weekAgo), { text: fingerprint(body), at: now.toISOString() }];
   try { store.setItem(discardsKey(key), JSON.stringify(discards.slice(-20))); } catch { /* Discarding still works without storage. */ }
 }
 
@@ -115,7 +125,7 @@ export function draftSession(store: DraftStore, started = new Date()): DraftSess
       const mine = last.get(key);
       if (readDraft(store, key) === null && mine?.body === holding) return true;
       const since = mine?.at ?? started.toISOString(); const text = fingerprint(holding);
-      return readDiscards(store, key).some((d) => d.text === text && d.at > since);
+      return readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > since);
     },
   };
 }

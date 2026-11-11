@@ -173,7 +173,9 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       try { await deleteNote(id); }
       catch (e) { if (!(e instanceof ApiError && e.code === "not_found")) throw e; }
       // Another editor of this note, here or in another tab, may have stored newer text before the delete settled.
-      if (ownsSlot()) draft.session.clear(slot);
+      // Text deleted with the note is recorded as discarded, so a late save never brings it back.
+      const deleted = readDraft(browserDraftStore(), slot);
+      if (ownsSlot()) { if (deleted) recordDiscard(browserDraftStore(), slot, deleted.body, new Date()); draft.session.clear(slot); }
       if (mounted.current) navigate("/notes");
     } catch (e) {
       if (mounted.current) { setConfirming(false); setError(`This note wasn’t deleted (${message(e)}).`); }
