@@ -104,7 +104,10 @@ export interface DraftSession {
   clear(key: string, now?: Date): void;
   /** The key is empty, or holds `holding` or the text this editor last stored there. */
   owns(key: string, holding: string): boolean;
-  /** The user discarded `holding` under the key, or deleted it with its note, since this editor last wrote or cleared it. */
+  /**
+   * The user discarded `holding`, or deleted it with its note, since this editor last wrote or cleared the key: under
+   * that key or under any other draft key of its kind, since another editor may have moved the text there first.
+   */
   dropped(key: string, holding: string): boolean;
 }
 export function draftSession(store: DraftStore, started = new Date()): DraftSession {
@@ -124,7 +127,10 @@ export function draftSession(store: DraftStore, started = new Date()): DraftSess
     // editor's late request may since have overwritten that save. Only a recorded Discard or delete counts.
     dropped(key, holding) {
       const since = last.get(key)?.at ?? started.toISOString(); const text = fingerprint(holding);
-      return readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > since);
+      const kind = discardsKey(key.slice(0, key.lastIndexOf(".") + 1));
+      const keys: string[] = [];
+      try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(kind)) keys.push(k); } } catch { /* None to read. */ }
+      return keys.some((k) => readDiscards(store, k).some((d) => d.text === text && d.at > since));
     },
   };
 }

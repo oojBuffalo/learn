@@ -77,7 +77,7 @@ it("a session never brings back text the user discarded after its last write or 
   // Discarded, then the slot was typed over: the late text is still the discarded one.
   late.write(k, "Late text", at(1)); recordDiscard(s, k, "Late text", at(2)); other.write(k, "Newer text", at(3));
   expect(late.dropped(k, "Late text")).toBe(true); expect(late.dropped(k, "Late text, edited")).toBe(false);
-  expect(late.dropped("study.draft.note.4", "Late text")).toBe(false);
+  expect(late.dropped("study.draft.note.4", "Late text")).toBe(true); expect(late.dropped("study.draft.explanation.4", "Late text")).toBe(false);
   // This editor's own clear came first, then the same text was discarded in another tab.
   const reverted = draftSession(s, at(0)); const key = "study.draft.note.9";
   reverted.clear(key, at(4)); other.write(key, "Original", at(5)); recordDiscard(s, key, "Original", at(6)); other.clear(key, at(6));
@@ -87,6 +87,15 @@ it("a session never brings back text the user discarded after its last write or 
   expect(reverted.dropped(key, "Original")).toBe(false);
   // An editor that never touched the key checks discards made since it opened.
   expect(draftSession(s, at(5)).dropped(key, "Original")).toBe(true); expect(draftSession(s, at(7)).dropped(key, "Original")).toBe(false);
+});
+
+it("a session counts a discard of its text under another key of the same kind, made after its last action", () => {
+  const s = mem(); const late = draftSession(s, at(0)); const key = "study.draft.note.5";
+  late.write(key, "Moved text", at(1));
+  recordDiscard(s, "study.draft.explanation.new", "Moved text", at(2)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.note.new", "Other text", at(2)); expect(late.dropped(key, "Moved text")).toBe(false);
+  recordDiscard(s, "study.draft.note.new", "Moved text", at(2)); expect(late.dropped(key, "Moved text")).toBe(true);
+  late.write(key, "Moved text", at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
 });
 
 it("keeps each key's 20 newest discards from the last week, untouched by discards under other keys, and ignores a corrupt list", () => {
