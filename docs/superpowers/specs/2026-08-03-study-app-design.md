@@ -358,6 +358,15 @@ Every mode makes you *do* something with the material:
   The list shows 20 notes with a count ("Showing 20 of 57 notes") and a Show more
   button that adds 20; a new search or filter starts again from the first 20.
   Search runs in the browser over `GET /notes`. The explain-back list has neither.
+  **Download all notes** (shown once any note exists) saves every note, whatever
+  the search or filter and orphaned ones included, as `notes-YYYY-MM-DD.tgz` (the
+  server's local date): one `notes/<id>-<slug>.md` per note, its slug taken from the
+  first heading outside code fences, or else the first non-blank line (lowercase
+  ASCII, at most 60 characters, `note` when empty). Each file is stamped with the
+  note's update time and opens with YAML front matter (`id`, `created`, `updated`,
+  `orphaned`, then `package` and `lesson` ids for attached notes, each with its
+  `title` while that content is in the library), followed by the body exactly as
+  stored.
 - **Explain-back** — pick a lesson, explain it in your own words in Markdown, and rate
   your confidence 1–5 (1 Lost, 2 Shaky, 3 Getting there, 4 Solid, 5 Could teach it; no
   default). A lesson in the library has one **revisit** prompt while its latest
@@ -398,6 +407,9 @@ REST JSON API (all under `/api`):
   reopening a completed lesson does not change its completion time.
 - `GET /notes` (every note, each with an `orphaned` flag), `POST /notes`,
   `GET/PATCH/DELETE /notes/:id`; bodies are Markdown, non-blank, at most 100 000 characters
+- `GET /notes/export` — every note as a gzip-compressed tarball (`application/gzip`,
+  attachment `notes-YYYY-MM-DD.tgz`) of Markdown files with front matter (§4); with no
+  notes it holds only the empty `notes/` folder
 - `GET /explanations` (every explanation, each with an `orphaned` flag; `?revisit=1`:
   revisit prompts only), `POST /explanations`, `GET/PATCH /explanations/:id` (no delete;
   see §3 for the purge); bodies are Markdown, non-blank, at most 100 000 characters
