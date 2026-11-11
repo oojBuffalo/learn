@@ -191,6 +191,11 @@ it("a save resuming after discard records may have expired leaves the text where
   expect(late.dropped(k, "Suspended text", new Date(at(1).getTime() + week - 60_000))).toBe(false);
   expect(late.dropped(k, "Suspended text", new Date(at(1).getTime() + week + 60_000))).toBe(true);
   expect(readDraft(s, k)?.body).toBe("Suspended text");
+  // Newer words that never reached storage (it was full) exist nowhere else, so they are still written.
+  let full = false;
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => { if (full && key === k) throw new Error("quota"); s.setItem(key, value); } };
+  const unstored = draftSession(store, at(0)); unstored.write(k, "Stored", at(1)); full = true; unstored.write(k, "Stored, then more", at(2));
+  expect(unstored.dropped(k, "Stored, then more", new Date(at(2).getTime() + week + 60_000))).toBe(false);
 });
 
 it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {

@@ -149,8 +149,9 @@ export interface DraftSession {
   /**
    * Since this editor last wrote or cleared any draft, the user discarded `holding` under the key (or deleted it with
    * its note), or removed `holding` in a draft of this editor's origin under any key of its kind, where another
-   * editor may have moved it. Also true once that write is a week old, since discards older than that are removed:
-   * a save resuming that late (a suspended computer) leaves the text where the editor stored it.
+   * editor may have moved it. Also true once that write is a week old, since discards older than that are removed,
+   * if `holding` is the text the editor last stored: a save resuming that late (a suspended computer) leaves it where
+   * it is. Text that never reached storage is still written.
    */
   dropped(key: string, holding: string, now?: Date): boolean;
 }
@@ -160,6 +161,7 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
   let lineage = origin;
   // Every write stores the editor's current text, so its latest write or clear anywhere is when it last stood by it.
   let latest = stamp(store, started);
+  let lastStored: string | null = null;
   let aside: string | null = null;
   const mineStill = (key: string) => {
     const stored = readDraft(store, key); const mine = last.get(key);
@@ -181,7 +183,7 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     write(key, body, now) {
       const at = stamp(store, now);
       if (!writeDraft(store, key, body, now, lineage)) return false;
-      acted(key, body, now, at); return true;
+      lastStored = body; acted(key, body, now, at); return true;
     },
     clear(key, now = new Date()) { const at = stamp(store, now); if (clearDraft(store, key)) acted(key, null, now, at); },
     owns(key, holding) {
@@ -194,7 +196,7 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     // The same words discarded under another row are a different draft, and an older revision of this editor's
     // draft is not its current text; across keys only this origin's current words count.
     dropped(key, holding, now = new Date()) {
-      if (Date.parse(latest) <= now.getTime() - KEPT_FOR) return true;
+      if (lastStored === holding && Date.parse(latest) <= now.getTime() - KEPT_FOR) return true;
       const text = fingerprint(holding);
       if (discardsUnder(store, `${key}.`).some((d) => d.text === text && d.at > latest)) return true;
       return discardsUnder(store, key.slice(0, key.lastIndexOf(".") + 1)).some((d) => d.origin === lineage && d.text === text && d.at > latest);
