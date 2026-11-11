@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import type { Db } from "../src/db.js";
+import type { Item } from "@study/shared";
+import { REGEX_REQUEST_BUDGET_MS, REGEX_TIME_BUDGET_MS } from "../src/regexTest.js";
 import { PLAY_FILES, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
@@ -104,6 +106,39 @@ describe("quiz submissions", () => {
     expect((await exercise.json()).error).toEqual({ code: "not_checkable", message: "unsafe regular expression" });
     expect((await attempt(quizBody({ sa1: RIGHT.sa1 }))).status).toBe(422);
     expect(attemptCount()).toBe(0);
+  });
+});
+
+describe("a stored regex that backtracks catastrophically", () => {
+  // The guard accepts overlapping repeats in sequence. At 56 characters an untimed check still
+  // takes seconds, so a missing budget fails these tests rather than hanging the run.
+  const slow = { type: "short-answer", text: `${"a".repeat(55)}b` };
+  beforeEach(async () => {
+    const items = (JSON.parse(PLAY_FILES["items.json"] as string) as Item[]).map((item) => item.id !== "sa1" ? item
+      : { id: "sa1", type: "short-answer", prompt: "Say yes", match: "regex", accept: ["^yes$", "^a*a*a*a*a*a*a*a*$"] });
+    const files = { ...PLAY_FILES, "items.json": JSON.stringify(items) };
+    expect((await app.request("/api/packages/import", { method: "POST", body: new Uint8Array(makeZip(files)) })).status).toBe(201);
+  });
+  const timed = async (body: unknown) => {
+    const start = performance.now();
+    const res = await attempt(body);
+    expect(performance.now() - start).toBeLessThan(1000);
+    expect(res.status).toBe(200);
+    return res.json();
+  };
+
+  it("grades an exercise wrong within the time budget, with a fresh budget for each request", async () => {
+    // Together these timeouts outrun one request's budget, so a shared budget would fail the last answer.
+    for (let i = 0; i <= REGEX_REQUEST_BUDGET_MS / REGEX_TIME_BUDGET_MS; i++) {
+      expect(await timed({ packageId: "demo", itemId: "sa1", answer: slow })).toMatchObject({ correct: false, score: 0 });
+    }
+    expect(lastAttempt()).toMatchObject({ kind: "exercise", item_id: "sa1", correct: 0, score: 0 });
+    expect(await timed({ packageId: "demo", itemId: "sa1", answer: RIGHT.sa1 })).toMatchObject({ correct: true });
+  });
+  it("grades the quiz item wrong within the time budget and scores the rest", async () => {
+    const result = await timed(quizBody({ ...RIGHT, sa1: slow }));
+    expect(result).toMatchObject({ correctCount: 5, answeredCount: 6 });
+    expect(result.results[3]).toMatchObject({ itemId: "sa1", answered: true, correct: false, score: 0 });
   });
 });
 

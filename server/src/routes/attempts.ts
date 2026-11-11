@@ -4,6 +4,7 @@ import type { AppEnv } from "../app.js";
 import { apiError, parseJsonBody, parseQuery } from "../http.js";
 import { getGame, getItem, getQuiz } from "../content.js";
 import { insertExerciseAttempt, insertGameAttempt, insertQuizAttempt, listAttempts } from "../attemptLog.js";
+import { createTimedRegexTest } from "../regexTest.js";
 
 export function attemptRoutes() {
   const r = new Hono<AppEnv>();
@@ -24,7 +25,7 @@ export function attemptRoutes() {
       if (!found) return apiError(c, 404, "not_found", "unknown quiz");
       let result;
       try {
-        result = scoreQuiz(found.quiz, found.items, body.answers, body.elapsedSeconds);
+        result = scoreQuiz(found.quiz, found.items, body.answers, body.elapsedSeconds, createTimedRegexTest());
       } catch (e) {
         return apiError(c, 422, "not_checkable", (e as Error).message);
       }
@@ -36,7 +37,7 @@ export function attemptRoutes() {
       if (!found) return apiError(c, 404, "not_found", "unknown game");
       let result;
       try {
-        result = scoreGame(found.game, found.pool, body.play, body.elapsedSeconds);
+        result = scoreGame(found.game, found.pool, body.play, body.elapsedSeconds, createTimedRegexTest());
       } catch (e) {
         return apiError(c, 422, "not_checkable", (e as Error).message);
       }
@@ -48,7 +49,7 @@ export function attemptRoutes() {
     if (!item) return apiError(c, 404, "not_found", "unknown item");
     let result;
     try {
-      result = checkAnswer(item, answer);
+      result = checkAnswer(item, answer, createTimedRegexTest());
     } catch (e) {
       return apiError(c, 422, "not_checkable", (e as Error).message);
     }

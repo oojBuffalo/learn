@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Game, GamePlay, Item } from "../src/index.js";
+import type { CheckableItem, Game, GamePlay, Item } from "../src/index.js";
 import {
   GAME_DEFAULTS,
   scoreGame,
@@ -155,6 +155,17 @@ it("checks an item move with checkAnswer", () => {
     .toMatchObject({ correct: true, score: 1 });
   expect(() => checkGameMove(gSpeed, pool(gSpeed), { itemId: "card1", answer: optionA })).toThrow('item "card1" is not in this game');
   expect(() => checkGameMove(gSpeed, pool(gSpeed), { left: "a", right: "1" })).toThrow("timed-round games take { itemId, answer } moves");
+});
+
+it("passes a given regex tester to item checks", () => {
+  // No template pools short-answer items today; a hand-built pool shows the tester still reaches checkAnswer.
+  const sa: CheckableItem = { id: "sa", type: "short-answer", prompt: "?", match: "regex", accept: ["^yes$"] };
+  const no = { itemId: "sa", answer: { type: "short-answer" as const, text: "no" } };
+  const play: GamePlay = { template: "timed-round", itemIds: ["sa"], answers: [no] };
+  expect(checkGameMove(gSpeed, [sa], no)).toMatchObject({ correct: false });
+  expect(checkGameMove(gSpeed, [sa], no, () => true)).toMatchObject({ correct: true });
+  expect(scoreGame(gSpeed, [sa], play, 0).score).toBe(0);
+  expect(scoreGame(gSpeed, [sa], play, 0, () => true).score).toBe(1);
 });
 
 const pick = (left: string, right: string) => ({ left, right });

@@ -1,7 +1,7 @@
 import type { CheckableItem, Item } from "./items.js";
 import type { Game } from "./packageSchema.js";
 import { checkAnswer } from "./checking.js";
-import type { CheckResult } from "./checking.js";
+import type { CheckResult, RegexTest } from "./checking.js";
 import { shuffle } from "./random.js";
 import type { GameMove, GamePlay } from "./requests.js";
 
@@ -210,13 +210,14 @@ export type GameMoveResult = CheckResult | { correct: boolean };
  *   game: The game whose template selects the move shape.
  *   pool: Its resolved compatible items.
  *   move: A matching text pick or an item answer.
+ *   regexTest: Passed to `checkAnswer` for regex accept entries; it defaults to an untimed run.
  * Returns:
  *   A matching correctness flag or the item's CheckResult.
  * Raises:
  *   Error: The move has the wrong shape, the matching left/right or item is
  *     outside the pool, or checkAnswer rejects the answer.
  */
-export function checkGameMove(game: Game, pool: readonly CheckableItem[], move: GameMove): GameMoveResult {
+export function checkGameMove(game: Game, pool: readonly CheckableItem[], move: GameMove, regexTest?: RegexTest): GameMoveResult {
   if (game.template === "matching") {
     if (!("left" in move)) throw new Error("matching games take { left, right } picks");
     const pair = matchingPairs(pool).find((p) => p.left === move.left);
@@ -229,7 +230,7 @@ export function checkGameMove(game: Game, pool: readonly CheckableItem[], move: 
   if (!("itemId" in move)) throw new Error(`${game.template} games take { itemId, answer } moves`);
   const item = pool.find((i) => i.id === move.itemId);
   if (!item) throw new Error(`item "${move.itemId}" is not in this game`);
-  return checkAnswer(item, move.answer);
+  return checkAnswer(item, move.answer, regexTest);
 }
 
 /** The server-computed score and summary of one completed or interrupted game. */
@@ -252,13 +253,16 @@ export interface GameResult {
  *   pool: Its resolved compatible items.
  *   play: The dealt units and ordered moves submitted by the learner.
  *   elapsedSeconds: The request-validated elapsed time.
+ *   regexTest: Passed to `checkGameMove` for regex accept entries; it defaults to an untimed run.
  * Returns:
  *   The score, progress counts and elapsed time clamped to the game's limit.
  * Raises:
  *   Error: The play template differs, its deal cannot come from this pool,
  *     a move repeats or names an undealt unit, or checkGameMove rejects it.
  */
-export function scoreGame(game: Game, pool: readonly CheckableItem[], play: GamePlay, elapsedSeconds: number): GameResult {
+export function scoreGame(
+  game: Game, pool: readonly CheckableItem[], play: GamePlay, elapsedSeconds: number, regexTest?: RegexTest,
+): GameResult {
   if (play.template !== game.template) {
     throw new Error(`play template "${play.template}" does not match game template "${game.template}"`);
   }
@@ -291,7 +295,7 @@ export function scoreGame(game: Game, pool: readonly CheckableItem[], play: Game
       if (!dealt.has(answer.itemId) || answered.has(answer.itemId)) {
         throw new Error(`answer for an undealt or already answered item "${answer.itemId}"`);
       }
-      const result = checkGameMove(game, pool, answer) as CheckResult;
+      const result = checkGameMove(game, pool, answer, regexTest) as CheckResult;
       answered.add(answer.itemId);
       points += result.score;
       if (result.correct) correctCount++;

@@ -127,6 +127,23 @@ describe("checkAnswer", () => {
     }
   });
 
+  it("short-answer: runs each regex entry through a given tester on the trimmed answer", () => {
+    const rx: Item = { id: "r13", type: "short-answer", prompt: "?", match: "regex", accept: ["^a$", "^b$"] };
+    const tester = vi.fn((pattern: string) => pattern === "^b$");
+    expect(checkAnswer(rx, { type: "short-answer", text: " x " }, tester).correct).toBe(true);
+    expect(tester.mock.calls).toEqual([["^a$", "x"], ["^b$", "x"]]);
+    const folded: Item = { id: "r14", type: "short-answer", prompt: "?", accept: ["x"] };
+    expect(checkAnswer(folded, { type: "short-answer", text: "x" }, tester).correct).toBe(true);
+    expect(tester).toHaveBeenCalledTimes(2);
+  });
+
+  it("short-answer: vets every stored regex before calling a given tester", () => {
+    const rx: Item = { id: "r15", type: "short-answer", prompt: "?", match: "regex", accept: ["^ok$", "(a+)+"] };
+    const tester = vi.fn(() => true);
+    expect(() => checkAnswer(rx, { type: "short-answer", text: "ok" }, tester)).toThrow(/unsafe regular expression/);
+    expect(tester).not.toHaveBeenCalled();
+  });
+
   it("short-answer: leaves fold and exact accept entries unvetted", () => {
     const folded: Item = { id: "r10", type: "short-answer", prompt: "?", accept: ["(a+)+"] };
     expect(checkAnswer(folded, { type: "short-answer", text: "(a+)+" }).correct).toBe(true);

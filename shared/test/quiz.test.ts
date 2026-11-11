@@ -54,6 +54,13 @@ it("dedupes quiz items and reports results in quiz order", () => {
   expect(scoreQuiz(quiz, items, [...nulls].reverse(), 0).results.map((x) => x.itemId)).toEqual(["mc", "ms", "fb", "ord"]);
   expect(scoreQuiz({ ...quiz, items: ["mc", "mc", "ms"] }, items, nulls.slice(0, 2), 0).total).toBe(2);
 });
+it("passes a given regex tester to every short-answer check", () => {
+  const sa: Item = { id: "sa", type: "short-answer", prompt: "?", match: "regex", accept: ["^yes$"] };
+  const q: Quiz = { id: "qs", title: "S", items: ["sa"] };
+  const answers = [{ itemId: "sa", answer: { type: "short-answer", text: "no" } as Answer }];
+  expect(scoreQuiz(q, new Map([["sa", sa]]), answers, 0).score).toBe(0);
+  expect(scoreQuiz(q, new Map([["sa", sa]]), answers, 0, () => true).score).toBe(1);
+});
 it("clamps elapsed time to the limit and flags timedOut at the limit", () => {
   expect(scoreQuiz(quiz, items, nulls, 75)).toMatchObject({ elapsedSeconds: 60, timedOut: true });
   expect(scoreQuiz(quiz, items, nulls, 60)).toMatchObject({ elapsedSeconds: 60, timedOut: true });
