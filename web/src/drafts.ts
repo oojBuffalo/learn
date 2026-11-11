@@ -62,9 +62,9 @@ export function restoredDraftId(state: unknown): number | null {
 /** Fired on this window when an editor stores or removes a draft; other tabs get a `storage` event instead. */
 export const DRAFTS_CHANGED = "study:drafts-changed";
 const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(new Event(DRAFTS_CHANGED)); };
-// Each draft key keeps its own discards, so discards elsewhere never push one out.
+// Every discard is stored under its own key, `study.draft.discarded.<draft key>.<time>.<random>`, so two tabs
+// discarding at once never overwrite each other's record.
 const DISCARDS = "study.draft.discarded.";
-const discardsKey = (key: string) => DISCARDS + key;
 type Discard = { text: string; at: string; origin?: string };
 // Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
 function fingerprint(body: string): string {
@@ -72,12 +72,21 @@ function fingerprint(body: string): string {
   for (let i = 0; i < body.length; i++) hash = Math.imul(hash ^ body.charCodeAt(i), 0x01000193) >>> 0;
   return `${body.length}:${hash.toString(16)}`;
 }
-function readDiscards(store: DraftStore, storageKey: string): Discard[] {
+function readDiscard(store: DraftStore, storageKey: string): Discard | null {
   try {
-    const parsed: unknown = JSON.parse(store.getItem(storageKey) ?? "[]");
-    return Array.isArray(parsed) ? parsed.filter((d): d is Discard => d !== null && typeof d === "object"
-      && typeof d.text === "string" && typeof d.at === "string" && (d.origin === undefined || typeof d.origin === "string")) : [];
-  } catch { return []; }
+    const d: unknown = JSON.parse(store.getItem(storageKey) ?? "null");
+    if (d !== null && typeof d === "object" && "text" in d && "at" in d && typeof d.text === "string" && typeof d.at === "string") {
+      const origin = "origin" in d && typeof d.origin === "string" ? { origin: d.origin } : {};
+      return { text: d.text, at: d.at, ...origin };
+    }
+  } catch { /* A corrupt record counts as none. */ }
+  return null;
+}
+/** The discard records whose storage key starts with `study.draft.discarded.` + `prefix`. */
+function discardsUnder(store: DraftStore, prefix: string): Discard[] {
+  const keys: string[] = [];
+  try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(DISCARDS + prefix)) keys.push(k); } } catch { /* None to read. */ }
+  return keys.flatMap((k) => { const d = readDiscard(store, k); return d ? [d] : []; });
 }
 /**
  * Remembers that the user discarded this text under the key, so a save that settles later never brings it back.
@@ -87,17 +96,15 @@ function readDiscards(store: DraftStore, storageKey: string): Discard[] {
  */
 export function recordDiscard(store: DraftStore, key: string, draft: { body: string; origin?: string }, now: Date): void {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  try {
-    const expired: string[] = [];
-    for (let i = 0; i < store.length; i++) {
-      const other = store.key(i);
-      if (other?.startsWith(DISCARDS) && !readDiscards(store, other).some((d) => d.at > weekAgo)) expired.push(other);
-    }
-    for (const other of expired) store.removeItem(other);
-  } catch { /* Old records only cost space. */ }
-  const discards = [...readDiscards(store, discardsKey(key)).filter((d) => d.at > weekAgo),
-    { text: fingerprint(draft.body), at: now.toISOString(), origin: draft.origin }];
-  try { store.setItem(discardsKey(key), JSON.stringify(discards)); } catch { /* Discarding still works without storage. */ }
+  const all: string[] = [];
+  try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(DISCARDS)) all.push(k); } } catch { /* None to prune. */ }
+  for (const k of all) {
+    const d = readDiscard(store, k);
+    if (d === null || d.at <= weekAgo) { try { store.removeItem(k); } catch { /* Old records only cost space. */ } }
+  }
+  const record: Discard = { text: fingerprint(draft.body), at: now.toISOString(), ...(draft.origin ? { origin: draft.origin } : {}) };
+  try { store.setItem(`${DISCARDS}${key}.${record.at}.${Math.random().toString(36).slice(2, 10)}`, JSON.stringify(record)); }
+  catch { /* Discarding still works without storage. */ }
 }
 
 /**
@@ -166,11 +173,8 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     // draft is not its current text; across keys only this origin's current words count.
     dropped(key, holding) {
       const text = fingerprint(holding);
-      if (readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > latest)) return true;
-      const kind = discardsKey(key.slice(0, key.lastIndexOf(".") + 1));
-      const keys: string[] = [];
-      try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(kind)) keys.push(k); } } catch { /* None to read. */ }
-      return keys.some((k) => readDiscards(store, k).some((d) => d.origin === lineage && d.text === text && d.at > latest));
+      if (discardsUnder(store, `${key}.`).some((d) => d.text === text && d.at > latest)) return true;
+      return discardsUnder(store, key.slice(0, key.lastIndexOf(".") + 1)).some((d) => d.origin === lineage && d.text === text && d.at > latest);
     },
   };
 }

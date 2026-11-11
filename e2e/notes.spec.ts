@@ -1810,3 +1810,30 @@ for (const kind of ["note", "explanation"] as const) {
     expect(await storedBody(page, key)).toBeNull();
   });
 }
+
+test("a late 404 never brings back a deleted note’s text that the deleting tab never edited", async ({ page, request }) => {
+  const id = (await (await request.post("/api/notes", { data: { body: "Original", target: null } })).json()).note.id;
+  const fresh = "study.draft.note.new"; const key = `study.draft.note.${id}`;
+  const touches = await watchDraft(page, "study.draft.");
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route(`**/api/notes/${id}`, async (route) => {
+    if (route.request().method() === "PATCH") await held; await route.continue();
+  });
+  await page.goto(`/notes/${id}`);
+  const editor = page.getByLabel("Note", { exact: true }); await expect(editor).toHaveValue("Original");
+  await editor.fill("Changed"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.fill("Original"); expect(await storedBody(page, key)).toBeNull();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const other = await page.context().newPage();
+  await other.goto(`/notes/${id}`); await expect(other.getByLabel("Note", { exact: true })).toHaveValue("Original");
+  await other.getByRole("button", { name: "Delete", exact: true }).click();
+  await other.locator(".confirm").getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(other).toHaveURL(/\/notes$/);
+  const before = await touches();
+  const answered = page.waitForResponse((r) => r.request().method() === "PATCH");
+  release(); expect((await answered).status()).toBe(404);
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect(await storedBody(page, fresh)).toBeNull(); expect(await storedBody(page, key)).toBeNull();
+  await other.close();
+});

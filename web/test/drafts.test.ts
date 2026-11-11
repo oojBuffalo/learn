@@ -137,6 +137,19 @@ it("an adopted draft counts as the editor's own, so a set-aside restore is remov
   expect(readDraft(s, kept)).toBeNull(); expect(readDraft(s, "study.draft.note.9")?.origin).toBe("old-tab");
 });
 
+it("two tabs recording discards at once keep both, since each record has its own key", () => {
+  const s = mem();
+  // Each tab reads the shared store but its writes land only when both have finished, as two tabs' caches might.
+  const lagging = () => { const writes: [string, string][] = [];
+    return { store: { ...s, get length() { return s.length; }, setItem: (key: string, value: string) => { writes.push([key, value]); } } as DraftStore,
+      flush: () => { for (const [key, value] of writes) s.setItem(key, value); } }; };
+  const one = lagging(); const two = lagging();
+  recordDiscard(one.store, k, { body: "First tab's offer" }, at(1)); recordDiscard(two.store, k, { body: "Second tab's offer" }, at(1));
+  one.flush(); two.flush();
+  const session = draftSession(s, at(0));
+  expect(session.dropped(k, "First tab's offer")).toBe(true); expect(session.dropped(k, "Second tab's offer")).toBe(true);
+});
+
 it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {
   const s = mem(); const session = draftSession(s, at(0));
   recordDiscard(s, k, { body: "Kept a long time" }, at(1));
@@ -146,10 +159,11 @@ it("keeps every discard from the last week, however many follow under any key, a
   recordDiscard(s, k, { body: "A week later" }, new Date(at(3).getTime() + 8 * 24 * 60 * 60 * 1000));
   expect(session.dropped(k, "Kept a long time")).toBe(false); expect(session.dropped(k, "Text 99")).toBe(false);
   expect(session.dropped(k, "A week later")).toBe(true);
-  for (const value of ["{not json", '{"text":1}', '[{"text":1,"at":"y"}, null]']) {
-    s.setItem(`study.draft.discarded.${k}`, value); expect(session.dropped(k, "A week later")).toBe(false);
-    expect(() => recordDiscard(s, k, { body: "Text 50" }, at(4))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);
-  }
+  const corrupt = ["{not json", '{"text":1}', '[{"text":"x","at":"y"}]', "null"];
+  corrupt.forEach((value, i) => s.setItem(`study.draft.discarded.${k}.bad${i}`, value));
+  expect(session.dropped(k, "A week later")).toBe(true);
+  expect(() => recordDiscard(s, k, { body: "Text 50" }, at(4))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);
+  corrupt.forEach((_, i) => expect(s.getItem(`study.draft.discarded.${k}.bad${i}`)).toBeNull());
   expect(rowDrafts(s, "note")).toEqual([]);
 });
 

@@ -186,9 +186,12 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       try { await deleteNote(id); }
       catch (e) { if (!(e instanceof ApiError && e.code === "not_found")) throw e; }
       // Another editor of this note, here or in another tab, may have stored newer text before the delete settled.
-      // Text deleted with the note is recorded as discarded, so a late save never brings it back.
-      const deleted = readDraft(browserDraftStore(), slot);
-      if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(browserDraftStore(), slot, deleted, new Date()); }
+      // Text deleted with the note (its draft, its saved body and the text on screen) is recorded as discarded, so a
+      // late save from another editor never brings it back. Another editor's newer draft stays, and is not recorded.
+      const store = browserDraftStore(); const now = new Date();
+      const deleted = readDraft(store, slot);
+      if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(store, slot, deleted, now); }
+      for (const body of new Set([saved?.body, latestBody.current])) if (body) recordDiscard(store, slot, { body }, now);
       draft.session.dropAside();
       if (mounted.current) navigate("/notes");
     } catch (e) {
