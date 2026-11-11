@@ -68,9 +68,12 @@ const DISCARDS = "study.draft.discarded.";
 // Orders discards against editors' writes across tabs: a stamp is never earlier than the last one any tab took and
 // never equal to it, even when two actions share a millisecond or the system clock is set back.
 const CLOCK = "study.draft.clock";
+const MAX_TIME = 8.64e15;
 function stamp(store: DraftStore, now: Date): string {
   let last = 0;
-  try { last = Number(store.getItem(CLOCK)) || 0; } catch { /* No clock yet. */ }
+  try { last = Number(store.getItem(CLOCK)); } catch { /* No clock yet. */ }
+  // A corrupt clock (not a number, or beyond what a Date holds) counts as none.
+  if (!Number.isFinite(last) || last < 0 || last >= MAX_TIME) last = 0;
   const next = Math.max(now.getTime(), last + 1);
   try { store.setItem(CLOCK, String(next)); } catch { /* Ordering then falls back to this tab's clock. */ }
   return new Date(next).toISOString();
@@ -160,8 +163,10 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     return stored === null || (mine !== undefined && mine.body === stored.body && mine.at === stored.at);
   };
   const dropAside = () => { const key = aside; aside = null; if (key !== null && mineStill(key) && clearDraft(store, key)) last.set(key, { body: null, at: latest }); };
-  const acted = (key: string, body: string | null, now: Date) => {
-    last.set(key, { body, at: now.toISOString() }); latest = stamp(store, now);
+  // The stamp is taken before the write or clear is visible to other tabs, so a discard of that text in another tab
+  // has to read the clock afterwards and always stamps later.
+  const acted = (key: string, body: string | null, now: Date, at: string) => {
+    last.set(key, { body, at: now.toISOString() }); latest = at;
     // Storing or clearing the set-aside key itself settles it; storing or clearing elsewhere supersedes its text.
     if (aside === key) aside = null; else if (aside !== null) dropAside();
     changed();
@@ -171,10 +176,11 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     dropAside,
     adopt(draft, key) { if (draft.origin) lineage = draft.origin; if (!last.has(key)) last.set(key, { body: draft.body, at: draft.at }); },
     write(key, body, now) {
+      const at = stamp(store, now);
       if (!writeDraft(store, key, body, now, lineage)) return false;
-      acted(key, body, now); return true;
+      acted(key, body, now, at); return true;
     },
-    clear(key, now = new Date()) { if (clearDraft(store, key)) acted(key, null, now); },
+    clear(key, now = new Date()) { const at = stamp(store, now); if (clearDraft(store, key)) acted(key, null, now, at); },
     owns(key, holding) {
       const stored = readDraft(store, key);
       const mine = last.get(key);

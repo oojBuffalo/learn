@@ -161,6 +161,27 @@ it("orders a discard after the editor's last write even in the same millisecond 
   late.write(k, "Rolled back", at(1)); expect(late.dropped(k, "Rolled back")).toBe(false);
 });
 
+it("a discard made the moment another tab sees a write still counts against that write", () => {
+  const s = mem(); let discardNext = false;
+  // Another tab discards the text as soon as this editor's write lands, before this editor's next step.
+  const store: DraftStore = { ...s, get length() { return s.length; }, setItem: (key, value) => {
+    s.setItem(key, value);
+    if (discardNext && key === k) { discardNext = false; recordDiscard(s, k, { body: "Seen at once", origin: "origin-a" }, at(1)); s.removeItem(k); }
+  } };
+  const late = draftSession(store, at(0), "origin-a");
+  discardNext = true; late.write(k, "Seen at once", at(1));
+  expect(late.dropped(k, "Seen at once")).toBe(true);
+});
+
+it("a corrupt shared clock never stops an editor from opening or writing", () => {
+  for (const value of ["Infinity", "1e300", "-5", "not a number", ""]) {
+    const s = mem(); s.setItem("study.draft.clock", value);
+    expect(() => { const session = draftSession(s, at(0)); session.write(k, "Still works", at(1)); session.dropped(k, "Still works"); }).not.toThrow();
+    expect(readDraft(s, k)?.body).toBe("Still works");
+    expect(() => recordDiscard(s, k, { body: "x" }, at(2))).not.toThrow();
+  }
+});
+
 it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {
   const s = mem(); const session = draftSession(s, at(0));
   recordDiscard(s, k, { body: "Kept a long time" }, at(1));

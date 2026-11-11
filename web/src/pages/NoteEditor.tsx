@@ -100,13 +100,13 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   function discard() {
     const offered = draft.offer;
     const stored = readDraft(browserDraftStore(), slot);
-    const owned = ownsSlot();
-    // The offer's origin is recorded only when the offer itself is removed; newer text over it is not discarded.
-    const record = () => !offered || recordDiscard(browserDraftStore(), slot,
-      { body: offered.body, origin: owned && stored?.at === offered.at && stored.body === offered.body ? stored.origin : undefined }, new Date());
+    // Only the offer itself is removed. Newer text over it, from this editor or another tab, stays where it is.
+    const isOffer = offered !== null && stored !== null && stored.at === offered.at && stored.body === offered.body;
+    const record = () => offered === null || recordDiscard(browserDraftStore(), slot,
+      { body: offered.body, origin: isOffer ? stored.origin : undefined }, new Date());
     // Recorded before the clear, so a save settling in another tab in between sees it; again after it if storage was full.
     const recorded = record();
-    if (!owned) { draft.dismiss(); return; }
+    if (!isOffer) { draft.dismiss(); if (stored === null && latestBody.current !== saved?.body) draft.write(latestBody.current); return; }
     draft.clear(); if (!recorded) record();
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }

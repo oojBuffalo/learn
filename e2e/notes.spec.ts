@@ -1898,3 +1898,18 @@ for (const kind of ["note", "explanation"] as const) {
     await other.close();
   });
 }
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`Discard on an old ${kind} offer keeps newer typing in place even when storage is full`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    const { full } = await fillableDrafts(page);
+    await page.goto("/library");
+    await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Older offer", at: new Date().toISOString() })), fresh);
+    await page.goto(w.fresh);
+    await expect(page.getByText(/Restore unsaved text from/)).toBeVisible();
+    await page.getByLabel(w.label, { exact: true }).fill("Newer typing"); expect(await storedBody(page, fresh)).toBe("Newer typing");
+    await full(true); await page.getByRole("button", { name: "Discard", exact: true }).click();
+    await expect(page.getByText(/Restore unsaved text from/)).toHaveCount(0);
+    expect(await storedBody(page, fresh)).toBe("Newer typing");
+  });
+}
