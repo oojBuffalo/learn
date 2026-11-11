@@ -358,6 +358,23 @@ for (const where of ["Home", "the Explain-back list"] as const) {
   });
 }
 
+test("saving a dismissed explanation promises Home only when its prompt is back", async ({ page, request }) => {
+  const created = await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, roughly.", confidence: 2 } });
+  expect(created.status()).toBe(201);
+  const id = (await created.json()).explanation.id as number;
+  expect((await request.post(`/api/explanations/${id}/dismiss`)).status()).toBe(200);
+  await page.goto(`/notes/explain/${id}`);
+  const editor = page.getByLabel("Your explanation", { exact: true });
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  await editor.fill("Recall, reworded.");
+  await save.click();
+  await expect(page.getByRole("status")).toHaveText("Saved. Rated 2 · Shaky.");
+  await page.getByLabel("1 · Lost", { exact: true }).check();
+  await save.click();
+  await expect(page.getByRole("status")).toHaveText("Saved. Rated 1 · Lost — it’ll come back on Home until you explain it with more confidence.");
+  expect((await request.post("/api/explanations", { data: { packageId: PKG, lessonId: LESSON, body: "Recall, solidly.", confidence: 4 } })).status()).toBe(201);
+});
+
 test("Leftover progress clears progress, spares writing, and a re-import restores it", async ({ page, request }) => {
   let zip: Buffer | null = null;
   try {
