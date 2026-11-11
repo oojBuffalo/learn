@@ -121,6 +121,8 @@ it("slugs the first heading, else the first line, as bounded lowercase ASCII", (
   expect(noteSlug("Intro text\n```sh\n# install\n```\n")).toBe("intro-text");
   expect(noteSlug("~~~\n# inside a fence\n~~~\n## Outside: it")).toBe("outside-it");
   expect(noteSlug("````md\n```\n# still fenced\n~~~\n````\n# After")).toBe("after");
+  expect(noteSlug("Intro\n```md\n``` trailing text\n# Example\n```\n# Actual title")).toBe("actual-title");
+  expect(noteSlug("``` not `a fence`\n# Real")).toBe("real");
   for (const body of ["😀 🧠\n# —", "日本語", "#\n\n"]) expect(noteSlug(body)).toBe("note");
   const long = noteSlug(`# ${"word ".repeat(40)}`);
   expect(long.length).toBeLessThanOrEqual(60);

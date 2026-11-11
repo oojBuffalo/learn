@@ -33,13 +33,13 @@ function yamlString(value: string): string {
  */
 export function noteSlug(body: string): string {
   const lines = body.split(/\r?\n/);
-  let fence: string | null = null; // the open code fence's marker; only a same-character, at-least-as-long one closes it
+  // The open code fence's marker. As in CommonMark, a backtick opener's info string has no backticks,
+  // and only a bare run of the same character, at least as long, closes it.
+  let fence: string | null = null;
   const heading = lines.find((line) => {
-    const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
-    if (marker && (fence === null || (marker[0] === fence[0] && marker.length >= fence.length))) {
-      fence = fence === null ? marker : null;
-      return false;
-    }
+    const [, marker = "", rest = ""] = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line) ?? [];
+    if (fence === null && marker && !(marker[0] === "`" && rest.includes("`"))) { fence = marker; return false; }
+    if (fence !== null && marker[0] === fence[0] && marker.length >= fence.length && /^[ \t]*$/.test(rest)) { fence = null; return false; }
     return fence === null && /^ {0,3}#{1,6}[ \t]+\S/.test(line);
   });
   const source = heading ?? lines.find((line) => line.trim() !== "") ?? "";
