@@ -69,6 +69,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
         const restore = initial.current.restore;
         const kept = restore === null ? null : readDraft(browserDraftStore(), draftKey("note", restore));
         if (restore !== null && !kept) setRecoveryId(null);
+        if (kept) draft.session.adopt(kept);
         latestBody.current = note?.body ?? kept?.body ?? "";
         setBody(latestBody.current); setTarget(value); setSaved({ body: note?.body ?? "", target: value });
         setOrphaned(note?.orphaned ?? false); setFallback(fallbackPackages(originalTarget));
@@ -94,10 +95,13 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
     const offered = draft.offer;
-    const record = () => { if (offered) recordDiscard(browserDraftStore(), slot, offered.body, new Date()); };
-    if (!ownsSlot()) { record(); draft.dismiss(); return; }
+    const stored = readDraft(browserDraftStore(), slot);
+    // The offer's origin is recorded only when the offer itself is removed; newer text over it is not discarded.
+    const record = (removed: boolean) => { if (offered) recordDiscard(browserDraftStore(), slot,
+      { body: offered.body, origin: removed && stored?.at === offered.at && stored.body === offered.body ? stored.origin : undefined }, new Date()); };
+    if (!ownsSlot()) { record(false); draft.dismiss(); return; }
     // Recorded once the clear has freed its space, and before this editor stores its own text again.
-    draft.clear(); record();
+    draft.clear(); record(true);
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
 
@@ -142,14 +146,16 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       // Text that another editor discarded, or removed with a delete, while this save was pending stays gone.
       const key = draftKey("note", note.id);
       const dropped = drafts.dropped(slot, latestBody.current) || drafts.dropped(key, latestBody.current);
-      // A create's old draft stays until the new key holds the text typed since, so a failed write loses nothing.
-      let moved = true;
+      // A create's old draft goes only once its text is saved or stored under the new note, so nothing is lost when
+      // another editor holds that key, the write fails or the text was discarded elsewhere.
+      const settled = latestBody.current === sent.body;
+      let moved = false;
       if (ownsDraft(key)) {
-        if (latestBody.current === sent.body) drafts.clear(key);
+        if (settled) drafts.clear(key);
         else if (!dropped) moved = drafts.write(key, latestBody.current, new Date());
       }
-      if (creating && moved && recoveryId !== null && ownsDraft(draftKey("note", recoveryId))) drafts.clear(draftKey("note", recoveryId));
-      if (creating && moved && ownsDraft(draftKey("note", "new"))) drafts.clear(draftKey("note", "new"));
+      if (creating && (settled || moved) && recoveryId !== null && ownsDraft(draftKey("note", recoveryId))) drafts.clear(draftKey("note", recoveryId));
+      if (creating && (settled || moved) && ownsDraft(draftKey("note", "new"))) drafts.clear(draftKey("note", "new"));
       if (!mounted.current) return;
       draft.dismiss();
       setId(note.id); setSaved(sent); setOrphaned(note.orphaned);
@@ -180,7 +186,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
       // Another editor of this note, here or in another tab, may have stored newer text before the delete settled.
       // Text deleted with the note is recorded as discarded, so a late save never brings it back.
       const deleted = readDraft(browserDraftStore(), slot);
-      if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(browserDraftStore(), slot, deleted.body, new Date()); }
+      if (ownsSlot()) { draft.session.clear(slot); if (deleted) recordDiscard(browserDraftStore(), slot, deleted, new Date()); }
       if (mounted.current) navigate("/notes");
     } catch (e) {
       if (mounted.current) { setConfirming(false); setError(`This note wasn’t deleted (${message(e)}).`); }
@@ -198,7 +204,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     <TargetSelect label="Attach to" packages={libraryFailed ? fallback : packages} currentOnly={libraryFailed} value={target}
       onChange={(value) => { setTarget(value); draft.write(latestBody.current); }} />
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
-      <button className="btn" onClick={() => { edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
+      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
       <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
     <MarkdownEditor label="Note" value={body} packageId={target?.packageId} onChange={edit} onSave={() => void save()} />
     <div className="actions"><button className="btn btn-primary" disabled={!canSave} onClick={() => void save()}>Save</button>

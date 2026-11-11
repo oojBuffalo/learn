@@ -8,7 +8,8 @@ export interface DraftStore {
   removeItem(key: string): void;
 }
 export type DraftKind = "note" | "explanation";
-export interface Draft { body: string; at: string }
+/** `origin` names the editor session the text started in; it stays with the text when it is restored or moved. */
+export interface Draft { body: string; at: string; origin?: string }
 const NO_STORE: DraftStore = { length: 0, key: () => null, getItem: () => null, setItem: () => {}, removeItem: () => {} };
 export function browserDraftStore(): DraftStore {
   try { const store = window.localStorage; store.getItem("study.draft.probe"); return store; }
@@ -18,13 +19,16 @@ export const draftKey = (kind: DraftKind, id: number | "new"): string => `study.
 export function readDraft(store: DraftStore, key: string): Draft | null {
   try {
     const parsed: unknown = JSON.parse(store.getItem(key) ?? "null");
-    if (parsed !== null && typeof parsed === "object" && "body" in parsed && "at" in parsed && typeof parsed.body === "string" && typeof parsed.at === "string") return { body: parsed.body, at: parsed.at };
+    if (parsed !== null && typeof parsed === "object" && "body" in parsed && "at" in parsed && typeof parsed.body === "string" && typeof parsed.at === "string") {
+      const origin = "origin" in parsed && typeof parsed.origin === "string" ? { origin: parsed.origin } : {};
+      return { body: parsed.body, at: parsed.at, ...origin };
+    }
   } catch { /* An unavailable store or corrupt draft must not break editing. */ }
   return null;
 }
 /** Returns whether the draft was stored. */
-export function writeDraft(store: DraftStore, key: string, body: string, now: Date): boolean {
-  try { store.setItem(key, JSON.stringify({ body, at: now.toISOString() })); return true; } catch { /* Editing still works when storage is unavailable. */ }
+export function writeDraft(store: DraftStore, key: string, body: string, now: Date, origin?: string): boolean {
+  try { store.setItem(key, JSON.stringify({ body, at: now.toISOString(), origin })); return true; } catch { /* Editing still works when storage is unavailable. */ }
   return false;
 }
 /** Returns whether the draft was removed. */
@@ -61,7 +65,7 @@ const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(
 // Each draft key keeps its own discards, so discards elsewhere never push one out.
 const DISCARDS = "study.draft.discarded.";
 const discardsKey = (key: string) => DISCARDS + key;
-type Discard = { text: string; at: string };
+type Discard = { text: string; at: string; origin?: string };
 // Length plus FNV-1a over the UTF-16 code units: enough to match a discarded body without storing it again.
 function fingerprint(body: string): string {
   let hash = 0x811c9dc5;
@@ -72,15 +76,16 @@ function readDiscards(store: DraftStore, storageKey: string): Discard[] {
   try {
     const parsed: unknown = JSON.parse(store.getItem(storageKey) ?? "[]");
     return Array.isArray(parsed) ? parsed.filter((d): d is Discard => d !== null && typeof d === "object"
-      && typeof d.text === "string" && typeof d.at === "string") : [];
+      && typeof d.text === "string" && typeof d.at === "string" && (d.origin === undefined || typeof d.origin === "string")) : [];
   } catch { return []; }
 }
 /**
  * Remembers that the user discarded this text under the key, so a save that settles later never brings it back.
+ * Pass the draft's `origin` only when the draft was actually removed; a draft only dismissed may have newer text.
  * A key keeps its 20 newest discards from the last week; no save stays pending that long, so older records, under
  * any key, are removed here.
  */
-export function recordDiscard(store: DraftStore, key: string, body: string, now: Date): void {
+export function recordDiscard(store: DraftStore, key: string, draft: { body: string; origin?: string }, now: Date): void {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   try {
     const expired: string[] = [];
@@ -90,7 +95,8 @@ export function recordDiscard(store: DraftStore, key: string, body: string, now:
     }
     for (const other of expired) store.removeItem(other);
   } catch { /* Old records only cost space. */ }
-  const discards = [...readDiscards(store, discardsKey(key)).filter((d) => d.at > weekAgo), { text: fingerprint(body), at: now.toISOString() }];
+  const discards = [...readDiscards(store, discardsKey(key)).filter((d) => d.at > weekAgo),
+    { text: fingerprint(draft.body), at: now.toISOString(), origin: draft.origin }];
   try { store.setItem(discardsKey(key), JSON.stringify(discards.slice(-20))); } catch { /* Discarding still works without storage. */ }
 }
 
@@ -102,19 +108,24 @@ export interface DraftSession {
   /** Returns whether the draft was stored. */
   write(key: string, body: string, now: Date): boolean;
   clear(key: string, now?: Date): void;
+  /** The editor now holds this draft's text, restored from storage, so its writes carry the draft's origin. */
+  adopt(draft: Draft): void;
   /** The key is empty, or holds `holding` or the text this editor last stored there. */
   owns(key: string, holding: string): boolean;
   /**
-   * The user discarded `holding`, or deleted it with its note, since this editor last wrote or cleared the key: under
-   * that key or under any other draft key of its kind, since another editor may have moved the text there first.
+   * Since this editor last wrote or cleared the key, the user discarded `holding` there (or deleted it with its note),
+   * or removed a draft of this editor's origin under any key of its kind, where another editor may have moved it.
    */
   dropped(key: string, holding: string): boolean;
 }
-export function draftSession(store: DraftStore, started = new Date()): DraftSession {
+const newOrigin = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+export function draftSession(store: DraftStore, started = new Date(), origin = newOrigin()): DraftSession {
   const last = new Map<string, { body: string | null; at: string }>();
+  let lineage = origin;
   return {
+    adopt(draft) { if (draft.origin) lineage = draft.origin; },
     write(key, body, now) {
-      if (!writeDraft(store, key, body, now)) return false;
+      if (!writeDraft(store, key, body, now, lineage)) return false;
       last.set(key, { body, at: now.toISOString() }); changed(); return true;
     },
     clear(key, now = new Date()) { if (clearDraft(store, key)) { last.set(key, { body: null, at: now.toISOString() }); changed(); } },
@@ -125,12 +136,14 @@ export function draftSession(store: DraftStore, started = new Date()): DraftSess
     },
     // An emptied key alone proves nothing: another editor that restored and saved this text clears it too, and this
     // editor's late request may since have overwritten that save. Only a recorded Discard or delete counts.
+    // The same words discarded under another row are a different draft; only the origin follows a move.
     dropped(key, holding) {
       const since = last.get(key)?.at ?? started.toISOString(); const text = fingerprint(holding);
+      if (readDiscards(store, discardsKey(key)).some((d) => d.text === text && d.at > since)) return true;
       const kind = discardsKey(key.slice(0, key.lastIndexOf(".") + 1));
       const keys: string[] = [];
       try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(kind)) keys.push(k); } } catch { /* None to read. */ }
-      return keys.some((k) => readDiscards(store, k).some((d) => d.text === text && d.at > since));
+      return keys.some((k) => readDiscards(store, k).some((d) => d.origin === lineage && d.at > since));
     },
   };
 }

@@ -1043,14 +1043,16 @@ const writing = (kind: "note" | "explanation") => {
   };
 };
 const storedBody = (page: Page, key: string) => page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? "null")?.body ?? null, key);
-// Counts every storage call on one draft key, so a test can wait for a late save that changes nothing to settle.
+// Counts every storage call on one draft key (or, with a trailing ".", every key it starts), so a test can wait for a
+// late save that changes nothing to settle.
 async function watchDraft(page: Page, key: string): Promise<() => Promise<number>> {
   await page.addInitScript((watched) => {
     const w = window as unknown as { touches: number }; w.touches = 0;
     const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+    const hit = (k: unknown) => typeof k === "string" && (watched.endsWith(".") ? k.startsWith(watched) : k === watched);
     for (const name of ["getItem", "setItem", "removeItem"]) {
       const original = proto[name]!;
-      proto[name] = function (this: Storage, ...args: unknown[]) { if (args[0] === watched) w.touches += 1; return original.apply(this, args); };
+      proto[name] = function (this: Storage, ...args: unknown[]) { if (hit(args[0])) w.touches += 1; return original.apply(this, args); };
     }
   }, key);
   return () => page.evaluate(() => (window as unknown as { touches: number }).touches);
@@ -1164,7 +1166,7 @@ for (const kind of ["note", "explanation"] as const) {
   test(`a late first ${kind} save never brings back text another tab discarded`, async ({ page }) => {
     const w = writing(kind);
     const fresh = `study.draft.${kind}.new`;
-    const touches = await watchDraft(page, fresh);
+    const touches = await watchDraft(page, "study.draft.");
     let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
     await page.route(`**/api/${w.api}`, async (route) => {
       if (route.request().method() === "POST") await held; await route.continue();
@@ -1538,6 +1540,71 @@ for (const kind of ["note", "explanation"] as const) {
     release(); expect((await answered).status()).toBe(200);
     await expect.poll(touches).toBeGreaterThan(before);
     expect(await storedBody(page, key)).toBeNull(); expect(await storedBody(page, fresh)).toBeNull();
+    await other.close();
+  });
+}
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a late first ${kind} save keeps its text when the same words are discarded from an unrelated kept draft`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    const touches = await watchDraft(page, fresh);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() === "POST") await held; await route.continue();
+    });
+    const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("Shared words");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" and more");
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+    // A different, deleted row's draft holds the same words; discarding it says nothing about this editor's text.
+    const other = await page.context().newPage(); await other.goto("/library");
+    await other.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Shared words and more", at: new Date().toISOString(), origin: "unrelated" })), `study.draft.${kind}.999999`);
+    await other.goto(kind === "note" ? "/notes" : "/notes?tab=explanations");
+    const kept = other.getByRole("region", { name: "Kept drafts" });
+    await expect(kept.locator(".kept-row").filter({ hasText: "Shared words and more" })).toBeVisible();
+    await kept.getByRole("button", { name: "Discard", exact: true }).click(); await expect(kept).toHaveCount(0);
+    const before = await touches();
+    release(); const id = (await (await created).json())[kind].id;
+    await expect.poll(touches).toBeGreaterThan(before);
+    expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Shared words and more");
+    expect(await storedBody(page, fresh)).toBeNull();
+    await other.close();
+  });
+
+  test(`a late first ${kind} save keeps its old draft when another tab already edits the new ${kind}`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    const touches = await watchDraft(page, "study.draft.");
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    let noteCreated!: (id: number) => void; const createdId = new Promise<number>((resolve) => { noteCreated = resolve; });
+    // The server creates the row at once; only its answer to this editor is held.
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      const response = await route.fetch(); noteCreated((await response.json())[kind].id); await held; await route.fulfill({ response });
+    });
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("First writing");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    const id = await createdId;
+    await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" and more");
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+    const other = await page.context().newPage();
+    const otherEditor = other.getByLabel(w.label, { exact: true });
+    await other.goto(`${w.base}/${id}`); await expect(otherEditor).toHaveValue("First writing");
+    await otherEditor.fill("Other tab writing"); expect(await storedBody(other, `study.draft.${kind}.${id}`)).toBe("Other tab writing");
+    const before = await touches();
+    const answered = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    release(); expect((await answered).status()).toBe(201);
+    await expect.poll(touches).toBeGreaterThan(before);
+    expect(await storedBody(page, fresh)).toBe("First writing and more");
+    expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Other tab writing");
     await other.close();
   });
 }

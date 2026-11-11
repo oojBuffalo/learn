@@ -75,6 +75,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         const restore = initial.current.restore;
         const kept = restore === null ? null : readDraft(browserDraftStore(), draftKey("explanation", restore));
         if (restore !== null && !kept) setRecoveryId(null);
+        if (kept) draft.session.adopt(kept);
         latestBody.current = explanation?.body ?? kept?.body ?? ""; setBody(latestBody.current);
         setTarget(selected); setConfidence(explanation?.confidence ?? null); setInfo(explanation);
         setSaved({ body: explanation?.body ?? "", confidence: explanation?.confidence ?? null, target: selected });
@@ -101,10 +102,13 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
   function discard() {
     const offered = draft.offer;
-    const record = () => { if (offered) recordDiscard(browserDraftStore(), slot, offered.body, new Date()); };
-    if (!ownsSlot()) { record(); draft.dismiss(); return; }
+    const stored = readDraft(browserDraftStore(), slot);
+    // The offer's origin is recorded only when the offer itself is removed; newer text over it is not discarded.
+    const record = (removed: boolean) => { if (offered) recordDiscard(browserDraftStore(), slot,
+      { body: offered.body, origin: removed && stored?.at === offered.at && stored.body === offered.body ? stored.origin : undefined }, new Date()); };
+    if (!ownsSlot()) { record(false); draft.dismiss(); return; }
     // Recorded once the clear has freed its space, and before this editor stores its own text again.
-    draft.clear(); record();
+    draft.clear(); record(true);
     if (latestBody.current !== saved?.body) draft.write(latestBody.current);
   }
 
@@ -158,13 +162,15 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       // Text that another editor discarded while this save was pending stays gone.
       const key = draftKey("explanation", explanation.id);
       const dropped = drafts.dropped(slot, latestBody.current) || drafts.dropped(key, latestBody.current);
-      // A create's old draft stays until the new key holds the text typed since, so a failed write loses nothing.
-      let moved = true;
+      // A create's old draft goes only once its text is saved or stored under the new row, so nothing is lost when
+      // another editor holds that key, the write fails or the text was discarded elsewhere.
+      const settled = latestBody.current === sent.body;
+      let moved = false;
       if (ownsDraft(key)) {
-        if (latestBody.current === sent.body) drafts.clear(key); else if (!dropped) moved = drafts.write(key, latestBody.current, new Date());
+        if (settled) drafts.clear(key); else if (!dropped) moved = drafts.write(key, latestBody.current, new Date());
       }
-      if (creating && moved && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
-      if (creating && moved && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
+      if (creating && (settled || moved) && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
+      if (creating && (settled || moved) && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
       if (!mounted.current) return;
       draft.dismiss();
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);
@@ -208,7 +214,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         <Link to={"/notes/explain/new" + filterSearch({ kind: "package", packageId: target!.packageId, lessonId: target!.lessonId! })}>Explain it again</Link></div>}
     <p className="note">Explain it in your own words, as if to a friend — no peeking.</p>
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
-      <button className="btn" onClick={() => { edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
+      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
       <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
     <MarkdownEditor label="Your explanation" value={body} onChange={edit} packageId={target?.packageId} onSave={() => void save()} />
     <ConfidencePicker value={confidence} onChange={setConfidence} />
