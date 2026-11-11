@@ -43,6 +43,20 @@ function ensureContentOrderColumns(db: Db): void {
   migrate();
 }
 
+/**
+ * Adds the revisit dismissal column to an explanations table created before it existed.
+ * Args:
+ *   db: The open database, after schema.sql has run.
+ * Returns:
+ *   Nothing; existing explanations stay undismissed.
+ * Raises:
+ *   Error: The schema change fails.
+ */
+function ensureExplanationDismissal(db: Db): void {
+  const columns = db.pragma("table_info(explanations)") as { name: string }[];
+  if (!columns.some((column) => column.name === "dismissed_at")) db.exec("ALTER TABLE explanations ADD COLUMN dismissed_at TEXT");
+}
+
 export function openDb(dataDir = process.env.STUDY_DATA_DIR ?? resolveDefaultDataDir()): Db {
   mkdirSync(dataDir, { recursive: true });
   const db = new Database(join(dataDir, "study.db"));
@@ -51,5 +65,6 @@ export function openDb(dataDir = process.env.STUDY_DATA_DIR ?? resolveDefaultDat
   const schema = readFileSync(join(HERE, "schema.sql"), "utf8");
   db.exec(schema);
   ensureContentOrderColumns(db);
+  ensureExplanationDismissal(db);
   return db;
 }

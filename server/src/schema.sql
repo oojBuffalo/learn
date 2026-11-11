@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS explanations (
   body TEXT NOT NULL,
   confidence INTEGER NOT NULL CHECK (confidence IN (1, 2, 3, 4, 5)),
   created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL
+  updated_at TEXT NOT NULL,
+  dismissed_at TEXT                 -- its revisit prompt was dismissed; lowering the rating clears it (db.ts adds it to older databases)
 );
 CREATE INDEX IF NOT EXISTS explanations_lesson ON explanations(package_id, lesson_id, id);

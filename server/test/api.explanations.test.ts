@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Explanation } from "@study/shared";
 import { createApp } from "../src/app.js";
 import type { Db } from "../src/db.js";
-import { GOOD_FILES, freshDb, makeZip } from "./helpers.js";
+import { GOOD_FILES, NO_ORPHANS, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
@@ -121,4 +121,64 @@ it("reads by id, rejects other revisit values, and has no DELETE", async () => {
   }
   const a = await explain("intro", 2); const res = await send("DELETE", `/api/explanations/${a}`);
   expect(res.status).toBe(404); expect((await res.json()).error.code).toBe("not_found"); expect(count()).toBe(1);
+});
+
+const dismiss = (id: number | string) => send("POST", `/api/explanations/${id}/dismiss`);
+const dismissedRows = () => (db.prepare("SELECT COUNT(*) n FROM explanations WHERE dismissed_at IS NOT NULL").get() as { n: number }).n;
+it("dismissing a prompt hides it everywhere, idempotently, without editing the explanation", async () => {
+  const a = await explain("intro", 2); const b = await explain("more", 1); at("2026-10-01T10:05:00.000Z");
+  const first = await dismiss(a); expect(first.status).toBe(200);
+  const body = await first.json();
+  expect(body.explanation).toMatchObject({ id: a, confidence: 2, revisit: false, orphaned: false, updatedAt: T0 });
+  expect(await prompts()).toEqual([b]); expect((await list()).find((e) => e.id === a)?.revisit).toBe(false);
+  expect((await (await app.request(`/api/explanations/${a}`)).json()).explanation.revisit).toBe(false);
+  at("2026-10-01T10:10:00.000Z"); const again = await dismiss(a); expect(again.status).toBe(200);
+  expect(await again.json()).toEqual(body);
+  expect(db.prepare("SELECT dismissed_at FROM explanations WHERE id = ?").get(a)).toEqual({ dismissed_at: "2026-10-01T10:05:00.000Z" });
+});
+it("dismiss refuses unknown ids and explanations that aren't a revisit prompt, writing nothing", async () => {
+  for (const id of ["999", "9999999999999999999999999999999999999999"]) {
+    const res = await dismiss(id); expect(res.status).toBe(404);
+    expect((await res.json()).error).toEqual({ code: "not_found", message: "unknown explanation" });
+  }
+  for (const id of ["abc", "0", "01"]) {
+    const res = await dismiss(id); expect(res.status).toBe(404);
+    expect((await res.json()).error).toEqual({ code: "not_found", message: "no such route or resource" });
+  }
+  const refused = async (id: number) => {
+    const res = await dismiss(id); expect(res.status).toBe(409);
+    expect((await res.json()).error).toEqual({ code: "not_revisit", message: "explanation is not a revisit prompt" });
+  };
+  const older = await explain("intro", 1); const latest = await explain("intro", 2); const solid = await explain("more", 3);
+  await refused(older); await refused(solid);
+  await app.request("/api/packages/demo", { method: "DELETE" }); await refused(latest);
+  expect(dismissedRows()).toBe(0);
+});
+it("a new low explanation brings a dismissed prompt back; a new 3+ one still clears it", async () => {
+  const a = await explain("intro", 2); expect((await dismiss(a)).status).toBe(200);
+  const b = await explain("intro", 2); expect(await prompts()).toEqual([b]);
+  expect((await dismiss(b)).status).toBe(200); await explain("intro", 4); expect(await prompts()).toEqual([]);
+  const c = await explain("intro", 1); expect(await prompts()).toEqual([c]);
+});
+it("only lowering a dismissed explanation's rating brings its prompt back", async () => {
+  const a = await explain("intro", 1); expect((await dismiss(a)).status).toBe(200);
+  for (const change of [{ body: "Reworded" }, { confidence: 1 }, { confidence: 2 }]) {
+    expect((await patch(a, change)).status).toBe(200); expect(await prompts()).toEqual([]);
+  }
+  expect((await patch(a, { confidence: 1 })).status).toBe(200); expect(await prompts()).toEqual([a]);
+  expect((await dismiss(a)).status).toBe(200); expect((await patch(a, { confidence: 4 })).status).toBe(200);
+  expect(await prompts()).toEqual([]); expect((await dismiss(a)).status).toBe(409);
+  expect((await patch(a, { confidence: 2 })).status).toBe(200); expect(await prompts()).toEqual([a]);
+});
+it("a dismissal survives removing and re-importing the lesson", async () => {
+  const a = await explain("intro", 2); expect((await dismiss(a)).status).toBe(200);
+  await app.request("/api/packages/demo", { method: "DELETE" }); await importGood();
+  expect(await prompts()).toEqual([]); expect((await list()).find((e) => e.id === a)).toMatchObject({ orphaned: false, revisit: false });
+});
+it("a purge deletes a dismissed explanation together with its dismissal", async () => {
+  const a = await explain("intro", 2); expect((await dismiss(a)).status).toBe(200);
+  await app.request("/api/packages/demo", { method: "DELETE" });
+  const purged = await send("POST", "/api/maintenance/orphans/purge", { packageId: "demo", includeWriting: true, expected: { ...NO_ORPHANS, explanations: 1 } });
+  expect(purged.status).toBe(200); expect(count()).toBe(0); expect(dismissedRows()).toBe(0);
+  await importGood(); const b = await explain("intro", 2); expect(await prompts()).toEqual([b]);
 });
