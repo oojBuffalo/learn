@@ -51,6 +51,7 @@ export function NotesListView({ notes, packages, filter, query, onFilterChange, 
   // A new search or filter starts again from the first page.
   const pageKey = filterSearch(filter, { q: text });
   const [page, setPage] = useState({ key: pageKey, size: NOTES_PAGE });
+  if (page.key !== pageKey) setPage({ key: pageKey, size: NOTES_PAGE });
   const size = page.key === pageKey ? page.size : NOTES_PAGE;
   const visible = shown.slice(0, size);
   const list = useRef<HTMLUListElement>(null);

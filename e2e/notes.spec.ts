@@ -811,7 +811,10 @@ test("the notes list searches, shows 20 at a time and starts over when the searc
     await show.selectOption("standalone");
     await expect(page).toHaveURL(/\/notes\?q=RESUME&standalone=1$/); await expect(search).toHaveValue("RESUME");
     await expect(count).toHaveText("Showing 20 of 42 notes");
+    await show.selectOption("all"); await expect(count).toHaveText("Showing 20 of 45 notes"); await show.selectOption("standalone");
     await more.click(); await expect(count).toHaveText("Showing 40 of 42 notes");
+    await search.fill("RESUME TIP"); await expect(count).toHaveText("Showing 20 of 42 notes");
+    await search.fill("RESUME"); await expect(count).toHaveText("Showing 20 of 42 notes");
     await search.fill(""); await search.pressSequentially("résumé tip");
     await expect(search).toHaveValue("résumé tip"); await expect(count).toHaveText("Showing 20 of 42 notes");
     await show.selectOption(`pkg:${PKG}`);
