@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import type { Db } from "../src/db.js";
 import type { Item } from "@study/shared";
+import { REGEX_REQUEST_BUDGET_MS, REGEX_TIME_BUDGET_MS } from "../src/regexTest.js";
 import { PLAY_FILES, freshDb, makeZip } from "./helpers.js";
 
 let db: Db;
@@ -126,8 +127,11 @@ describe("a stored regex that backtracks catastrophically", () => {
     return res.json();
   };
 
-  it("grades an exercise wrong within the time budget, and a matching answer right", async () => {
-    expect(await timed({ packageId: "demo", itemId: "sa1", answer: slow })).toMatchObject({ correct: false, score: 0 });
+  it("grades an exercise wrong within the time budget, with a fresh budget for each request", async () => {
+    // Together these timeouts outrun one request's budget, so a shared budget would fail the last answer.
+    for (let i = 0; i <= REGEX_REQUEST_BUDGET_MS / REGEX_TIME_BUDGET_MS; i++) {
+      expect(await timed({ packageId: "demo", itemId: "sa1", answer: slow })).toMatchObject({ correct: false, score: 0 });
+    }
     expect(lastAttempt()).toMatchObject({ kind: "exercise", item_id: "sa1", correct: 0, score: 0 });
     expect(await timed({ packageId: "demo", itemId: "sa1", answer: RIGHT.sa1 })).toMatchObject({ correct: true });
   });

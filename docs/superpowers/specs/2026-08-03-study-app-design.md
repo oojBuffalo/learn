@@ -189,9 +189,11 @@ or an alternation. Lazy forms count the same. This guards nested repetition;
 it is not a full backtracking analysis: overlapping repeats in sequence and
 ranged repeats inside bounded repeats may still pass. Stored patterns are checked
 before any regex accept entry runs. On the server each stored pattern also runs
-under a time budget of 50 ms per accept entry, so a pattern that gets past this
-guard cannot block the server. An entry that runs out of time counts as no match:
-the timeout grades as a wrong answer unless another accept entry matches.
+under a time budget, so a pattern that gets past this guard cannot block the
+server: 50 ms per accept entry, and 200 ms for all the regex checks of one request.
+An entry that runs out of time, or that runs after the request's budget is spent,
+counts as no match. So a timeout grades as a wrong answer unless another accept
+entry matches in time.
 
 Typed answers (short-answer text and each fill-blank value) are capped at 200
 characters. A matching item's pair texts and distractors are at most 2000
