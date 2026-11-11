@@ -9,9 +9,9 @@ import { formatDay } from "../format.js";
 import { lessonsInProgress } from "../home.js";
 import { filterSearch } from "../listFilter.js";
 
-export function HomeView({ today, due, dueLoading, packages, revisit, failed, onRetry }: {
-  today: Date; due: number | null; dueLoading: boolean; packages: PackageSummary[] | null;
-  revisit: Explanation[] | null; failed: boolean; onRetry: () => void;
+export function HomeView({ today, due, dueLoading, dueRetrying, packages, revisit, failed, onRetry, onRetryDue }: {
+  today: Date; due: number | null; dueLoading: boolean; dueRetrying: boolean; packages: PackageSummary[] | null;
+  revisit: Explanation[] | null; failed: boolean; onRetry: () => void; onRetryDue: () => void;
 }) {
   const reading = lessonsInProgress(packages ?? []);
   return <div className="page">
@@ -22,7 +22,10 @@ export function HomeView({ today, due, dueLoading, packages, revisit, failed, on
     <div className="stack">
       <section className="sheet" aria-labelledby="home-due"><div className="sheet-head">
         <h2 id="home-due">Cards due</h2>
-        {due === null ? <p className={dueLoading ? "loading" : "note"}>{dueLoading ? "Loading…" : "Couldn’t count your cards."}</p>
+        {due === null ? (dueLoading ? <p className="loading">Loading…</p>
+          : <><p className="note">Couldn’t count your cards.</p>
+            {/* aria-disabled, not disabled: a disabled button would drop keyboard focus to the page mid-recount. */}
+            <div className="actions"><button className="btn" aria-disabled={dueRetrying} onClick={dueRetrying ? undefined : onRetryDue}>Try again</button></div></>)
           : due === 0 ? <p className="note">Nothing due — cards come back as their intervals expire.</p>
             : <><p className="home-figure">{due}</p><p className="note">{due === 1 ? "card waiting" : "cards waiting"}</p>
               <Link className="btn btn-primary" to="/study">Start review</Link></>}
@@ -52,6 +55,7 @@ export function HomeView({ today, due, dueLoading, packages, revisit, failed, on
 export default function Home() {
   const { due, refreshDue } = useDue();
   const [dueLoading, setDueLoading] = useState(true);
+  const [dueRetrying, setDueRetrying] = useState(false);
   const [packages, setPackages] = useState<PackageSummary[] | null>(null);
   const [revisit, setRevisit] = useState<Explanation[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -67,6 +71,10 @@ export default function Home() {
       setFailed(library.status === "rejected" || prompts.status === "rejected");
     });
   }
+  function retryDue() {
+    setDueRetrying(true);
+    refreshDue().then(() => setDueRetrying(false));
+  }
   useEffect(() => { load(); return () => { session.current++; }; }, [refreshDue]);
-  return <HomeView today={new Date()} due={due} dueLoading={dueLoading} packages={packages} revisit={revisit} failed={failed} onRetry={load} />;
+  return <HomeView today={new Date()} due={due} dueLoading={dueLoading} dueRetrying={dueRetrying} packages={packages} revisit={revisit} failed={failed} onRetry={load} onRetryDue={retryDue} />;
 }
