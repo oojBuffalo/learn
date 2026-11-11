@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { browserDraftStore, clearDraft, draftKey, draftSession, readDraft, recordDiscard, restoreState, restoredDraftId, rowDrafts, writeDraft } from "../src/drafts.js";
 import type { DraftStore } from "../src/drafts.js";
 function mem(): DraftStore {
@@ -11,6 +11,9 @@ function broken(): DraftStore {
   return { get length(): number { return fail(); }, key: fail, getItem: fail, setItem: fail, removeItem: fail };
 }
 const k = "study.draft.note.new";
+// The tests' times are on 2026-10-22; "now" sits there too, so an editor's last write is never a week old by accident.
+beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(Date.UTC(2026, 9, 22, 12))); });
+afterEach(() => { vi.useRealTimers(); });
 const at = (minute: number) => new Date(Date.UTC(2026, 9, 22, 10, minute));
 it("draftKey format", () => {
   expect(draftKey("note", "new")).toBe(k); expect(draftKey("explanation", 7)).toBe("study.draft.explanation.7");
@@ -180,6 +183,14 @@ it("a corrupt shared clock never stops an editor from opening or writing", () =>
     expect(readDraft(s, k)?.body).toBe("Still works");
     expect(() => recordDiscard(s, k, { body: "x" }, at(2))).not.toThrow();
   }
+});
+
+it("a save resuming after discard records may have expired leaves the text where the editor stored it", () => {
+  const s = mem(); const late = draftSession(s, at(0)); const week = 7 * 24 * 60 * 60 * 1000;
+  late.write(k, "Suspended text", at(1));
+  expect(late.dropped(k, "Suspended text", new Date(at(1).getTime() + week - 60_000))).toBe(false);
+  expect(late.dropped(k, "Suspended text", new Date(at(1).getTime() + week + 60_000))).toBe(true);
+  expect(readDraft(s, k)?.body).toBe("Suspended text");
 });
 
 it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {

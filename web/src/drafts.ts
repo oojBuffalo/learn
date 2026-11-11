@@ -65,6 +65,8 @@ const changed = () => { if (typeof window !== "undefined") window.dispatchEvent(
 // Every discard is stored under its own key, `study.draft.discarded.<draft key>.<time>.<random>`, so two tabs
 // discarding at once never overwrite each other's record.
 const DISCARDS = "study.draft.discarded.";
+// How long discard records are kept, and so how long an editor's last write can vouch for its text.
+const KEPT_FOR = 7 * 24 * 60 * 60 * 1000;
 // Orders discards against editors' writes across tabs: a stamp is never earlier than the last one any tab took and
 // never equal to it, even when two actions share a millisecond or the system clock is set back.
 const CLOCK = "study.draft.clock";
@@ -110,7 +112,7 @@ function discardsUnder(store: DraftStore, prefix: string): Discard[] {
  * (which frees space) when this returns false.
  */
 export function recordDiscard(store: DraftStore, key: string, draft: { body: string; origin?: string }, now: Date): boolean {
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const weekAgo = new Date(now.getTime() - KEPT_FOR).toISOString();
   const all: string[] = [];
   try { for (let i = 0; i < store.length; i++) { const k = store.key(i); if (k?.startsWith(DISCARDS)) all.push(k); } } catch { /* None to prune. */ }
   for (const k of all) {
@@ -147,9 +149,10 @@ export interface DraftSession {
   /**
    * Since this editor last wrote or cleared any draft, the user discarded `holding` under the key (or deleted it with
    * its note), or removed `holding` in a draft of this editor's origin under any key of its kind, where another
-   * editor may have moved it.
+   * editor may have moved it. Also true once that write is a week old, since discards older than that are removed:
+   * a save resuming that late (a suspended computer) leaves the text where the editor stored it.
    */
-  dropped(key: string, holding: string): boolean;
+  dropped(key: string, holding: string, now?: Date): boolean;
 }
 const newOrigin = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 export function draftSession(store: DraftStore, started = new Date(), origin = newOrigin()): DraftSession {
@@ -190,7 +193,8 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
     // editor's late request may since have overwritten that save. Only a recorded Discard or delete counts.
     // The same words discarded under another row are a different draft, and an older revision of this editor's
     // draft is not its current text; across keys only this origin's current words count.
-    dropped(key, holding) {
+    dropped(key, holding, now = new Date()) {
+      if (Date.parse(latest) <= now.getTime() - KEPT_FOR) return true;
       const text = fingerprint(holding);
       if (discardsUnder(store, `${key}.`).some((d) => d.text === text && d.at > latest)) return true;
       return discardsUnder(store, key.slice(0, key.lastIndexOf(".") + 1)).some((d) => d.origin === lineage && d.text === text && d.at > latest);
