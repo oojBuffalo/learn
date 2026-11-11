@@ -15,34 +15,54 @@ function zodErrors(file: string, e: z.ZodError): PackageError[] {
 
 export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; errors: PackageError[] } {
   const errors: PackageError[] = [];
-  let zip: AdmZip;
+  let entries: Map<string, AdmZip.IZipEntry>;
   try {
-    zip = new AdmZip(zipBuf);
+    // adm-zip reads the central directory lazily, on the first getEntries().
+    const zip = new AdmZip(zipBuf);
+    entries = new Map(zip.getEntries().filter((e) => !e.isDirectory).map((e) => [e.entryName, e]));
   } catch {
     return { pkg: null, errors: [{ file: "(zip)", path: "", message: "not a readable zip archive" }] };
   }
-  const entries = new Map(zip.getEntries().filter((e) => !e.isDirectory).map((e) => [e.entryName, e]));
-  const text = (name: string) => entries.get(name)?.getData().toString("utf8");
+  // getData() inflates the entry and checks its CRC, so a corrupt entry throws here.
+  // undefined: no such entry. null: unreadable, and already reported.
+  const read = (name: string): Buffer | null | undefined => {
+    const entry = entries.get(name);
+    if (!entry) return undefined;
+    try {
+      return entry.getData();
+    } catch {
+      errors.push({ file: name, path: "", message: "unreadable entry" });
+      return null;
+    }
+  };
+  const text = (name: string) => {
+    const bytes = read(name);
+    return bytes ? bytes.toString("utf8") : bytes;
+  };
 
   const manifestRaw = text("manifest.json");
   if (manifestRaw === undefined) {
     return { pkg: null, errors: [{ file: "manifest.json", path: "", message: "missing manifest.json" }] };
   }
   let manifest: LoadedPackage["manifest"] | null = null;
-  try {
-    const parsed = manifestSchema.safeParse(JSON.parse(manifestRaw));
-    if (parsed.success) manifest = parsed.data;
-    else errors.push(...zodErrors("manifest.json", parsed.error));
-  } catch {
-    errors.push({ file: "manifest.json", path: "", message: "invalid JSON" });
+  if (manifestRaw !== null) {
+    try {
+      const parsed = manifestSchema.safeParse(JSON.parse(manifestRaw));
+      if (parsed.success) manifest = parsed.data;
+      else errors.push(...zodErrors("manifest.json", parsed.error));
+    } catch {
+      errors.push({ file: "manifest.json", path: "", message: "invalid JSON" });
+    }
   }
 
   const lessons: LoadedLesson[] = [];
   const lessonFiles = [...entries.keys()].filter((n) => /^lessons\/[^/]+\.md$/.test(n)).sort();
   if (lessonFiles.length === 0) errors.push({ file: "lessons/", path: "", message: "package has no lessons" });
   lessonFiles.forEach((file, order) => {
+    const raw = text(file);
+    if (raw == null) return;
     try {
-      const { data, content } = readLesson(text(file)!);
+      const { data, content } = readLesson(raw);
       const fm = lessonFrontmatterSchema.safeParse(data);
       if (fm.success) lessons.push({ file, order, frontmatter: fm.data, body: content });
       else errors.push(...zodErrors(file, fm.error));
@@ -54,7 +74,7 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
 
   const parseJsonArray = <T>(file: string, schema: z.ZodType<T>): T[] => {
     const raw = text(file);
-    if (raw === undefined) return [];
+    if (raw == null) return [];
     try {
       const arr = JSON.parse(raw);
       if (!Array.isArray(arr)) {
@@ -76,9 +96,12 @@ export function readPackageZip(zipBuf: Buffer): { pkg: LoadedPackage | null; err
   const items = parseJsonArray("items.json", itemSchema);
   const quizzes = parseJsonArray("quizzes.json", quizSchema);
   const games = parseJsonArray("games.json", gameSchema);
-  const assets = [...entries.entries()]
-    .filter(([n]) => n.startsWith("assets/"))
-    .map(([path, e]) => ({ path, data: new Uint8Array(e.getData()) }));
+  const assets = [...entries.keys()]
+    .filter((n) => n.startsWith("assets/"))
+    .flatMap((path) => {
+      const bytes = read(path);
+      return bytes ? [{ path, data: new Uint8Array(bytes) }] : [];
+    });
 
   if (!manifest) return { pkg: null, errors };
   const unitLessonIds = manifest.units?.flatMap((unit) => unit.lessonIds) ?? [];

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.js";
 import { openDb, type Db } from "../src/db.js";
-import { GOOD_FILES, PLAY_FILES, V2_FILES, makeZip } from "./helpers.js";
+import { GOOD_FILES, PLAY_FILES, V2_FILES, corruptEntry, makeZip } from "./helpers.js";
 
 let db: Db;
 let app: ReturnType<typeof createApp>;
@@ -34,6 +34,16 @@ describe("package routes", () => {
     const body = await res.json();
     expect(body.error.code).toBe("invalid_package");
     expect(Array.isArray(body.error.details)).toBe(true);
+  });
+
+  it.each(["manifest.json", "assets/dot.png"])("rejects an unreadable %s with 422, not 500", async (file) => {
+    const body = new Uint8Array(corruptEntry(makeZip(GOOD_FILES), file));
+    const res = await app.request("/api/packages/import", { method: "POST", body });
+    expect(res.status).toBe(422);
+    const { error } = await res.json();
+    expect(error.code).toBe("invalid_package");
+    expect(error.details[0]).toEqual({ file, path: "", message: "unreadable entry" });
+    expect(db.prepare("SELECT COUNT(*) n FROM packages").get()).toMatchObject({ n: 0 });
   });
 
   it("exports a zip and 404s unknown ids", async () => {
