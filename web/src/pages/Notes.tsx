@@ -1,16 +1,18 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import type { ReactNode } from "react";
+import { flushSync } from "react-dom";
+import { Link, useLocation, useNavigate, useNavigationType, useSearchParams } from "react-router-dom";
 import type { Explanation, Note } from "@study/shared";
 import { listExplanations, listNotes, listPackages } from "../api.js";
 import { ConfidenceChip } from "../components/ConfidencePicker.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
 import { formatDay } from "../format.js";
-import { filterExplanations, filterNotes, filterSearch, parseListFilter } from "../listFilter.js";
+import { filterExplanations, filterNotes, filterSearch, noteLabel, NOTES_PAGE, parseListFilter, searchNotes } from "../listFilter.js";
 import type { ListFilter } from "../listFilter.js";
 import { headline, message, plural } from "../text.js";
 
-function Filters({ packages, filter, orphaned, explanations = false, onChange }: {
-  packages: TargetPackage[]; filter: ListFilter; orphaned: number; explanations?: boolean; onChange: (f: ListFilter) => void;
+function Filters({ packages, filter, orphaned, explanations = false, onChange, children }: {
+  packages: TargetPackage[]; filter: ListFilter; orphaned: number; explanations?: boolean; onChange: (f: ListFilter) => void; children?: ReactNode;
 }) {
   const value = filter.kind === "package" ? `pkg:${filter.packageId}` : filter.kind;
   const pkg = filter.kind === "package" ? packages.find((p) => p.id === filter.packageId) : undefined;
@@ -30,30 +32,50 @@ function Filters({ packages, filter, orphaned, explanations = false, onChange }:
       <option value="">Whole package</option>
       {pkg?.lessons.map((l) => <option key={l.id} value={l.id}>{l.title}</option>)}
     </select>}
+    {children}
   </div>;
 }
 
-export function NotesListView({ notes, packages, filter, onFilterChange }: {
-  notes: Note[]; packages: TargetPackage[]; filter: ListFilter; onFilterChange: (f: ListFilter) => void;
+export function NotesListView({ notes, packages, filter, query, onFilterChange, onQueryChange }: {
+  notes: Note[]; packages: TargetPackage[]; filter: ListFilter; query: string;
+  onFilterChange: (f: ListFilter, query: string) => void; onQueryChange: (query: string) => void;
 }) {
+  // The box owns its text: the URL is written in a transition and can lag typing. Any navigation
+  // other than the box's own replace (Back, a link, a filter) brings its search back in.
+  const [text, setText] = useState(query);
+  const location = useLocation(); const navigation = useNavigationType();
+  const [seen, setSeen] = useState(location.key);
+  if (seen !== location.key) { setSeen(location.key); if (navigation !== "REPLACE") setText(query); }
   const orphaned = notes.filter((n) => n.orphaned).length;
-  const shown = filterNotes(notes, filter);
+  const shown = searchNotes(filterNotes(notes, filter), text);
+  // A new search or filter starts again from the first page.
+  const pageKey = filterSearch(filter, { q: text });
+  const [page, setPage] = useState({ key: pageKey, size: NOTES_PAGE });
+  const size = page.key === pageKey ? page.size : NOTES_PAGE;
+  const visible = shown.slice(0, size);
+  const list = useRef<HTMLUListElement>(null);
+  const showMore = (button: HTMLButtonElement) => {
+    const focused = document.activeElement === button;
+    flushSync(() => setPage({ key: pageKey, size: size + NOTES_PAGE }));
+    // The last Show more removes the button, so focus goes to the first note it revealed rather than the page.
+    if (focused && !button.isConnected) list.current?.children[size]?.querySelector("a")?.focus();
+  };
+  const words = text.trim();
   return <>
-    <Filters packages={packages} filter={filter} orphaned={orphaned} onChange={onFilterChange} />
+    <Filters packages={packages} filter={filter} orphaned={orphaned} onChange={(f) => onFilterChange(f, text)}>
+      <input type="search" className="field field-grow" aria-label="Search notes" placeholder="Search notes"
+        value={text} onChange={(e) => { setText(e.target.value); onQueryChange(e.target.value); }} /></Filters>
     {filter.kind === "all" && orphaned > 0 && <p className="note">{`${plural(orphaned, "note")} ${orphaned === 1 ? "belongs" : "belong"} to content that’s no longer in your library.`}{" "}
       <Link to="/notes?orphaned=1">Show them</Link></p>}
     <div className="actions"><Link className="btn btn-primary" to={`/notes/new${filter.kind === "package" ? filterSearch(filter) : ""}`}>New note</Link></div>
-    {shown.length === 0 ? <div className="empty"><p className="empty-title">{filter.kind === "all" ? "No notes yet" : "Nothing here yet."}</p>
-      {filter.kind === "all" && <p className="note">Write one here or from any lesson.</p>}</div>
-      : <ul className="notes-list">{shown.map((n) => {
-        const target = n.target;
-        const pkg = target?.packageTitle ?? target?.packageId;
-        const label = n.orphaned && target ? `Removed: ${target.packageId}${target.lessonId ? `/${target.lessonId}` : ""}`
-          : target === null ? "Standalone" : target.lessonId === null ? pkg : `${pkg} › ${target.lessonTitle ?? target.lessonId}`;
-        return <li key={n.id}><Link className="notes-row" to={`/notes/${n.id}`}>
-          <span className="lesson-row-text"><span className="lesson-row-title">{headline(n.body)}</span><span className="lesson-row-sum">{label}</span></span>
-          <span className="meta">{formatDay(n.updatedAt)}</span></Link></li>;
-      })}</ul>}
+    <div role="status">{shown.length === 0 ? <div className="empty"><p className="empty-title">{words ? `No notes match “${words}”.` : filter.kind === "all" ? "No notes yet" : "Nothing here yet."}</p>
+      {!words && filter.kind === "all" && <p className="note">Write one here or from any lesson.</p>}</div>
+      : <p className="meta">{visible.length < shown.length ? `Showing ${visible.length} of ${shown.length} notes` : plural(shown.length, "note")}</p>}</div>
+    {visible.length > 0 && <ul className="notes-list" ref={list}>{visible.map((n) => <li key={n.id}><Link className="notes-row" to={`/notes/${n.id}`}>
+      <span className="lesson-row-text"><span className="lesson-row-title">{headline(n.body)}</span><span className="lesson-row-sum">{noteLabel(n)}</span></span>
+      <span className="meta">{formatDay(n.updatedAt)}</span></Link></li>)}</ul>}
+    {visible.length < shown.length && <div className="actions actions-center">
+      <button type="button" className="btn" onClick={(e) => showMore(e.currentTarget)}>Show more</button></div>}
   </>;
 }
 
@@ -97,6 +119,7 @@ export default function Notes() {
   const explainTab = params.get("tab") === "explanations";
   const filter = parseListFilter(params);
   const revisitOnly = params.get("revisit") === "1";
+  const query = params.get("q") ?? "";
   useEffect(() => {
     const current = ++session.current;
     Promise.allSettled([listNotes(), listPackages(), listExplanations()]).then(([n, p, e]) => {
@@ -119,7 +142,8 @@ export default function Notes() {
       : explainTab ? explanations === null ? <p className="loading">Loading…</p> : <ExplanationsListView explanations={explanations} packages={packages} filter={filter}
         revisitOnly={revisitOnly} onFilterChange={(f) => navigate({ search: filterSearch(f, { tab: "explanations", ...(revisitOnly ? { revisit: "1" } : {}) }) })}
         onRevisitChange={(value) => navigate({ search: filterSearch(filter, { tab: "explanations", ...(value ? { revisit: "1" } : {}) }) })} />
-        : notes === null ? <p className="loading">Loading…</p> : <NotesListView notes={notes} packages={packages} filter={filter}
-          onFilterChange={(f) => navigate({ search: filterSearch(f) })} />}
+        : notes === null ? <p className="loading">Loading…</p> : <NotesListView notes={notes} packages={packages} filter={filter} query={query}
+          onFilterChange={(f, q) => navigate({ search: filterSearch(f, q ? { q } : {}) })}
+          onQueryChange={(q) => navigate({ search: filterSearch(filter, q ? { q } : {}) }, { replace: true })} />}
   </div>;
 }

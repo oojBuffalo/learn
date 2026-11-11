@@ -789,3 +789,44 @@ test("Leftover progress reports a held cleanup that finishes after a Library ref
   await expect(panel.getByRole("alert")).toHaveCount(0);
   expect(reports).toBe(3);
 });
+
+test("the notes list searches, shows 20 at a time and starts over when the search or filter changes", async ({ page, request }) => {
+  const ids: number[] = [];
+  try {
+    for (let i = 1; i <= 45; i++) {
+      const created = await request.post("/api/notes", { data: { body: `Résumé tip ${i}`, target: i <= 3 ? { packageId: PKG, lessonId: LESSON } : null } });
+      expect(created.status()).toBe(201); ids.push((await created.json()).note.id);
+    }
+    await page.goto("/notes");
+    const search = page.getByRole("searchbox", { name: "Search notes" }); const count = page.getByRole("status");
+    const rows = page.locator(".notes-list > li"); const more = page.getByRole("button", { name: "Show more", exact: true });
+    const show = page.getByLabel("Show", { exact: true });
+    await search.fill("RESUME");
+    await expect(page).toHaveURL(/\/notes\?q=RESUME$/); await expect(search).toBeFocused();
+    await expect(count).toHaveText("Showing 20 of 45 notes"); await expect(rows).toHaveCount(20);
+    await more.focus(); await page.keyboard.press("Enter");
+    await expect(count).toHaveText("Showing 40 of 45 notes"); await expect(rows).toHaveCount(40); await expect(more).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(count).toHaveText("45 notes"); await expect(more).toHaveCount(0); await expect(rows.nth(40).getByRole("link")).toBeFocused();
+    await show.selectOption("standalone");
+    await expect(page).toHaveURL(/\/notes\?q=RESUME&standalone=1$/); await expect(search).toHaveValue("RESUME");
+    await expect(count).toHaveText("Showing 20 of 42 notes");
+    await more.click(); await expect(count).toHaveText("Showing 40 of 42 notes");
+    await search.fill(""); await search.pressSequentially("résumé tip");
+    await expect(search).toHaveValue("résumé tip"); await expect(count).toHaveText("Showing 20 of 42 notes");
+    await show.selectOption(`pkg:${PKG}`);
+    await expect(count).toHaveText("3 notes"); await expect(more).toHaveCount(0);
+    await rows.first().getByRole("link").click(); await expect(page).toHaveURL(/\/notes\/\d+$/);
+    await page.goBack();
+    await expect(search).toHaveValue("résumé tip"); await expect(show).toHaveValue(`pkg:${PKG}`); await expect(count).toHaveText("3 notes");
+    await page.goBack(); await page.goBack();
+    await expect(page).toHaveURL(/\/notes\?q=RESUME$/); await expect(search).toHaveValue("RESUME"); await expect(show).toHaveValue("all");
+    await expect(count).toHaveText("Showing 20 of 45 notes");
+    await search.fill("active recall TIP");
+    await expect(count).toHaveText("3 notes");
+    await search.fill("tip 7 nowhere");
+    await expect(count).toHaveText("No notes match “tip 7 nowhere”."); await expect(rows).toHaveCount(0);
+  } finally {
+    for (const id of ids) await request.delete(`/api/notes/${id}`);
+  }
+});
