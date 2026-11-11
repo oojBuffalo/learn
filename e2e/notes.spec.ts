@@ -1058,6 +1058,28 @@ async function watchDraft(page: Page, key: string): Promise<() => Promise<number
   return () => page.evaluate(() => (window as unknown as { touches: number }).touches);
 }
 
+// Lets a test make this page's draft writes fail, as a full storage quota would, and counts every draft storage call.
+async function fillableDrafts(page: Page): Promise<{ touches: () => Promise<number>; full: (on: boolean) => Promise<void> }> {
+  await page.addInitScript(() => {
+    const win = window as unknown as { draftsFull: boolean; touches: number }; win.draftsFull = false; win.touches = 0;
+    const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
+    for (const name of ["getItem", "setItem", "removeItem"]) {
+      const original = proto[name]!;
+      proto[name] = function (this: Storage, ...args: unknown[]) {
+        if (typeof args[0] === "string" && args[0].startsWith("study.draft.")) {
+          win.touches += 1;
+          if (name === "setItem" && win.draftsFull) throw new DOMException("full", "QuotaExceededError");
+        }
+        return original.apply(this, args);
+      };
+    }
+  });
+  return {
+    touches: () => page.evaluate(() => (window as unknown as { touches: number }).touches),
+    full: (on) => page.evaluate((value) => { (window as unknown as { draftsFull: boolean }).draftsFull = value; }, on),
+  };
+}
+
 for (const kind of ["note", "explanation"] as const) {
   test(`a deleted ${kind}’s unsaved text waits under Kept drafts while another new draft holds the slot`, async ({ page, request }) => {
     const w = writing(kind);
@@ -1427,22 +1449,7 @@ test("a late 404 never brings back text another tab moved to the new-note draft 
 
 test("a late first save keeps the stored draft when its newer text can’t be stored", async ({ page }) => {
   const fresh = "study.draft.note.new";
-  // Lets the test make every draft write fail, as a full storage quota would, and counts draft storage calls.
-  await page.addInitScript(() => {
-    const w = window as unknown as { draftsFull: boolean; touches: number }; w.draftsFull = false; w.touches = 0;
-    const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
-    for (const name of ["getItem", "setItem", "removeItem"]) {
-      const original = proto[name]!;
-      proto[name] = function (this: Storage, ...args: unknown[]) {
-        if (typeof args[0] === "string" && args[0].startsWith("study.draft.")) {
-          w.touches += 1;
-          if (name === "setItem" && w.draftsFull) throw new DOMException("full", "QuotaExceededError");
-        }
-        return original.apply(this, args);
-      };
-    }
-  });
-  const touches = () => page.evaluate(() => (window as unknown as { touches: number }).touches);
+  const { touches, full } = await fillableDrafts(page);
   let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
   await page.route("**/api/notes", async (route) => {
     if (route.request().method() === "POST") await held; await route.continue();
@@ -1453,7 +1460,7 @@ test("a late first save keeps the stored draft when its newer text can’t be st
   await editor.fill("First"); await page.getByRole("button", { name: "Save", exact: true }).click();
   await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" stored");
   expect(await storedBody(page, fresh)).toBe("First stored");
-  await page.evaluate(() => { (window as unknown as { draftsFull: boolean }).draftsFull = true; });
+  await full(true);
   await page.keyboard.type(" unstored");
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
@@ -1612,22 +1619,7 @@ for (const kind of ["note", "explanation"] as const) {
 for (const kind of ["note", "explanation"] as const) {
   test(`a late first ${kind} save keeps newer text when another tab discards the older stored revision`, async ({ page }) => {
     const w = writing(kind); const fresh = `study.draft.${kind}.new`;
-    // Lets the test make this page's draft writes fail, as a full storage quota would, and counts draft storage calls.
-    await page.addInitScript(() => {
-      const win = window as unknown as { draftsFull: boolean; touches: number }; win.draftsFull = false; win.touches = 0;
-      const proto = Storage.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
-      for (const name of ["getItem", "setItem", "removeItem"]) {
-        const original = proto[name]!;
-        proto[name] = function (this: Storage, ...args: unknown[]) {
-          if (typeof args[0] === "string" && args[0].startsWith("study.draft.")) {
-            win.touches += 1;
-            if (name === "setItem" && win.draftsFull) throw new DOMException("full", "QuotaExceededError");
-          }
-          return original.apply(this, args);
-        };
-      }
-    });
-    const touches = () => page.evaluate(() => (window as unknown as { touches: number }).touches);
+    const { touches, full } = await fillableDrafts(page);
     let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
     await page.route(`**/api/${w.api}`, async (route) => {
       if (route.request().method() === "POST") await held; await route.continue();
@@ -1638,7 +1630,7 @@ for (const kind of ["note", "explanation"] as const) {
     await editor.fill("Stored text");
     if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
     await page.getByRole("button", { name: "Save", exact: true }).click();
-    await page.evaluate(() => { (window as unknown as { draftsFull: boolean }).draftsFull = true; });
+    await full(true);
     await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" and newer text");
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
@@ -1646,7 +1638,7 @@ for (const kind of ["note", "explanation"] as const) {
     const other = await page.context().newPage();
     await other.goto(w.fresh); await other.getByRole("button", { name: "Discard", exact: true }).click();
     expect(await storedBody(other, fresh)).toBeNull();
-    await page.evaluate(() => { (window as unknown as { draftsFull: boolean }).draftsFull = false; });
+    await full(false);
     const before = await touches();
     release(); const id = (await (await created).json())[kind].id;
     await expect.poll(touches).toBeGreaterThan(before);
@@ -1682,5 +1674,47 @@ for (const kind of ["note", "explanation"] as const) {
     expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Base more");
     expect(await storedBody(page, fresh)).toBeNull();
     await other.close();
+  });
+}
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`a mounted ${kind} recovery that can’t store its text in the new draft clears the old one once saved`, async ({ page, request }) => {
+    const w = writing(kind);
+    const id = (await (await request.post(`/api/${w.api}`, { data: w.data("Recovered writing") })).json())[kind].id;
+    const { full } = await fillableDrafts(page);
+    await page.route(`**/api/${w.api}/${id}`, (route) => route.request().method() === "PATCH"
+      ? route.fulfill({ status: 404, json: { error: { code: "not_found", message: `unknown ${kind}` } } }) : route.continue());
+    await page.goto(`${w.base}/${id}`);
+    const editor = page.getByLabel(w.label, { exact: true }); await expect(editor).toHaveValue("Recovered writing");
+    await editor.fill("Recovered writing, edited"); expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBe("Recovered writing, edited");
+    await full(true); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByRole("alert")).toHaveText(w.gone);
+    expect(await storedBody(page, `study.draft.${kind}.new`)).toBeNull();
+    await full(false); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${w.base}/\\d+$`)); await expect(page).not.toHaveURL(new RegExp(`${w.base}/${id}$`));
+    expect(await storedBody(page, `study.draft.${kind}.${id}`)).toBeNull();
+    expect(await storedBody(page, `study.draft.${kind}.new`)).toBeNull();
+  });
+
+  test(`a first ${kind} save that can’t store newer text under the new row clears its old draft after the next save`, async ({ page }) => {
+    const w = writing(kind); const fresh = `study.draft.${kind}.new`;
+    const { full } = await fillableDrafts(page);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() === "POST") await held; await route.continue();
+    });
+    const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    await page.goto(w.fresh);
+    const editor = page.getByLabel(w.label, { exact: true });
+    await editor.fill("First");
+    if (kind === "explanation") await page.getByLabel("4 · Solid", { exact: true }).check();
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await full(true); await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" more");
+    release(); await created; await expect(page).toHaveURL(new RegExp(`${w.base}/\\d+$`));
+    await expect(page.getByRole("status")).toHaveText("Unsaved changes");
+    expect(await storedBody(page, fresh)).toBe("First");
+    await full(false); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText(kind === "explanation" ? "Saved. Rated 4 · Solid." : "Saved");
+    expect(await storedBody(page, fresh)).toBeNull();
   });
 }

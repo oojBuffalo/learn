@@ -47,6 +47,9 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
+  // A first save that couldn't store its newer text under the new row leaves its old draft; the next save that
+  // stores or saves this editor's text clears it.
+  const leftover = useRef<string | null>(null);
   const slot = draftKey("explanation", id ?? recoveryId ?? "new");
   const draft = useDraft(slot, saved?.body ?? null, body);
   const dirty = saved !== null && (body !== saved.body || confidence !== saved.confidence || encodeTarget(target) !== encodeTarget(saved.target));
@@ -134,17 +137,17 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
 
   // A removed explanation's text moves to the new draft, which Explain a lesson offers, unless another new explanation's
   // text is there; then it stays under the old key, and Notes lists it as a kept draft. Text another editor discarded
-  // stays gone. Returns whether the new draft is free for this editor.
+  // stays gone. Returns whether the new draft now holds this editor's text.
   function keepGoneText(oldId: number): boolean {
     const drafts = draft.session;
     const old = draftKey("explanation", oldId); const fresh = draftKey("explanation", "new");
     const free = ownsDraft(fresh);
     // Discarded text stays gone whichever of the two keys it was discarded from, even after other text took the new draft.
     if (drafts.dropped(old, latestBody.current) || drafts.dropped(fresh, latestBody.current)) return free;
-    // The old key keeps the text until the new draft holds it.
-    if (free) { if (drafts.write(fresh, latestBody.current, new Date()) && ownsDraft(old)) drafts.clear(old); }
-    else if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
-    return free;
+    // The old key keeps the text, and stays this editor's draft, until the new draft holds it.
+    if (free && drafts.write(fresh, latestBody.current, new Date())) { if (ownsDraft(old)) drafts.clear(old); return true; }
+    if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
+    return false;
   }
 
   async function save() {
@@ -171,6 +174,11 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       }
       if (creating && (settled || moved) && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
       if (creating && (settled || moved) && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
+      if (creating && !settled && !moved) leftover.current = slot;
+      else if (!creating && (settled || moved) && leftover.current !== null) {
+        if (ownsDraft(leftover.current)) drafts.clear(leftover.current);
+        leftover.current = null;
+      }
       if (!mounted.current) return;
       draft.dismiss();
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);
