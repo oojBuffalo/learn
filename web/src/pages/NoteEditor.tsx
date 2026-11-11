@@ -69,7 +69,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
         const restore = initial.current.restore;
         const kept = restore === null ? null : readDraft(browserDraftStore(), draftKey("note", restore));
         if (restore !== null && !kept) setRecoveryId(null);
-        if (kept) draft.session.adopt(kept);
+        if (kept) draft.session.adopt(kept, draftKey("note", restore!));
         latestBody.current = note?.body ?? kept?.body ?? "";
         setBody(latestBody.current); setTarget(value); setSaved({ body: note?.body ?? "", target: value });
         setOrphaned(note?.orphaned ?? false); setFallback(fallbackPackages(originalTarget));
@@ -207,7 +207,7 @@ export default function NoteEditor({ editorKey }: { editorKey: string }) {
     <TargetSelect label="Attach to" packages={libraryFailed ? fallback : packages} currentOnly={libraryFailed} value={target}
       onChange={(value) => { setTarget(value); draft.write(latestBody.current); }} />
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
-      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
+      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!, slot); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
       <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
     <MarkdownEditor label="Note" value={body} packageId={target?.packageId} onChange={edit} onSave={() => void save()} />
     <div className="actions"><button className="btn btn-primary" disabled={!canSave} onClick={() => void save()}>Save</button>

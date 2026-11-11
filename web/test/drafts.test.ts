@@ -93,7 +93,7 @@ it("a session counts a removed draft of its origin under any key of its kind, bu
   const s = mem(); const late = draftSession(s, at(0), "origin-a"); const key = "study.draft.note.5";
   late.write(key, "Moved text", at(1)); expect(readDraft(s, key)).toEqual({ body: "Moved text", at: at(1).toISOString(), origin: "origin-a" });
   // Another editor restores it, moves it to the new draft and discards it there.
-  const other = draftSession(s, at(0), "origin-b"); other.adopt(readDraft(s, key)!);
+  const other = draftSession(s, at(0), "origin-b"); other.adopt(readDraft(s, key)!, key);
   other.write("study.draft.note.new", "Moved text", at(2)); expect(readDraft(s, "study.draft.note.new")?.origin).toBe("origin-a");
   recordDiscard(s, "study.draft.note.new", { body: "Unrelated", origin: "origin-c" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
   recordDiscard(s, "study.draft.note.9", { body: "Moved text" }, at(3)); expect(late.dropped(key, "Moved text")).toBe(false);
@@ -103,7 +103,7 @@ it("a session counts a removed draft of its origin under any key of its kind, bu
   late.write(key, "Moved text", at(4)); expect(late.dropped(key, "Moved text")).toBe(false);
   // A draft that never had an origin, stored before origins existed, is matched by its words under its own key only.
   s.setItem("study.draft.note.7", JSON.stringify({ body: "Old", at: at(1).toISOString() })); expect(readDraft(s, "study.draft.note.7")).toEqual({ body: "Old", at: at(1).toISOString() });
-  const restored = draftSession(s, at(0)); restored.adopt(readDraft(s, "study.draft.note.7")!);
+  const restored = draftSession(s, at(0)); restored.adopt(readDraft(s, "study.draft.note.7")!, "study.draft.note.7");
   restored.write("study.draft.note.7", "Old", at(5)); expect(readDraft(s, "study.draft.note.7")?.origin).toMatch(/.+/);
 });
 
@@ -128,15 +128,24 @@ it("a draft set aside goes when the editor next stores or clears another draft, 
   expect(readDraft(s, k)?.body).toBe("Moved back");
 });
 
-it("keeps each key's 20 newest discards from the last week, untouched by discards under other keys, and ignores a corrupt list", () => {
+it("an adopted draft counts as the editor's own, so a set-aside restore is removed once superseded", () => {
+  const s = mem(); const kept = "study.draft.note.4";
+  s.setItem(kept, JSON.stringify({ body: "Kept text", at: at(1).toISOString(), origin: "old-tab" }));
+  const session = draftSession(s, at(2)); session.adopt(readDraft(s, kept)!, kept);
+  expect(session.owns(kept, "Something else")).toBe(true);
+  session.setAside(kept); session.write("study.draft.note.9", "Kept text, saved", at(3));
+  expect(readDraft(s, kept)).toBeNull(); expect(readDraft(s, "study.draft.note.9")?.origin).toBe("old-tab");
+});
+
+it("keeps every discard from the last week, however many follow under any key, and ignores a corrupt list", () => {
   const s = mem(); const session = draftSession(s, at(0));
   recordDiscard(s, k, { body: "Kept a long time" }, at(1));
   for (let i = 0; i < 100; i++) recordDiscard(s, `study.draft.note.${i + 1}`, { body: "Elsewhere" }, at(2));
-  expect(session.dropped(k, "Kept a long time")).toBe(true);
-  for (let i = 0; i < 20; i++) recordDiscard(s, k, { body: `Text ${i}` }, at(3));
-  expect(session.dropped(k, "Kept a long time")).toBe(false); expect(session.dropped(k, "Text 0")).toBe(true);
+  for (let i = 0; i < 100; i++) recordDiscard(s, k, { body: `Text ${i}` }, at(3));
+  expect(session.dropped(k, "Kept a long time")).toBe(true); expect(session.dropped(k, "Text 0")).toBe(true);
   recordDiscard(s, k, { body: "A week later" }, new Date(at(3).getTime() + 8 * 24 * 60 * 60 * 1000));
-  expect(session.dropped(k, "Text 19")).toBe(false); expect(session.dropped(k, "A week later")).toBe(true);
+  expect(session.dropped(k, "Kept a long time")).toBe(false); expect(session.dropped(k, "Text 99")).toBe(false);
+  expect(session.dropped(k, "A week later")).toBe(true);
   for (const value of ["{not json", '{"text":1}', '[{"text":1,"at":"y"}, null]']) {
     s.setItem(`study.draft.discarded.${k}`, value); expect(session.dropped(k, "A week later")).toBe(false);
     expect(() => recordDiscard(s, k, { body: "Text 50" }, at(4))).not.toThrow(); expect(session.dropped(k, "Text 50")).toBe(true);

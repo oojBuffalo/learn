@@ -75,7 +75,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         const restore = initial.current.restore;
         const kept = restore === null ? null : readDraft(browserDraftStore(), draftKey("explanation", restore));
         if (restore !== null && !kept) setRecoveryId(null);
-        if (kept) draft.session.adopt(kept);
+        if (kept) draft.session.adopt(kept, draftKey("explanation", restore!));
         latestBody.current = explanation?.body ?? kept?.body ?? ""; setBody(latestBody.current);
         setTarget(selected); setConfidence(explanation?.confidence ?? null); setInfo(explanation);
         setSaved({ body: explanation?.body ?? "", confidence: explanation?.confidence ?? null, target: selected });
@@ -216,7 +216,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         <Link to={"/notes/explain/new" + filterSearch({ kind: "package", packageId: target!.packageId, lessonId: target!.lessonId! })}>Explain it again</Link></div>}
     <p className="note">Explain it in your own words, as if to a friend — no peeking.</p>
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
-      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
+      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!, slot); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
       <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
     <MarkdownEditor label="Your explanation" value={body} onChange={edit} packageId={target?.packageId} onSave={() => void save()} />
     <ConfidencePicker value={confidence} onChange={setConfidence} />

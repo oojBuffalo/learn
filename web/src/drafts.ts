@@ -82,8 +82,8 @@ function readDiscards(store: DraftStore, storageKey: string): Discard[] {
 /**
  * Remembers that the user discarded this text under the key, so a save that settles later never brings it back.
  * Pass the draft's `origin` only when the draft was actually removed; a draft only dismissed may have newer text.
- * A key keeps its 20 newest discards from the last week; no save stays pending that long, so older records, under
- * any key, are removed here.
+ * Records are kept for a week, however many there are, so no number of later discards pushes out one that a save
+ * still pending may need; week-old records, under any key, are removed here.
  */
 export function recordDiscard(store: DraftStore, key: string, draft: { body: string; origin?: string }, now: Date): void {
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -97,7 +97,7 @@ export function recordDiscard(store: DraftStore, key: string, draft: { body: str
   } catch { /* Old records only cost space. */ }
   const discards = [...readDiscards(store, discardsKey(key)).filter((d) => d.at > weekAgo),
     { text: fingerprint(draft.body), at: now.toISOString(), origin: draft.origin }];
-  try { store.setItem(discardsKey(key), JSON.stringify(discards.slice(-20))); } catch { /* Discarding still works without storage. */ }
+  try { store.setItem(discardsKey(key), JSON.stringify(discards)); } catch { /* Discarding still works without storage. */ }
 }
 
 /**
@@ -108,8 +108,11 @@ export interface DraftSession {
   /** Returns whether the draft was stored. */
   write(key: string, body: string, now: Date): boolean;
   clear(key: string, now?: Date): void;
-  /** The editor now holds this draft's text, restored from storage, so its writes carry the draft's origin. */
-  adopt(draft: Draft): void;
+  /**
+   * The editor now holds this draft's text, restored from the key, so its writes carry the draft's origin and the
+   * stored draft counts as this editor's own.
+   */
+  adopt(draft: Draft, key: string): void;
   /**
    * The key keeps this editor's older text because moving it failed. It is removed, if it still holds that text,
    * when the editor next stores or clears a draft under another key, or by `dropAside`.
@@ -146,7 +149,7 @@ export function draftSession(store: DraftStore, started = new Date(), origin = n
   return {
     setAside(key) { aside = key; },
     dropAside,
-    adopt(draft) { if (draft.origin) lineage = draft.origin; },
+    adopt(draft, key) { if (draft.origin) lineage = draft.origin; if (!last.has(key)) last.set(key, { body: draft.body, at: draft.at }); },
     write(key, body, now) {
       if (!writeDraft(store, key, body, now, lineage)) return false;
       acted(key, body, now); return true;

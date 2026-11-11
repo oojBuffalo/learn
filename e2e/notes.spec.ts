@@ -1750,3 +1750,63 @@ for (const [kind, ending] of [["note", "revert"], ["explanation", "revert"], ["n
     expect(await storedBody(page, fresh)).toBeNull();
   });
 }
+
+test("a late first note save never brings back text discarded before many more discards", async ({ page }) => {
+  const fresh = "study.draft.note.new";
+  const touches = await watchDraft(page, "study.draft.");
+  let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/api/notes", async (route) => {
+    if (route.request().method() === "POST") await held; await route.continue();
+  });
+  const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/api/notes");
+  await page.goto("/notes/new");
+  const editor = page.getByLabel("Note", { exact: true });
+  await editor.fill("Pending text"); await page.getByRole("button", { name: "Save", exact: true }).click();
+  await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" late");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Library", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Library", level: 1 })).toBeVisible();
+  const other = await page.context().newPage();
+  await other.goto("/notes/new"); await other.getByRole("button", { name: "Discard", exact: true }).click();
+  for (let i = 0; i < 21; i++) {
+    await other.evaluate((n) => localStorage.setItem("study.draft.note.new", JSON.stringify({ body: `Filler ${n}`, at: new Date().toISOString() })), i);
+    await other.goto("/notes/new"); await other.getByRole("button", { name: "Discard", exact: true }).click();
+  }
+  expect(await storedBody(other, fresh)).toBeNull();
+  const before = await touches();
+  release(); const id = (await (await created).json()).note.id;
+  await expect.poll(touches).toBeGreaterThan(before);
+  expect(await storedBody(page, `study.draft.note.${id}`)).toBeNull();
+  await other.close();
+});
+
+for (const kind of ["note", "explanation"] as const) {
+  test(`an unedited restored kept ${kind} draft is removed once a later save stores its text`, async ({ page, request }) => {
+    const w = writing(kind);
+    const id = (await (await request.post(`/api/${w.api}`, { data: w.data("Gone writing") })).json())[kind].id;
+    if (kind === "note") expect((await request.delete(`/api/notes/${id}`)).status()).toBe(204);
+    else await page.route(`**/api/explanations/${id}`, (route) => route.fulfill({ status: 404, json: { error: { code: "not_found", message: "unknown explanation" } } }));
+    const key = `study.draft.${kind}.${id}`;
+    const { full } = await fillableDrafts(page);
+    await page.goto("/library");
+    await page.evaluate((k) => localStorage.setItem(k, JSON.stringify({ body: "Kept text", at: new Date().toISOString(), origin: "old-tab" })), key);
+    let release!: () => void; const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route(`**/api/${w.api}`, async (route) => {
+      if (route.request().method() === "POST") await held; await route.continue();
+    });
+    const created = page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === `/api/${w.api}`);
+    await page.goto(kind === "note" ? "/notes" : "/notes?tab=explanations");
+    await page.getByRole("region", { name: "Kept drafts" }).getByRole("button", { name: "Restore", exact: true }).click();
+    const editor = page.getByLabel(w.label, { exact: true }); await expect(editor).toHaveValue("Kept text");
+    if (kind === "explanation") {
+      await page.getByLabel("Lesson", { exact: true }).selectOption(`${PKG}/${LESSON}`); await page.getByLabel("4 · Solid", { exact: true }).check();
+    }
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await full(true); await editor.click(); await page.keyboard.press("End"); await page.keyboard.type(" more");
+    release(); await created; await expect(page).toHaveURL(new RegExp(`${w.base}/\\d+$`));
+    await expect(page.getByRole("status")).toHaveText("Unsaved changes");
+    expect(await storedBody(page, key)).toBe("Kept text");
+    await full(false); await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByRole("status")).toHaveText(kind === "explanation" ? "Saved. Rated 4 · Solid." : "Saved");
+    expect(await storedBody(page, key)).toBeNull();
+  });
+}
