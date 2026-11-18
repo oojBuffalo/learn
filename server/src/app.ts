@@ -27,8 +27,11 @@ export function createApp(db: Db): Hono<AppEnv> {
   app.use("/api/*", (c, next) =>
     c.req.header("origin") === undefined && c.req.header("sec-fetch-site") === undefined ? next() : check(c, next),
   );
+  // csrf() throws a plain-text 403 HTTPException; give it the API's JSON error shape.
   app.onError((err, c) =>
-    err instanceof HTTPException ? err.getResponse() : c.json({ error: { code: "internal", message: err.message } }, 500),
+    err instanceof HTTPException && err.status === 403
+      ? c.json({ error: { code: "forbidden", message: "cross-origin request blocked" } }, 403)
+      : err instanceof HTTPException ? err.getResponse() : c.json({ error: { code: "internal", message: err.message } }, 500),
   );
   app.notFound((c) => c.json({ error: { code: "not_found", message: "no such route or resource" } }, 404));
   app.route("/api/packages", packageRoutes());

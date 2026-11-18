@@ -11,6 +11,7 @@ const form = () => { const f = new FormData(); f.set("file", new Blob([new Uint8
 it("rejects a cross-origin text/plain POST", async () => {
   const res = await post({ origin: "https://evil.example", "content-type": "text/plain" });
   expect(res.status).toBe(403);
+  expect(await res.json()).toEqual({ error: { code: "forbidden", message: expect.any(String) } });
 });
 it("rejects a cross-origin multipart POST", async () => {
   const res = await post({ origin: "https://evil.example", "sec-fetch-site": "cross-site" }, form());
