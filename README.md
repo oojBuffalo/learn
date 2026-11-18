@@ -16,7 +16,7 @@ Windows, better-sqlite3 downloads a prebuilt binary for these versions, so
     npm run build -w web
     npm start -w server        # http://localhost:4321
 
-Dev mode: `npm start -w server` + `npm run dev -w web` (Vite on :5173, proxies /api).
+Dev mode: `npm start -w server` + `npm run dev -w web` (Vite on :5173, proxies /api). The API refuses cross-site form-style POSTs (403); the Vite proxy keeps the browser's Host, so the dev app passes.
 
 ## Data
 
