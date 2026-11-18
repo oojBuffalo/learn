@@ -43,7 +43,7 @@ One TypeScript repo, three parts:
   frontend; one command starts everything on the loopback-only address
   `127.0.0.1:4321`. All data lives in a single SQLite file at `data/study.db` (WAL
   mode); live backups use SQLite's backup operation (`npm run backup -w server --
-  <destination.db>`), while direct file copies require the app to be stopped. `/api/*` rejects with 403 any
+  <destination.db>`), while direct file copies require the app to be stopped. `/api/*` rejects with 403 (JSON error code `forbidden`) any
   browser POST/PUT/PATCH/DELETE that is form-typed or has no content type (`text/plain`, form, multipart) and
   is not same-origin (Hono `csrf()`: `Sec-Fetch-Site: same-origin`, or `Origin` equal to the
   request's own origin); requests with neither header (curl, tests) pass.
@@ -431,7 +431,7 @@ REST JSON API (all under `/api`):
 - `GET /maintenance/orphans`, `POST /maintenance/orphans/purge` (`packageId`,
   `includeWriting`, and the `expected` counts the user confirmed; a mismatch returns 409
   `orphans_changed` and deletes nothing)
-- Errors: 400 `invalid_request`, 404 `not_found`, 409 `orphans_changed` (purge only) /
+- Errors: 400 `invalid_request`, 403 `forbidden` (cross-origin browser write), 404 `not_found`, 409 `orphans_changed` (purge only) /
   `not_revisit` (dismiss only),
   422 `not_checkable` / `invalid_package`; a rejected request writes nothing.
 
