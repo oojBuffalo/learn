@@ -431,7 +431,7 @@ REST JSON API (all under `/api`):
 - `GET /maintenance/orphans`, `POST /maintenance/orphans/purge` (`packageId`,
   `includeWriting`, and the `expected` counts the user confirmed; a mismatch returns 409
   `orphans_changed` and deletes nothing)
-- Errors: 400 `invalid_request`, 404 `not_found`, 409 `orphans_changed` (purge only) /
+- Errors: 400 `invalid_request`, 403 `forbidden` (cross-origin browser write), 404 `not_found`, 409 `orphans_changed` (purge only) /
   `not_revisit` (dismiss only),
   422 `not_checkable` / `invalid_package`; a rejected request writes nothing.
 

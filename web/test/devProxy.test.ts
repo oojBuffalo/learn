@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createServer, type ViteDevServer } from "vite";
 import { expect, it } from "vitest";
 import { createApp } from "../../server/src/app.js";
 import { freshDb, makeZip, GOOD_FILES } from "../../server/test/helpers.js";
@@ -14,14 +14,17 @@ it("a POST through the Vite dev proxy is same-origin for the browser's Origin, 4
   const apiPort = await listening(api);
   const prevPort = process.env.PORT;
   process.env.PORT = String(apiPort); // vite.config.ts reads it for the proxy target
-  const vite = await createServer({
-    configFile: fileURLToPath(new URL("../vite.config.ts", import.meta.url)),
-    root: fileURLToPath(new URL("..", import.meta.url)),
-    logLevel: "silent",
-    server: { port: 0, host: "127.0.0.1" },
-  });
+  let vite: ViteDevServer | undefined;
   try {
-    await vite.listen();
+    vite = await createServer({
+      configFile: fileURLToPath(new URL("../vite.config.ts", import.meta.url)),
+      root: fileURLToPath(new URL("..", import.meta.url)),
+      logLevel: "silent",
+    });
+    // vite.listen() treats port 0 as unset (5173); bind the http server itself so the port is really free.
+    const viteListening = new Promise<void>((ok) => vite!.httpServer!.once("listening", ok));
+    vite.httpServer!.listen(0, "127.0.0.1");
+    await viteListening;
     const base = `http://127.0.0.1:${(vite.httpServer!.address() as AddressInfo).port}`;
     const post = (origin: string) =>
       fetch(`${base}/api/packages/import`, {
@@ -36,7 +39,10 @@ it("a POST through the Vite dev proxy is same-origin for the browser's Origin, 4
   } finally {
     process.env.PORT = prevPort;
     if (prevPort === undefined) delete process.env.PORT;
-    await vite.close();
-    await new Promise((ok) => api.close(ok));
+    try {
+      await vite?.close();
+    } finally {
+      await new Promise((ok) => api.close(ok));
+    }
   }
 });
