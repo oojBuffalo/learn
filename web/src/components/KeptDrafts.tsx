@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiError, getExplanation, getNote } from "../api.js";
-import { browserDraftStore, clearDraft, draftKey, DRAFTS_CHANGED, readDraft, recordDiscard, restoreState, rowDrafts } from "../drafts.js";
+import { browserDraftStore, clearDraft, discardAround, draftKey, DRAFTS_CHANGED, readDraft, recordDiscard, restoreState, rowDrafts } from "../drafts.js";
 import type { Draft, DraftKind } from "../drafts.js";
 import { headline, message } from "../text.js";
 
@@ -72,11 +72,9 @@ export default function KeptDrafts({ kind, refreshKey }: { kind: DraftKind; refr
     const current = readDraft(store, key);
     // Text written there since the list loaded, by an editor that restored it, stays and is shown instead.
     const same = current?.body === draft.body && current.at === draft.at;
-    // Recorded before the clear, so a save settling in another tab in between sees it, and again after the clear,
-    // which frees space, if storage was full. The origin is recorded only when the draft itself is removed.
+    // The origin is recorded only when the draft itself is removed.
     const record = () => recordDiscard(store, key, { body: draft.body, origin: same ? current.origin : undefined }, new Date());
-    const recorded = record();
-    if (same && clearDraft(store, key) && !recorded) record();
+    if (same) discardAround(record, () => clearDraft(store, key)); else record();
     const left = readDraft(store, key);
     setKept((list) => ({ ...list, drafts: list.drafts.flatMap((d) => d.id !== draft.id ? [d] : left ? [{ id: d.id, ...left }] : []) }));
   }

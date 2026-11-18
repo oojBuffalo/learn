@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { browserDraftStore, clearDraft, draftKey, draftSession, readDraft, recordDiscard, restoreState, restoredDraftId, rowDrafts, writeDraft } from "../src/drafts.js";
+import { browserDraftStore, clearDraft, discardAround, draftKey, draftSession, readDraft, recordDiscard, restoreState, restoredDraftId, rowDrafts, writeDraft } from "../src/drafts.js";
 import type { DraftStore } from "../src/drafts.js";
 function mem(): DraftStore {
   const values = new Map<string, string>();
@@ -241,4 +241,12 @@ it("a failed write keeps a session's claim on the text it last stored", () => {
   const session = draftSession(store);
   expect(session.write(k, "Stored", at(1))).toBe(true); full = true; expect(session.write(k, "Too big", at(2))).toBe(false);
   expect(readDraft(s, k)?.body).toBe("Stored"); expect(session.owns(k, "Too big")).toBe(true);
+});
+it("discardAround records before the clear, and again after it only when the first record failed", () => {
+  const ops: string[] = [];
+  discardAround(() => { ops.push("record"); return true; }, () => ops.push("clear"));
+  expect(ops).toEqual(["record", "clear"]); ops.length = 0;
+  let room = false;
+  discardAround(() => { ops.push(room ? "record" : "full"); return room; }, () => { ops.push("clear"); room = true; });
+  expect(ops).toEqual(["full", "clear", "record"]);
 });

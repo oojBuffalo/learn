@@ -8,7 +8,7 @@ import Markdown from "../components/Markdown.js";
 import MarkdownEditor from "../components/MarkdownEditor.js";
 import TargetSelect, { decodeTarget, encodeTarget } from "../components/TargetSelect.js";
 import type { TargetPackage } from "../components/TargetSelect.js";
-import { browserDraftStore, draftKey, readDraft, recordDiscard, restoredDraftId, useDraft } from "../drafts.js";
+import { restoredDraftId, useDraft } from "../drafts.js";
 import { formatDay } from "../format.js";
 import { filterSearch } from "../listFilter.js";
 import { message } from "../text.js";
@@ -29,7 +29,6 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   // Restore on Notes opens a removed explanation's kept draft here, and its key stays this editor's draft until the save.
   const [recoveryId, setRecoveryId] = useState<number | null>(initial.current.restore);
   const [body, setBody] = useState("");
-  const latestBody = useRef("");
   const [confidence, setConfidence] = useState<Confidence | null>(null);
   const [target, setTarget] = useState<NoteTarget | null>(null);
   const [saved, setSaved] = useState<Fields | null>(null);
@@ -47,8 +46,7 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
   const inFlight = useRef(false);
   const mounted = useRef(false);
   const session = useRef(0);
-  const slot = draftKey("explanation", id ?? recoveryId ?? "new");
-  const draft = useDraft(slot, saved?.body ?? null, body);
+  const draft = useDraft("explanation", id ?? recoveryId ?? "new", saved?.body ?? null, body);
   const dirty = saved !== null && (body !== saved.body || confidence !== saved.confidence || encodeTarget(target) !== encodeTarget(saved.target));
   const hint = !target?.lessonId ? "Pick a lesson to save." : !body.trim() ? "Write your explanation to save."
     : body.length > BODY_MAX ? "Shorten it to 100,000 characters to save." : confidence === null ? "Rate your confidence to save." : null;
@@ -73,10 +71,9 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         const livePrefill = prefill && pkgs.some((pkg) => pkg.id === prefill.packageId && pkg.lessons.some((lesson) => lesson.id === prefill.lessonId));
         const selected = explanation ? { packageId: explanation.packageId, lessonId: explanation.lessonId } : livePrefill ? prefill : null;
         const restore = initial.current.restore;
-        const kept = restore === null ? null : readDraft(browserDraftStore(), draftKey("explanation", restore));
+        const kept = draft.adoptKept(restore);
         if (restore !== null && !kept) setRecoveryId(null);
-        if (kept) draft.session.adopt(kept, draftKey("explanation", restore!));
-        latestBody.current = explanation?.body ?? kept?.body ?? ""; setBody(latestBody.current);
+        draft.latest.current = explanation?.body ?? kept?.body ?? ""; setBody(draft.latest.current);
         setTarget(selected); setConfidence(explanation?.confidence ?? null); setInfo(explanation);
         setSaved({ body: explanation?.body ?? "", confidence: explanation?.confidence ?? null, target: selected });
         setStalePrefill(!explanation && prefill !== null && !livePrefill);
@@ -92,43 +89,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  function edit(value: string) {
-    const last = latestBody.current;
-    latestBody.current = value; setBody(value);
-    if (value !== saved?.body || confidence !== saved?.confidence) draft.write(value);
-    else {
-      if (ownsSlot(last)) draft.clear(); else draft.dismiss();
-      // Back at the saved text: an older draft set aside after a failed move is no longer wanted either.
-      draft.session.dropAside();
-    }
-  }
+  function edit(value: string) { setBody(value); draft.edit(value, value !== saved?.body || confidence !== saved?.confidence); }
 
-  // Discard drops the offered draft; text typed since the offer, here or in another tab, stays as the current draft.
-  function discard() {
-    const offered = draft.offer;
-    const stored = readDraft(browserDraftStore(), slot);
-    // Only the offer itself is removed. Newer text over it, from this editor or another tab, stays where it is.
-    const isOffer = offered !== null && stored !== null && stored.at === offered.at && stored.body === offered.body;
-    const record = () => offered === null || recordDiscard(browserDraftStore(), slot,
-      { body: offered.body, origin: isOffer ? stored.origin : undefined }, new Date());
-    // Recorded before the clear, so a save settling in another tab in between sees it; again after it if storage was full.
-    const recorded = record();
-    if (!isOffer) { draft.dismiss(); if (stored === null && latestBody.current !== saved?.body) draft.write(latestBody.current); return; }
-    draft.clear(); if (!recorded) record();
-    if (latestBody.current !== saved?.body) draft.write(latestBody.current);
-  }
-
-  // A newer editor of the same key may have stored its own text, or discarded this editor's, since this save started;
-  // a late settle leaves that key alone.
-  function ownsDraft(key: string): boolean {
-    return draft.session.owns(key, latestBody.current);
-  }
-
-  // This editor's slot holds nothing, its own last text or the offer it showed; anything else is newer text from another editor of the row.
-  function ownsSlot(last = latestBody.current): boolean {
-    const stored = readDraft(browserDraftStore(), slot);
-    return stored === null || stored.body === last || stored.body === draft.offer?.body;
-  }
 
   // An edit-mode mount never loaded the library; create mode after a 404 needs it to offer live lessons.
   function loadLibrary() {
@@ -136,21 +98,6 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
     setLibraryFailed(false);
     listPackages().then((pkgs) => { if (session.current === current) setPackages(pkgs); },
       () => { if (session.current === current) setLibraryFailed(true); });
-  }
-
-  // A removed explanation's text moves to the new draft, which Explain a lesson offers, unless another new explanation's
-  // text is there; then it stays under the old key, and Notes lists it as a kept draft. Text another editor discarded
-  // stays gone. Returns whether the new draft now holds this editor's text.
-  function keepGoneText(oldId: number): boolean {
-    const drafts = draft.session;
-    const old = draftKey("explanation", oldId); const fresh = draftKey("explanation", "new");
-    const free = ownsDraft(fresh);
-    // Discarded text stays gone whichever of the two keys it was discarded from, even after other text took the new draft.
-    if (drafts.dropped(old, latestBody.current) || drafts.dropped(fresh, latestBody.current)) return free;
-    // The old key keeps the text, and stays this editor's draft, until the new draft holds it.
-    if (free && drafts.write(fresh, latestBody.current, new Date())) { if (ownsDraft(old)) drafts.clear(old); return true; }
-    if (ownsDraft(old)) drafts.write(old, latestBody.current, new Date());
-    return false;
   }
 
   async function save() {
@@ -164,35 +111,20 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
       if (sent.confidence !== saved.confidence) patch.confidence = sent.confidence;
       const explanation = creating ? await createExplanation({ body: sent.body, confidence: sent.confidence,
         packageId: sent.target.packageId, lessonId: sent.target.lessonId! }) : await updateExplanation(id, patch);
-      const drafts = draft.session;
-      // Text that another editor discarded while this save was pending stays gone.
-      const key = draftKey("explanation", explanation.id);
-      const dropped = drafts.dropped(slot, latestBody.current) || drafts.dropped(key, latestBody.current);
-      // A create's old draft goes only once its text is saved or stored under the new row, so nothing is lost when
-      // another editor holds that key, the write fails or the text was discarded elsewhere.
-      const settled = latestBody.current === sent.body;
-      let moved = false;
-      if (ownsDraft(key)) {
-        if (settled) drafts.clear(key); else if (!dropped) moved = drafts.write(key, latestBody.current, new Date());
-      }
-      if (creating && (settled || moved) && recoveryId !== null && ownsDraft(draftKey("explanation", recoveryId))) drafts.clear(draftKey("explanation", recoveryId));
-      if (creating && (settled || moved) && ownsDraft(draftKey("explanation", "new"))) drafts.clear(draftKey("explanation", "new"));
-      // Until this editor next stores or clears its draft, the old one keeps the text the new row's key couldn't.
-      if (creating && !settled && !moved) drafts.setAside(slot);
+      draft.saved(explanation.id, sent.body, creating, recoveryId);
       if (!mounted.current) return;
-      draft.dismiss();
       setId(explanation.id); setSaved(sent); setInfo(explanation); setHasSaved(true);
       if (creating) navigate(`/notes/explain/${explanation.id}`, { replace: true, state: { editorKey } });
     } catch (e) {
       const gone = !creating && e instanceof ApiError && e.code === "not_found";
       if (!mounted.current) {
-        if (gone) keepGoneText(id);
+        if (gone) draft.keepGone(id);
         return;
       }
       if (gone) {
         setId(null); setSaved({ body: "", confidence: null, target }); setHasSaved(false);
         // Recovery edits stay on the old key while another new explanation's text holds the new draft.
-        setRecoveryId(keepGoneText(id) ? null : id);
+        setRecoveryId(draft.keepGone(id) ? null : id);
         if (initial.current.explanationId) loadLibrary();
         setError("This explanation was removed elsewhere — Save will create it again.");
       } else setError(`Your explanation wasn’t saved (${message(e)}).`);
@@ -222,8 +154,8 @@ export default function ExplanationEditor({ editorKey }: { editorKey: string }) 
         <Link to={"/notes/explain/new" + filterSearch({ kind: "package", packageId: target!.packageId, lessonId: target!.lessonId! })}>Explain it again</Link></div>}
     <p className="note">Explain it in your own words, as if to a friend — no peeking.</p>
     {draft.offer && <p className="note">{`Restore unsaved text from ${new Date(draft.offer.at).toLocaleString()}?`}{" "}
-      <button className="btn" onClick={() => { draft.session.adopt(draft.offer!, slot); edit(draft.offer!.body); draft.dismiss(); }}>Restore</button>
-      <button className="btn btn-quiet" onClick={discard}>Discard</button></p>}
+      <button className="btn" onClick={() => edit(draft.adoptOffer())}>Restore</button>
+      <button className="btn btn-quiet" onClick={draft.discard}>Discard</button></p>}
     <MarkdownEditor label="Your explanation" value={body} onChange={edit} packageId={target?.packageId} onSave={() => void save()} />
     <ConfidencePicker value={confidence} onChange={setConfidence} />
     {hint && <p className="note" id={hintId}>{hint}</p>}
