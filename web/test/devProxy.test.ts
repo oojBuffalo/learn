@@ -5,10 +5,13 @@ import { fileURLToPath } from "node:url";
 import { createServer, type ViteDevServer } from "vite";
 import { expect, it } from "vitest";
 import { createApp } from "../../server/src/app.js";
-import { freshDb, makeZip, tempDir, GOOD_FILES } from "../../server/test/helpers.js";
+import { freshDb, tempDir } from "../../server/test/helpers.js";
 
 it("a POST through the Vite dev proxy is same-origin for the browser's Origin, 403 for a foreign one", async () => {
-  const api = serve({ fetch: createApp(freshDb()).fetch, hostname: "127.0.0.1", port: 0 });
+  const app = createApp(freshDb());
+  const marker = `probe-${Math.random()}`; // only this test's API answers with it, so a misrouted proxy cannot pass
+  app.post("/api/_probe", (c) => c.json({ marker }, 201));
+  const api = serve({ fetch: app.fetch, hostname: "127.0.0.1", port: 0 });
   const prevPort = process.env.PORT;
   let vite: ViteDevServer | undefined;
   try {
@@ -25,12 +28,10 @@ it("a POST through the Vite dev proxy is same-origin for the browser's Origin, 4
     await once(vite.httpServer!, "listening");
     const base = `http://127.0.0.1:${(vite.httpServer!.address() as AddressInfo).port}`;
     const post = (origin: string) =>
-      fetch(`${base}/api/packages/import`, {
-        method: "POST",
-        headers: { origin, "content-type": "text/plain" },
-        body: new Uint8Array(makeZip(GOOD_FILES)),
-      });
-    expect((await post(base)).status).toBe(201);
+      fetch(`${base}/api/_probe`, { method: "POST", headers: { origin, "content-type": "text/plain" }, body: "x" });
+    const ok = await post(base);
+    expect(ok.status).toBe(201);
+    expect(await ok.json()).toEqual({ marker });
     const bad = await post("https://evil.example");
     expect(bad.status).toBe(403);
     expect((await bad.json()).error.code).toBe("forbidden");
