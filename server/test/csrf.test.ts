@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { createApp } from "../src/app.js";
 import { freshDb, makeZip, GOOD_FILES } from "./helpers.js";
@@ -15,11 +16,16 @@ it("rejects a cross-origin multipart POST", async () => {
   const res = await post({ origin: "https://evil.example", "sec-fetch-site": "cross-site" }, form());
   expect(res.status).toBe(403);
 });
-it("lets a same-origin multipart POST through", async () => {
-  const res = await post({ origin: "http://localhost", "sec-fetch-site": "same-origin" }, form());
-  expect(res.status).not.toBe(403); // the route wants a raw zip, so 422 is fine here
+const zip = () => new Uint8Array(makeZip(GOOD_FILES));
+it("imports a same-origin text/plain POST on Origin alone", async () => {
+  const res = await post({ origin: "http://localhost", "content-type": "text/plain" }, zip());
+  expect(res.status).toBe(201);
 });
-it("lets a same-origin text/plain POST through on Origin alone", async () => {
-  const res = await post({ origin: "http://localhost", "content-type": "text/plain" });
-  expect(res.status).not.toBe(403);
+it("imports a same-origin POST on Sec-Fetch-Site alone", async () => {
+  const res = await post({ "sec-fetch-site": "same-origin", "content-type": "text/plain" }, zip());
+  expect(res.status).toBe(201);
+});
+it("the Vite dev proxy keeps the browser's Host so the Origin check matches", () => {
+  const config = readFileSync(new URL("../../web/vite.config.ts", import.meta.url), "utf8");
+  expect(config).toMatch(/changeOrigin:\s*false/);
 });

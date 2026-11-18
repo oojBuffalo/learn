@@ -22,7 +22,7 @@ export function createApp(db: Db): Hono<AppEnv> {
   });
   // Blocks cross-site simple POSTs (text/plain, form, multipart), which need no CORS preflight.
   // Browsers always send Origin or Sec-Fetch-Site on those; a request with neither (curl, tests) is not a browser CSRF.
-  // The Vite proxy rewrites Host but forwards Sec-Fetch-Site, so the dev app passes on that header.
+  // The Vite proxy keeps Host (changeOrigin: false), so the dev app passes on Origin too.
   const check = csrf();
   app.use("/api/*", (c, next) =>
     c.req.header("origin") === undefined && c.req.header("sec-fetch-site") === undefined ? next() : check(c, next),
