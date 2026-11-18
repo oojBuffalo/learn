@@ -2,9 +2,7 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    // Root vitest pulls vite 5 while web uses vite 6; without this, plugin-react's types clash with web's defineConfig.
-    "paths": { "vite": ["./node_modules/vite"] }
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src", "test", "vite.config.ts"]
 }
