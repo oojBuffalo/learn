@@ -8,7 +8,7 @@ flashcards, quizzes and games, notes and explain-back, and a Home dashboard at `
 
 ## Run
 
-Requires Node 22 or 24 (`engines` in `package.json`). On macOS, Linux and
+Requires Node 22, 24 or 26 (`engines` in `package.json`). On macOS, Linux and
 Windows, better-sqlite3 downloads a prebuilt binary for these versions, so
 `npm install` needs no C++ toolchain.
 
