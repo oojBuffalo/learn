@@ -43,7 +43,10 @@ One TypeScript repo, three parts:
   frontend; one command starts everything on the loopback-only address
   `127.0.0.1:4321`. All data lives in a single SQLite file at `data/study.db` (WAL
   mode); live backups use SQLite's backup operation (`npm run backup -w server --
-  <destination.db>`), while direct file copies require the app to be stopped.
+  <destination.db>`), while direct file copies require the app to be stopped. `/api/*` rejects with 403 any
+  browser POST/PUT/PATCH/DELETE that is form-typed or has no content type (`text/plain`, form, multipart) and
+  is not same-origin (Hono `csrf()`: `Sec-Fetch-Site: same-origin`, or `Origin` equal to the
+  request's own origin); requests with neither header (curl, tests) pass.
 - **`web/`** — Vite + React single-page app.
 
 **Core rule: teaching content and personal state never mix.** Imported content goes in
