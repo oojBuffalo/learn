@@ -1,30 +1,28 @@
 import { serve } from "@hono/node-server";
+import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import { fileURLToPath } from "node:url";
 import { createServer, type ViteDevServer } from "vite";
 import { expect, it } from "vitest";
 import { createApp } from "../../server/src/app.js";
-import { freshDb, makeZip, GOOD_FILES } from "../../server/test/helpers.js";
-
-const listening = (s: ReturnType<typeof serve>) =>
-  new Promise<number>((ok) => s.on("listening", () => ok((s.address() as AddressInfo).port)));
+import { freshDb, makeZip, tempDir, GOOD_FILES } from "../../server/test/helpers.js";
 
 it("a POST through the Vite dev proxy is same-origin for the browser's Origin, 403 for a foreign one", async () => {
   const api = serve({ fetch: createApp(freshDb()).fetch, hostname: "127.0.0.1", port: 0 });
-  const apiPort = await listening(api);
   const prevPort = process.env.PORT;
-  process.env.PORT = String(apiPort); // vite.config.ts reads it for the proxy target
   let vite: ViteDevServer | undefined;
   try {
+    await once(api, "listening");
+    process.env.PORT = String((api.address() as AddressInfo).port); // vite.config.ts reads it for the proxy target
     vite = await createServer({
       configFile: fileURLToPath(new URL("../vite.config.ts", import.meta.url)),
       root: fileURLToPath(new URL("..", import.meta.url)),
       logLevel: "silent",
+      cacheDir: tempDir(), // not the default, which a running `npm run dev` shares
     });
     // vite.listen() treats port 0 as unset (5173); bind the http server itself so the port is really free.
-    const viteListening = new Promise<void>((ok) => vite!.httpServer!.once("listening", ok));
     vite.httpServer!.listen(0, "127.0.0.1");
-    await viteListening;
+    await once(vite.httpServer!, "listening");
     const base = `http://127.0.0.1:${(vite.httpServer!.address() as AddressInfo).port}`;
     const post = (origin: string) =>
       fetch(`${base}/api/packages/import`, {
